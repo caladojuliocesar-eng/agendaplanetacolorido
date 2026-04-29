@@ -52,7 +52,7 @@ export async function resolveUserProfile(
       nome: "Julio Admin (Emergency)",
       email: user.email!,
       role: "admin",
-      escolaId: "agendaplanetinha",
+      escolaId: "agendaplanetacolorido", // Mudando para o ID mais provável do repositório
       criadoEm: new Date().toISOString()
     } as UserProfile;
   }
