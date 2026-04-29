@@ -116,10 +116,7 @@ function LoginContent() {
               className="h-20 w-auto object-contain" 
               alt="Logo Planeta Colorido" 
               onError={(e) => {
-                // Fallback if image not yet deployed
                 e.currentTarget.style.display = 'none';
-                e.currentTarget.parentElement!.innerHTML = '<span class="text-4xl">📓</span>';
-                e.currentTarget.parentElement!.className = 'w-20 h-20 bg-[#F97316] rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg';
               }}
             />
           </div>
