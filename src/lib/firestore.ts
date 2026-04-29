@@ -393,8 +393,7 @@ export async function unlinkParentFromStudent(userId: string, studentId: string)
 export async function getCobrancasByAluno(alunoId: string): Promise<Cobranca[]> {
   const q = query(
     collection(db(), "cobrancas"),
-    where("alunoId", "==", alunoId),
-    orderBy("dataVencimento", "desc")
+    where("alunoId", "==", alunoId)
   );
   const snap = await getDocs(q);
   return snap.docs.map(d => ({ id: d.id, ...d.data() } as Cobranca));
@@ -403,8 +402,7 @@ export async function getCobrancasByAluno(alunoId: string): Promise<Cobranca[]> 
 export async function getCobrancasByEscola(escolaId: string): Promise<Cobranca[]> {
   const q = query(
     collection(db(), "cobrancas"),
-    where("escolaId", "==", escolaId),
-    orderBy("criadoEm", "desc")
+    where("escolaId", "==", escolaId)
   );
   const snap = await getDocs(q);
   return snap.docs.map(d => ({ id: d.id, ...d.data() } as Cobranca));
