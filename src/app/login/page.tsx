@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   signInWithGoogle,
   signInWithEmail,
@@ -11,7 +11,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 
-export default function LoginPage() {
+function LoginContent() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isRegistering, setIsRegistering] = useState(false);
@@ -22,12 +22,13 @@ export default function LoginPage() {
   const router = useRouter();
   const { user } = useAuth();
 
+  const searchParams = useSearchParams();
+
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("error") === "no_profile") {
-      setError("Seu email não foi encontrado no sistema da escola. Verifique se o cadastro está correto.");
+    if (searchParams?.get("error") === "no_profile") {
+      setError("Seu email não foi encontrado ou o Firebase bloqueou a busca. O login falhou.");
     }
-  }, []);
+  }, [searchParams]);
 
   // If already logged in, go to home
   if (user) {
@@ -216,5 +217,17 @@ export default function LoginPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-[#FFF7ED]">
+        <div className="spinner"></div>
+      </div>
+    }>
+      <LoginContent />
+    </Suspense>
   );
 }
