@@ -184,6 +184,8 @@ export type CobrancaStatus = 'pendente' | 'pago' | 'atrasado' | 'cancelado';
 export interface Cobranca {
   id: string;
   alunoId: string;
+  alunoNome: string;  // Novo campo para facilitar a listagem
+  alunoTurma: string; // Novo campo para facilitar a listagem
   escolaId: string;
   titulo: string;
   valor: number;

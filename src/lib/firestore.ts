@@ -426,6 +426,18 @@ export async function updateCobrancaStatus(id: string, status: CobrancaStatus): 
   });
 }
 
+export async function updateCobranca(id: string, data: Partial<Cobranca>): Promise<void> {
+  await updateDoc(doc(db(), "cobrancas", id), {
+    ...data,
+    atualizadoEm: new Date().toISOString()
+  });
+}
+
+export async function deleteCobranca(id: string): Promise<void> {
+  const { deleteDoc } = await import("firebase/firestore");
+  await deleteDoc(doc(db(), "cobrancas", id));
+}
+
 export async function markCobrancaAsViewed(id: string): Promise<void> {
   await updateDoc(doc(db(), "cobrancas", id), {
     visualizado: true,

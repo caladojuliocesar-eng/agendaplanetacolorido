@@ -37,6 +37,17 @@ export default function AdminFinanceiroPage() {
     }
   }
 
+  async function handleDelete(id: string) {
+    if (confirm("Tem certeza que deseja excluir esta cobrança?")) {
+      try {
+        await (await import("@/lib/firestore")).deleteCobranca(id);
+        setCobrancas(prev => prev.filter(c => c.id !== id));
+      } catch (error) {
+        alert("Erro ao excluir");
+      }
+    }
+  }
+
   const getStatusColor = (status: CobrancaStatus) => {
     switch (status) {
       case 'pago': return '#22C55E';
@@ -76,6 +87,7 @@ export default function AdminFinanceiroPage() {
         <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
           <thead>
             <tr style={{ background: "#F8FAFC", borderBottom: "1px solid #E2E8F0" }}>
+              <th style={{ padding: "16px", fontSize: 13, fontWeight: 700, color: "#64748B" }}>Aluno</th>
               <th style={{ padding: "16px", fontSize: 13, fontWeight: 700, color: "#64748B" }}>Título</th>
               <th style={{ padding: "16px", fontSize: 13, fontWeight: 700, color: "#64748B" }}>Valor</th>
               <th style={{ padding: "16px", fontSize: 13, fontWeight: 700, color: "#64748B" }}>Vencimento</th>
@@ -95,21 +107,25 @@ export default function AdminFinanceiroPage() {
               cobrancas.map((c) => (
                 <tr key={c.id} style={{ borderBottom: "1px solid #F1F5F9" }}>
                   <td style={{ padding: "16px" }}>
-                    <span style={{ fontWeight: 600, color: "#1E293B" }}>{c.titulo}</span>
+                    <div style={{ fontWeight: 700, color: "#1E293B", fontSize: 14 }}>{c.alunoNome}</div>
+                    <div style={{ fontSize: 11, color: "#64748B" }}>{c.alunoTurma}</div>
+                  </td>
+                  <td style={{ padding: "16px" }}>
+                    <span style={{ fontWeight: 600, color: "#1E293B", fontSize: 13 }}>{c.titulo}</span>
                   </td>
                   <td style={{ padding: "16px", fontWeight: 700, color: "#1E293B" }}>
                     {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(c.valor)}
                   </td>
-                  <td style={{ padding: "16px", color: "#64748B" }}>
+                  <td style={{ padding: "16px", color: "#64748B", fontSize: 13 }}>
                     {new Date(c.dataVencimento + 'T12:00:00').toLocaleDateString('pt-BR')}
                   </td>
                   <td style={{ padding: "16px" }}>
                     <span style={{ 
                       padding: "4px 12px", 
                       borderRadius: 20, 
-                      fontSize: 12, 
+                      fontSize: 11, 
                       fontWeight: 700, 
-                      background: getStatusColor(c.status) + '20',
+                      background: getStatusColor(c.status) + '15',
                       color: getStatusColor(c.status)
                     }}>
                       {c.status.toUpperCase()}
@@ -125,16 +141,45 @@ export default function AdminFinanceiroPage() {
                     )}
                   </td>
                   <td style={{ padding: "16px" }}>
-                    <select 
-                      value={c.status} 
-                      onChange={(e) => handleStatusChange(c.id, e.target.value as CobrancaStatus)}
-                      style={{ padding: "6px", borderRadius: 8, border: "1px solid #E2E8F0", fontSize: 12 }}
-                    >
-                      <option value="pendente">Pendente</option>
-                      <option value="pago">Pago</option>
-                      <option value="atrasado">Atrasado</option>
-                      <option value="cancelado">Cancelado</option>
-                    </select>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <select 
+                        value={c.status} 
+                        onChange={(e) => handleStatusChange(c.id, e.target.value as CobrancaStatus)}
+                        style={{ padding: "6px", borderRadius: 8, border: "1px solid #E2E8F0", fontSize: 12 }}
+                      >
+                        <option value="pendente">Pendente</option>
+                        <option value="pago">Pago</option>
+                        <option value="atrasado">Atrasado</option>
+                        <option value="cancelado">Cancelado</option>
+                      </select>
+                      <Link 
+                        href={`/admin/financeiro/editar/${c.id}`}
+                        style={{ 
+                          padding: "6px 12px", 
+                          background: "#F1F5F9", 
+                          borderRadius: 8, 
+                          color: "#475569", 
+                          fontSize: 12, 
+                          fontWeight: 700,
+                          textDecoration: "none"
+                        }}
+                      >
+                        Editar
+                      </Link>
+                      <button 
+                        onClick={() => handleDelete(c.id)}
+                        style={{ 
+                          padding: "6px", 
+                          background: "#FEE2E2", 
+                          borderRadius: 8, 
+                          color: "#EF4444", 
+                          border: "none",
+                          cursor: "pointer"
+                        }}
+                      >
+                        🗑️
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))

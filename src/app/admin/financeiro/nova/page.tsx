@@ -77,8 +77,12 @@ export default function NewChargePage() {
         throw new Error("Valor inválido. Use o formato 0000,00");
       }
 
+      const selectedStudent = students.find(s => s.id === formData.alunoId);
+
       await createCobranca({
         alunoId: formData.alunoId,
+        alunoNome: selectedStudent?.nome || "Aluno",
+        alunoTurma: selectedStudent?.turma || "",
         escolaId: profile!.escolaId,
         titulo: formData.titulo,
         valor: valorNum,
