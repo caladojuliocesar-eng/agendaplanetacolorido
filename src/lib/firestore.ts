@@ -317,10 +317,9 @@ export async function deleteEvento(eventoId: string): Promise<void> {
 // ============================================
 
 export async function getAllStudents(escolaId: string): Promise<Student[]> {
-  // TEMPORARY: Return ALL students from the database to find the correct ID
   const q = query(
-    collection(db(), "alunos")
-    // where("escolaId", "==", escolaId)
+    collection(db(), "alunos"),
+    where("escolaId", "==", escolaId)
   );
   const snap = await getDocs(q);
   const students = snap.docs.map((d) => ({ id: d.id, ...d.data() } as Student));
