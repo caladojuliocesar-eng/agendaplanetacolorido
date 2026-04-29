@@ -84,16 +84,38 @@ export default function UsuariosAdminPage() {
                 <td style={{ padding: 16, fontWeight: 600 }}>{u.nome}</td>
                 <td style={{ padding: 16 }}>{u.email}</td>
                 <td style={{ padding: 16 }}>
-                  <span style={{ 
-                    padding: "4px 8px", 
-                    borderRadius: 6, 
-                    fontSize: 12, 
-                    fontWeight: 700,
-                    background: u.role === "admin" ? "#FEF3C7" : "#DBEAFE",
-                    color: u.role === "admin" ? "#92400E" : "#1E40AF"
-                  }}>
-                    {u.role.toUpperCase()}
-                  </span>
+                  {(() => {
+                    let label = u.role.toUpperCase();
+                    let bgColor = "#DBEAFE";
+                    let textColor = "#1E40AF";
+
+                    if (u.role === "admin") {
+                      label = "ADMIN";
+                      bgColor = "#FEF3C7";
+                      textColor = "#92400E";
+                    } else if (u.role === "professor") {
+                      label = "PROFESSOR";
+                      bgColor = "#EEF2FF";
+                      textColor = "#4338CA";
+                    } else {
+                      label = "RESPONSÁVEL";
+                      bgColor = "#F1F5F9";
+                      textColor = "#475569";
+                    }
+
+                    return (
+                      <span style={{ 
+                        padding: "4px 8px", 
+                        borderRadius: 6, 
+                        fontSize: 12, 
+                        fontWeight: 700,
+                        background: bgColor,
+                        color: textColor
+                      }}>
+                        {label}
+                      </span>
+                    );
+                  })()}
                 </td>
                 <td style={{ padding: 16 }}>{u.turma || "---"}</td>
               </tr>

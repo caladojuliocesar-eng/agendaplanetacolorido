@@ -106,6 +106,8 @@ export default function AdminMonitorPage() {
                   <th style={{ padding: "16px", textAlign: "left", fontSize: 13, color: "#475569" }}>Aluno</th>
                   <th style={{ padding: "16px", textAlign: "center", fontSize: 13, color: "#475569" }}>Lanche M.</th>
                   <th style={{ padding: "16px", textAlign: "center", fontSize: 13, color: "#475569" }}>Almoço</th>
+                  <th style={{ padding: "16px", textAlign: "center", fontSize: 13, color: "#475569" }}>Lanche T.</th>
+                  <th style={{ padding: "16px", textAlign: "center", fontSize: 13, color: "#475569" }}>Jantar</th>
                   <th style={{ padding: "16px", textAlign: "center", fontSize: 13, color: "#475569" }}>Rotina (💤💧💩)</th>
                   <th style={{ padding: "16px", textAlign: "center", fontSize: 13, color: "#475569" }}>Recados</th>
                   <th style={{ padding: "16px", textAlign: "center", fontSize: 13, color: "#475569" }}>Ação</th>
@@ -114,7 +116,7 @@ export default function AdminMonitorPage() {
               <tbody>
                 {alunosNaTurma.length === 0 ? (
                   <tr>
-                    <td colSpan={6} style={{ padding: 32, textAlign: "center", color: "#64748B" }}>
+                    <td colSpan={8} style={{ padding: 32, textAlign: "center", color: "#64748B" }}>
                       Nenhum aluno nesta turma.
                     </td>
                   </tr>
@@ -141,6 +143,12 @@ export default function AdminMonitorPage() {
                         </td>
                         <td style={{ padding: "16px", textAlign: "center" }}>
                           {getStatusDot(record?.alimentacao?.almoco)}
+                        </td>
+                        <td style={{ padding: "16px", textAlign: "center" }}>
+                          {getStatusDot(record?.alimentacao?.lancheTarde)}
+                        </td>
+                        <td style={{ padding: "16px", textAlign: "center" }}>
+                          {getStatusDot(record?.alimentacao?.jantar)}
                         </td>
                         <td style={{ padding: "16px", textAlign: "center" }}>
                           <div style={{ display: "flex", gap: 8, justifyContent: "center" }}>

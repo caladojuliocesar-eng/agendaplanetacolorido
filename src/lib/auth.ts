@@ -52,23 +52,27 @@ export async function resolveUserProfile(
     docSnap = await getDoc(docRef);
   } catch (e: any) {
     if (e.code === 'permission-denied') {
-      console.warn("Permission denied on direct UID lookup. Falling back to hardcoded profile for synced users.");
+      console.warn(`Permission denied for ${user.email}. Falling back to hardcoded profile.`);
       
-      // Fallback for known users if security rules are currently broken
-      if (user.email === 'contato@juliocalado.com.br') {
+      const cleanEmail = user.email?.toLowerCase().trim();
+      
+      // Fallback robusto
+      if (cleanEmail === 'contato@juliocalado.com.br' || cleanEmail === 'diretoria@ottomatic.com.br') {
         return { uid: user.uid, email: user.email, role: 'admin', escolaId: 'planeta-colorido', nome: 'Admin' } as UserProfile;
       }
-      if (user.email === 'julio.calado@hotmail.com') {
+      if (cleanEmail === 'julio.calado@hotmail.com') {
         return { uid: user.uid, email: user.email, role: 'professor', escolaId: 'planeta-colorido', nome: 'Professor', turma: 'Infantil II' } as UserProfile;
       }
-      if (user.email === 'calado.juliocesar@gmail.com') {
-        return { uid: user.uid, email: user.email, role: 'pai', escolaId: 'planeta-colorido', nome: 'Julio Calado', filhos: ['otto'] } as UserProfile;
-      }
-      if (user.email === 'gracielly.lourenco@gmail.com') {
-        return { uid: user.uid, email: user.email, role: 'pai', escolaId: 'planeta-colorido', nome: 'Gracielly', filhos: ['helena'] } as UserProfile;
-      }
-      if (user.email === 'diretoria@ottomatic.com.br') {
-        return { uid: user.uid, email: user.email, role: 'admin', escolaId: 'planeta-colorido', nome: 'Diretoria' } as UserProfile;
+      if (cleanEmail === 'calado.juliocesar@gmail.com' || cleanEmail === 'gracielly.lourenco@gmail.com') {
+        const isGracielly = cleanEmail.includes('gracielly');
+        return { 
+          uid: user.uid, 
+          email: user.email, 
+          role: 'pai', 
+          escolaId: 'planeta-colorido', 
+          nome: isGracielly ? 'Gracielly' : 'Julio Calado', 
+          filhos: [isGracielly ? 'helena' : 'otto'] 
+        } as UserProfile;
       }
       
       throw new Error(`Permissão negada pelo Firebase. Regras bloqueando ID: ${user.uid}`);

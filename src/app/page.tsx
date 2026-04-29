@@ -21,13 +21,19 @@ export default function RootPage() {
         } else {
           router.push("/pais/agenda");
         }
-      } else {
-        // Authenticated but no Firestore profile found
-        console.error("User authenticated but no profile found in Firestore.");
-        // We sign out to prevent getting stuck in a semi-logged state
-        signOut().then(() => {
-          router.push("/login?error=no_profile");
-        });
+      } else if (user) {
+        // Authenticated but profile is still null - give it a second or show error
+        console.log("Waiting for profile...");
+        // Se após 5 segundos não carregar, aí sim damos o erro
+        const timer = setTimeout(() => {
+          if (!profile) {
+            console.error("Timeout loading profile.");
+            signOut().then(() => {
+              router.push("/login?error=no_profile");
+            });
+          }
+        }, 5000);
+        return () => clearTimeout(timer);
       }
     }
   }, [user, loading, profile, router]);
