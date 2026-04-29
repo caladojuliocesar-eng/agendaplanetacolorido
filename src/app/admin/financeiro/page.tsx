@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuth } from "@/contexts/AuthContext";
-import { getCobrancasByEscola, updateCobrancaStatus } from "@/lib/firestore";
+import { getCobrancasByEscola, updateCobrancaStatus, updateCobranca } from "@/lib/firestore";
 import { Cobranca, CobrancaStatus } from "@/types";
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -10,6 +10,7 @@ export default function AdminFinanceiroPage() {
   const { profile } = useAuth();
   const [cobrancas, setCobrancas] = useState<Cobranca[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   useEffect(() => {
     if (profile?.escolaId) {
@@ -25,6 +26,20 @@ export default function AdminFinanceiroPage() {
       console.error("Erro ao carregar cobranças:", error);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleConfirmPayment(id: string) {
+    if (confirm("Confirmar que o pagamento foi recebido? O status passará para PAGO.")) {
+      try {
+        await updateCobranca(id, { 
+          status: 'pago',
+          dataPagamento: new Date().toISOString()
+        });
+        setCobrancas(prev => prev.map(c => c.id === id ? { ...c, status: 'pago' as CobrancaStatus } : c));
+      } catch (error) {
+        alert("Erro ao confirmar");
+      }
     }
   }
 
@@ -90,9 +105,8 @@ export default function AdminFinanceiroPage() {
               <th style={{ padding: "16px", fontSize: 13, fontWeight: 700, color: "#64748B" }}>Aluno</th>
               <th style={{ padding: "16px", fontSize: 13, fontWeight: 700, color: "#64748B" }}>Título</th>
               <th style={{ padding: "16px", fontSize: 13, fontWeight: 700, color: "#64748B" }}>Valor</th>
-              <th style={{ padding: "16px", fontSize: 13, fontWeight: 700, color: "#64748B" }}>Vencimento</th>
               <th style={{ padding: "16px", fontSize: 13, fontWeight: 700, color: "#64748B" }}>Status</th>
-              <th style={{ padding: "16px", fontSize: 13, fontWeight: 700, color: "#64748B" }}>Visualizado</th>
+              <th style={{ padding: "16px", fontSize: 13, fontWeight: 700, color: "#64748B" }}>Comprovante</th>
               <th style={{ padding: "16px", fontSize: 13, fontWeight: 700, color: "#64748B" }}>Ações</th>
             </tr>
           </thead>
@@ -111,13 +125,11 @@ export default function AdminFinanceiroPage() {
                     <div style={{ fontSize: 11, color: "#64748B" }}>{c.alunoTurma}</div>
                   </td>
                   <td style={{ padding: "16px" }}>
-                    <span style={{ fontWeight: 600, color: "#1E293B", fontSize: 13 }}>{c.titulo}</span>
+                    <div style={{ fontWeight: 600, color: "#1E293B", fontSize: 13 }}>{c.titulo}</div>
+                    <div style={{ fontSize: 11, color: "#64748B" }}>Venc: {new Date(c.dataVencimento + 'T12:00:00').toLocaleDateString('pt-BR')}</div>
                   </td>
                   <td style={{ padding: "16px", fontWeight: 700, color: "#1E293B" }}>
                     {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(c.valor)}
-                  </td>
-                  <td style={{ padding: "16px", color: "#64748B", fontSize: 13 }}>
-                    {new Date(c.dataVencimento + 'T12:00:00').toLocaleDateString('pt-BR')}
                   </td>
                   <td style={{ padding: "16px" }}>
                     <span style={{ 
@@ -132,16 +144,27 @@ export default function AdminFinanceiroPage() {
                     </span>
                   </td>
                   <td style={{ padding: "16px" }}>
-                    {c.visualizado ? (
-                      <span title={c.dataVisualizacao ? new Date(c.dataVisualizacao).toLocaleString() : ""} style={{ color: "#22C55E", fontSize: 12, fontWeight: 600 }}>
-                        👁️ Visualizado
-                      </span>
+                    {c.urlComprovante ? (
+                      <button 
+                        onClick={() => setSelectedImage(c.urlComprovante!)}
+                        style={{ background: "#F0FDF4", border: "1px solid #BBF7D0", color: "#166534", padding: "4px 8px", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer" }}
+                      >
+                        📄 Ver Anexo
+                      </button>
                     ) : (
-                      <span style={{ color: "#94A3B8", fontSize: 12 }}>Pendente</span>
+                      <span style={{ color: "#94A3B8", fontSize: 12 }}>Nenhum</span>
                     )}
                   </td>
                   <td style={{ padding: "16px" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      {c.urlComprovante && c.status !== 'pago' && (
+                        <button 
+                          onClick={() => handleConfirmPayment(c.id)}
+                          style={{ padding: "6px 12px", background: "#22C55E", color: "white", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: "pointer" }}
+                        >
+                          Confirmar
+                        </button>
+                      )}
                       <select 
                         value={c.status} 
                         onChange={(e) => handleStatusChange(c.id, e.target.value as CobrancaStatus)}
@@ -154,28 +177,13 @@ export default function AdminFinanceiroPage() {
                       </select>
                       <Link 
                         href={`/admin/financeiro/editar/${c.id}`}
-                        style={{ 
-                          padding: "6px 12px", 
-                          background: "#F1F5F9", 
-                          borderRadius: 8, 
-                          color: "#475569", 
-                          fontSize: 12, 
-                          fontWeight: 700,
-                          textDecoration: "none"
-                        }}
+                        style={{ padding: "6px 12px", background: "#F1F5F9", borderRadius: 8, color: "#475569", fontSize: 12, fontWeight: 700, textDecoration: "none" }}
                       >
-                        Editar
+                        ✏️
                       </Link>
                       <button 
                         onClick={() => handleDelete(c.id)}
-                        style={{ 
-                          padding: "6px", 
-                          background: "#FEE2E2", 
-                          borderRadius: 8, 
-                          color: "#EF4444", 
-                          border: "none",
-                          cursor: "pointer"
-                        }}
+                        style={{ padding: "6px", background: "#FEE2E2", borderRadius: 8, color: "#EF4444", border: "none", cursor: "pointer" }}
                       >
                         🗑️
                       </button>
@@ -187,6 +195,36 @@ export default function AdminFinanceiroPage() {
           </tbody>
         </table>
       </div>
+
+      {/* Modal for image viewing */}
+      {selectedImage && (
+        <div 
+          onClick={() => setSelectedImage(null)}
+          style={{ 
+            position: "fixed", 
+            top: 0, left: 0, right: 0, bottom: 0, 
+            background: "rgba(0,0,0,0.9)", 
+            display: "flex", 
+            alignItems: "center", 
+            justifyContent: "center", 
+            zIndex: 1000,
+            padding: 20
+          }}
+        >
+          <img 
+            src={selectedImage} 
+            alt="Comprovante" 
+            style={{ maxWidth: "100%", maxHeight: "100%", borderRadius: 8, boxShadow: "0 0 20px rgba(0,0,0,0.5)" }} 
+            onClick={(e) => e.stopPropagation()}
+          />
+          <button 
+            style={{ position: "absolute", top: 20, right: 20, background: "white", border: "none", borderRadius: "50%", width: 40, height: 40, fontWeight: "bold", cursor: "pointer" }}
+            onClick={() => setSelectedImage(null)}
+          >
+            ✕
+          </button>
+        </div>
+      )}
     </div>
   );
 }

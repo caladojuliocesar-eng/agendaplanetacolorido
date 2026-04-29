@@ -193,6 +193,8 @@ export interface Cobranca {
   status: CobrancaStatus;
   linkBoleto?: string;      // Link para Nubank/Banco
   urlDemonstrativo?: string; // URL da imagem do demonstrativo (Storage)
+  urlComprovante?: string;   // URL da imagem do comprovante enviado pelo pai
+  dataPagamento?: string;    // Data em que o pagamento foi confirmado
   visualizado: boolean;
   dataVisualizacao?: string;
   criadoEm: string;

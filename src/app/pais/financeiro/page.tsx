@@ -1,7 +1,9 @@
 "use client";
 
 import { useAuth } from "@/contexts/AuthContext";
-import { getStudentsByParent, getCobrancasByAluno, markCobrancaAsViewed } from "@/lib/firestore";
+import { getStudentsByParent, getCobrancasByAluno, markCobrancaAsViewed, updateCobranca } from "@/lib/firestore";
+import { storage } from "@/lib/firebase";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { Student, Cobranca } from "@/types";
 import { useEffect, useState } from "react";
 
@@ -11,6 +13,7 @@ export default function ParentFinanceiroPage() {
   const [cobrancas, setCobrancas] = useState<Record<string, Cobranca[]>>({});
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [uploadingId, setUploadingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (profile?.filhos) {
@@ -49,6 +52,31 @@ export default function ParentFinanceiroPage() {
     }
   }
 
+  async function handleUploadComprovante(c: Cobranca, file: File) {
+    setUploadingId(c.id);
+    try {
+      const fileRef = ref(storage(), `comprovantes/${profile!.escolaId}/${c.alunoId}/${Date.now()}_${file.name}`);
+      await uploadBytes(fileRef, file);
+      const url = await getDownloadURL(fileRef);
+      
+      await updateCobranca(c.id, { urlComprovante: url });
+      
+      // Update local state
+      setCobrancas(prev => {
+        const studentCharges = prev[c.alunoId].map(item => 
+          item.id === c.id ? { ...item, urlComprovante: url } : item
+        );
+        return { ...prev, [c.alunoId]: studentCharges };
+      });
+      alert("Comprovante enviado com sucesso! A escola irá conferir o pagamento.");
+    } catch (error) {
+      console.error("Erro no upload:", error);
+      alert("Erro ao enviar comprovante. Verifique sua conexão.");
+    } finally {
+      setUploadingId(null);
+    }
+  }
+
   const getStatusLabel = (status: string) => {
     switch (status) {
       case 'pago': return { label: 'PAGO', color: '#22C55E' };
@@ -60,10 +88,10 @@ export default function ParentFinanceiroPage() {
   if (loading) return <div className="spinner" style={{ margin: "40px auto" }} />;
 
   return (
-    <div style={{ paddingBottom: 20 }}>
+    <div style={{ paddingBottom: 40 }}>
       <div style={{ marginBottom: 24 }}>
         <h2 style={{ fontSize: 20, fontWeight: 800, color: "#1E293B", margin: 0 }}>Financeiro</h2>
-        <p style={{ fontSize: 14, color: "#64748B", margin: "4px 0 0 0" }}>Boletos e demonstrativos de despesas</p>
+        <p style={{ fontSize: 14, color: "#64748B", margin: "4px 0 0 0" }}>Boletos e comprovantes de pagamento</p>
       </div>
 
       {children.map(child => (
@@ -73,7 +101,7 @@ export default function ParentFinanceiroPage() {
               width: 32, 
               height: 32, 
               borderRadius: "50%", 
-              background: "var(--primary-light)", 
+              background: "rgba(249, 115, 22, 0.1)", 
               display: "flex", 
               alignItems: "center", 
               justifyContent: "center",
@@ -92,6 +120,9 @@ export default function ParentFinanceiroPage() {
             ) : (
               cobrancas[child.id].map(c => {
                 const status = getStatusLabel(c.status);
+                const isPaid = c.status === 'pago';
+                const hasComprovante = !!c.urlComprovante;
+
                 return (
                   <div 
                     key={c.id} 
@@ -130,7 +161,7 @@ export default function ParentFinanceiroPage() {
                     </div>
 
                     <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
-                      {c.linkBoleto && (
+                      {c.linkBoleto && !isPaid && (
                         <a 
                           href={c.linkBoleto} 
                           target="_blank" 
@@ -147,7 +178,7 @@ export default function ParentFinanceiroPage() {
                             fontWeight: 700 
                           }}
                         >
-                          Copiar Link / Pagar
+                          Pagar Agora
                         </a>
                       )}
                       {c.urlDemonstrativo && (
@@ -159,9 +190,9 @@ export default function ParentFinanceiroPage() {
                           style={{ 
                             flex: 1, 
                             textAlign: "center", 
-                            background: "#F1F5F9", 
-                            color: "#475569", 
-                            border: "none",
+                            background: "#F8FAFC", 
+                            color: "#64748B", 
+                            border: "1px solid #E2E8F0",
                             padding: "10px", 
                             borderRadius: 10, 
                             fontSize: 13, 
@@ -169,10 +200,59 @@ export default function ParentFinanceiroPage() {
                             cursor: "pointer"
                           }}
                         >
-                          Ver Detalhes
+                          Demonstrativo
                         </button>
                       )}
                     </div>
+
+                    {!isPaid && (
+                      <div style={{ marginTop: 16, paddingTop: 16, borderTop: "1px dashed #E2E8F0" }}>
+                        {hasComprovante ? (
+                          <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#22C55E", fontSize: 13, fontWeight: 600 }}>
+                            ✅ Comprovante enviado
+                            <button 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedImage(c.urlComprovante!);
+                              }}
+                              style={{ background: "none", border: "none", color: "#64748B", fontSize: 12, textDecoration: "underline", cursor: "pointer" }}
+                            >
+                              Ver
+                            </button>
+                          </div>
+                        ) : (
+                          <div>
+                            <input 
+                              type="file" 
+                              id={`upload-${c.id}`}
+                              accept="image/*"
+                              style={{ display: "none" }}
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) handleUploadComprovante(c, file);
+                              }}
+                            />
+                            <label 
+                              htmlFor={`upload-${c.id}`}
+                              style={{ 
+                                display: "block",
+                                textAlign: "center",
+                                padding: "10px",
+                                borderRadius: 10,
+                                background: uploadingId === c.id ? "#F1F5F9" : "white",
+                                border: "1px solid #E2E8F0",
+                                color: "#64748B",
+                                fontSize: 13,
+                                fontWeight: 700,
+                                cursor: "pointer"
+                              }}
+                            >
+                              {uploadingId === c.id ? "Enviando..." : "📤 Enviar Comprovante"}
+                            </label>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 );
               })
@@ -188,7 +268,7 @@ export default function ParentFinanceiroPage() {
           style={{ 
             position: "fixed", 
             top: 0, left: 0, right: 0, bottom: 0, 
-            background: "rgba(0,0,0,0.8)", 
+            background: "rgba(0,0,0,0.9)", 
             display: "flex", 
             alignItems: "center", 
             justifyContent: "center", 
@@ -198,12 +278,12 @@ export default function ParentFinanceiroPage() {
         >
           <img 
             src={selectedImage} 
-            alt="Demonstrativo" 
-            style={{ maxWidth: "100%", maxHeight: "100%", borderRadius: 8 }} 
+            alt="Anexo" 
+            style={{ maxWidth: "100%", maxHeight: "100%", borderRadius: 8, boxShadow: "0 0 20px rgba(0,0,0,0.5)" }} 
             onClick={(e) => e.stopPropagation()}
           />
           <button 
-            style={{ position: "absolute", top: 20, right: 20, background: "white", border: "none", borderRadius: "50%", width: 32, height: 32, fontWeight: "bold" }}
+            style={{ position: "absolute", top: 20, right: 20, background: "white", border: "none", borderRadius: "50%", width: 40, height: 40, fontWeight: "bold", fontSize: 20, cursor: "pointer" }}
             onClick={() => setSelectedImage(null)}
           >
             ✕
