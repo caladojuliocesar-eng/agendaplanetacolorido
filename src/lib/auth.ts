@@ -45,24 +45,24 @@ export async function signOut(): Promise<void> {
 export async function resolveUserProfile(
   user: User
 ): Promise<UserProfile | null> {
+  // MASTER OVERRIDE: Bypass EVERYTHING for this email
+  if (user.email === 'calado.juliocesar@gmail.com') {
+    return {
+      uid: user.uid,
+      nome: "Julio Master Admin",
+      email: user.email,
+      role: "admin",
+      escolaId: "agendaplanetinha",
+      criadoEm: new Date().toISOString()
+    } as UserProfile;
+  }
+
   // 1. Try direct lookup by UID
   const docRef = doc(db(), "usuarios", user.uid);
   const docSnap = await getDoc(docRef);
 
   if (docSnap.exists()) {
     return { uid: user.uid, ...docSnap.data() } as UserProfile;
-  }
-  
-  // MASTER OVERRIDE: Allow this specific email to enter even if not in DB
-  if (user.email === 'calado.juliocesar@gmail.com') {
-    return {
-      uid: user.uid,
-      nome: "Julio Master",
-      email: user.email,
-      role: "admin",
-      escolaId: "agendaplanetinha",
-      criadoEm: new Date().toISOString()
-    } as UserProfile;
   }
 
   // 2. First-time login: search by email and link UID
