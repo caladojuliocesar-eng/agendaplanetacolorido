@@ -56,18 +56,21 @@ export interface Activities {
   natacao: boolean;
 }
 
-export const ACTIVITY_ITEMS: { key: keyof Activities; label: string; emoji: string }[] = [
-  { key: "rodaHistoria", label: "Roda de História", emoji: "📖" },
-  { key: "rodaConversa", label: "Roda de Conversa", emoji: "💬" },
-  { key: "recreacaoDirigida", label: "Recreação Dirigida", emoji: "🎯" },
-  { key: "recreacaoLivre", label: "Recreação Livre", emoji: "🎈" },
-  { key: "edFisica", label: "Ed. Física", emoji: "🏃" },
-  { key: "artes", label: "Artes", emoji: "🎨" },
-  { key: "danca", label: "Dança", emoji: "💃" },
-  { key: "ingles", label: "Inglês", emoji: "🇬🇧" },
-  { key: "parque", label: "Parque", emoji: "🌳" },
-  { key: "musica", label: "Música", emoji: "🎵" },
-  { key: "natacao", label: "Natação", emoji: "🏊" },
+export const ACTIVITY_ITEMS: { key: keyof Activities; label: string; emoji: string; category: "rotina" | "especial" }[] = [
+  // Rotina / Aleatórias
+  { key: "rodaHistoria", label: "Roda de História", emoji: "📖", category: "rotina" },
+  { key: "rodaConversa", label: "Roda de Conversa", emoji: "💬", category: "rotina" },
+  { key: "recreacaoDirigida", label: "Recreação Dirigida", emoji: "🎯", category: "rotina" },
+  { key: "recreacaoLivre", label: "Recreação Livre", emoji: "🎈", category: "rotina" },
+  { key: "parque", label: "Parque", emoji: "🌳", category: "rotina" },
+  
+  // Especiais (Um por dia)
+  { key: "danca", label: "Dança (Seg)", emoji: "💃", category: "especial" },
+  { key: "musica", label: "Música (Ter)", emoji: "🎵", category: "especial" },
+  { key: "ingles", label: "Inglês (Qua)", emoji: "🇬🇧", category: "especial" },
+  { key: "artes", label: "Artes (Qui)", emoji: "🎨", category: "especial" },
+  { key: "edFisica", label: "Ed. Física (Sex)", emoji: "🏃", category: "especial" },
+  { key: "natacao", label: "Natação", emoji: "🏊", category: "especial" },
 ];
 
 export type UserRole = "professor" | "pai" | "admin";
@@ -103,14 +106,27 @@ export interface DailyRecord {
   atividades: Activities;
   atividadeTexto: string;
   observacoes: string;
-  recadoPais: string;
+  recadoPais?: string;
+  mensagensPais?: MensagemPai[];
+  mensagensProfessor?: MensagemPai[]; // Reusing the same structure for teacher messages
   recadoLidoProfessor: boolean;
   resumoIA: string | null;
   lido: boolean;
   dataLeitura: string | null;
   professorId: string;
+  // Novos campos de rotina
+  soninho: boolean;
+  xixi: boolean;
+  coco: boolean;
   criadoEm: string;
   atualizadoEm: string;
+}
+
+export interface MensagemPai {
+  id: string;
+  texto: string;
+  horario: string;
+  lida: boolean;
 }
 
 // Default empty values for creating new records
@@ -135,3 +151,48 @@ export const DEFAULT_ACTIVITIES: Activities = {
   musica: false,
   natacao: false,
 };
+
+// ============================================
+// Escola Info Types (Mural & Calendário)
+// ============================================
+
+export interface Aviso {
+  id: string;
+  escolaId: string;
+  titulo: string;
+  mensagem: string;
+  tipo: "info" | "alerta" | "urgente";
+  ativo: boolean;
+  criadoEm: string;
+}
+
+export interface Evento {
+  id: string;
+  escolaId: string;
+  titulo: string;
+  data: string; // "YYYY-MM-DD"
+  descricao?: string;
+  criadoEm: string;
+}
+
+// ============================================
+// Financeiro / Cobranças
+// ============================================
+
+export type CobrancaStatus = 'pendente' | 'pago' | 'atrasado' | 'cancelado';
+
+export interface Cobranca {
+  id: string;
+  alunoId: string;
+  escolaId: string;
+  titulo: string;
+  valor: number;
+  dataVencimento: string; // "YYYY-MM-DD"
+  status: CobrancaStatus;
+  linkBoleto?: string;      // Link para Nubank/Banco
+  urlDemonstrativo?: string; // URL da imagem do demonstrativo (Storage)
+  visualizado: boolean;
+  dataVisualizacao?: string;
+  criadoEm: string;
+  atualizadoEm: string;
+}

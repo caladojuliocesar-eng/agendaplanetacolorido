@@ -33,7 +33,34 @@ export default function ParentAgenda() {
   const [recadoSent, setRecadoSent] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  const today = getTodayDateString();
+  const [today, setToday] = useState(getTodayDateString());
+
+  // Refresh today's date when app becomes visible or at intervals
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        const currentToday = getTodayDateString();
+        if (currentToday !== today) {
+          setToday(currentToday);
+        }
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    
+    // Also check every minute just in case
+    const interval = setInterval(() => {
+      const currentToday = getTodayDateString();
+      if (currentToday !== today) {
+        setToday(currentToday);
+      }
+    }, 60000);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      clearInterval(interval);
+    };
+  }, [today]);
 
   // Load students
   useEffect(() => {
@@ -64,12 +91,7 @@ export default function ParentAgenda() {
         markAsReadByParent(record.id);
       }
 
-      // Pre-fill existing recado
-      if (record?.recadoPais) {
-        setRecado(record.recadoPais);
-      } else {
-        setRecado("");
-      }
+      setRecado("");
       setRecadoSent(false);
     }
     loadRecord();
@@ -83,13 +105,26 @@ export default function ParentAgenda() {
   };
 
   const handleSendRecado = async () => {
-    if (!todayRecord || !recado.trim() || sendingRecado) return;
+    if (!selectedStudent || !recado.trim() || sendingRecado) return;
+
+    // Check if there is an unread message
+    const hasUnread = todayRecord && !todayRecord.recadoLidoProfessor && todayRecord.mensagensPais && todayRecord.mensagensPais.length > 0;
+    
+    if (hasUnread) {
+      const confirm = window.confirm(
+        "A professora ainda não leu seu recado anterior.\n\nPara evitar sobrecarga na sala, envie novas mensagens apenas se for uma informação essencial.\n\nDeseja enviar mesmo assim?"
+      );
+      if (!confirm) return;
+    }
+
     setSendingRecado(true);
     try {
-      await saveParentMessage(todayRecord.id, recado.trim());
+      const recordId = todayRecord?.id || `${selectedStudent.id}_${today}`;
+      await saveParentMessage(recordId, recado.trim());
       setRecadoSent(true);
     } catch (err) {
       console.error("Error sending message:", err);
+      alert("Erro ao enviar recado. Tente novamente.");
     }
     setSendingRecado(false);
   };
@@ -174,14 +209,15 @@ export default function ParentAgenda() {
         </p>
       </div>
 
+
       {!todayRecord ? (
         <div className="card" style={{ padding: 32, textAlign: "center" }}>
           <p style={{ fontSize: 48, margin: "0 0 12px" }}>📝</p>
           <h3 style={{ margin: "0 0 8px", fontSize: 18 }}>
-            Agenda ainda não preenchida
+            Relatório do Dia
           </h3>
           <p style={{ color: "var(--text-secondary)", fontSize: 14 }}>
-            A professora ainda não preencheu a agenda de hoje. Volte mais tarde!
+            A professora ainda não preencheu o relatório de atividades de hoje.
           </p>
         </div>
       ) : (
@@ -238,6 +274,37 @@ export default function ParentAgenda() {
             </div>
           </div>
 
+          {/* Novos campos de rotina para os pais */}
+          <div className="card" style={{ 
+            display: "grid", 
+            gridTemplateColumns: "1fr 1fr 1fr", 
+            gap: 8, 
+            marginBottom: 16,
+            padding: "16px 12px",
+          }}>
+            <div style={{ textAlign: "center" }}>
+              <span style={{ fontSize: 22, display: "block", marginBottom: 4 }}>😴</span>
+              <span style={{ fontSize: 10, color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 700 }}>Soninho</span>
+              <span style={{ fontSize: 12, display: "block", fontWeight: 700, color: todayRecord.soninho ? "var(--success)" : "var(--text-muted)" }}>
+                {todayRecord.soninho ? "Dormiu" : "Não dormiu"}
+              </span>
+            </div>
+            <div style={{ textAlign: "center" }}>
+              <span style={{ fontSize: 22, display: "block", marginBottom: 4 }}>💧</span>
+              <span style={{ fontSize: 10, color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 700 }}>Xixi</span>
+              <span style={{ fontSize: 12, display: "block", fontWeight: 700, color: todayRecord.xixi ? "var(--success)" : "var(--text-muted)" }}>
+                {todayRecord.xixi ? "Fez Xixi" : "Não fez"}
+              </span>
+            </div>
+            <div style={{ textAlign: "center" }}>
+              <span style={{ fontSize: 22, display: "block", marginBottom: 4 }}>💩</span>
+              <span style={{ fontSize: 10, color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 700 }}>Cocô</span>
+              <span style={{ fontSize: 12, display: "block", fontWeight: 700, color: todayRecord.coco ? "var(--success)" : "var(--text-muted)" }}>
+                {todayRecord.coco ? "Fez Cocô" : "Não fez"}
+              </span>
+            </div>
+          </div>
+
           {/* Activities Card */}
           <div className="card" style={{ padding: 20, marginBottom: 16 }}>
             <p className="section-title">🎯 O que eu fiz</p>
@@ -291,64 +358,78 @@ export default function ParentAgenda() {
               </p>
             </div>
           )}
-
-          {/* Parent message */}
-          <div className="card" style={{ padding: 20, marginBottom: 16 }}>
-            <p className="section-title">💬 Recado para a Escola</p>
-            <textarea
-              className="text-input"
-              rows={2}
-              placeholder="Escreva um recado para a professora..."
-              value={recado}
-              onChange={(e) => {
-                setRecado(e.target.value);
-                setRecadoSent(false);
-              }}
-            />
-            <button
-              className={`btn btn--block ${
-                recadoSent ? "btn--secondary" : "btn--primary"
-              }`}
-              style={{
-                marginTop: 10,
-                fontSize: 14,
-                ...(recadoSent
-                  ? {
-                      background: "var(--success-light)",
-                      color: "var(--success)",
-                    }
-                  : {}),
-              }}
-              onClick={handleSendRecado}
-              disabled={sendingRecado || !recado.trim()}
-            >
-              {sendingRecado
-                ? "Enviando..."
-                : recadoSent
-                ? "✓ Recado Enviado!"
-                : "Enviar Recado"}
-            </button>
-          </div>
-
-          {/* Read indicator */}
-          <div
-            style={{
-              textAlign: "center",
-              fontSize: 12,
-              color: "var(--text-muted)",
-              marginBottom: 16,
-            }}
-          >
-            <span className="read-indicator">
-              👁️ Agenda visualizada em{" "}
-              {new Date().toLocaleTimeString("pt-BR", {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
-            </span>
-          </div>
         </>
       )}
+
+      {/* Parent message (Always available at the bottom of today's section) */}
+      <div className="card" style={{ padding: 20, marginBottom: 16 }}>
+        <p className="section-title">💬 Recado para a Escola</p>
+        
+        {/* Show messages already sent today */}
+        {((todayRecord?.mensagensPais && todayRecord.mensagensPais.length > 0) || (todayRecord?.mensagensProfessor && todayRecord.mensagensProfessor.length > 0)) && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 20 }}>
+            {(() => {
+              const combined = [
+                ...(todayRecord?.mensagensPais || []).map(m => ({ ...m, role: 'pai' })),
+                ...(todayRecord?.mensagensProfessor || []).map(m => ({ ...m, role: 'professor' }))
+              ].sort((a, b) => a.horario.localeCompare(b.horario));
+
+              return combined.map((msg, idx) => (
+                <div 
+                  key={msg.id || idx} 
+                  style={{ 
+                    background: msg.role === 'pai' ? 'var(--bg-app)' : 'var(--primary-light)', 
+                    padding: 12, 
+                    borderRadius: 8, 
+                    border: `1px solid ${msg.role === 'pai' ? 'var(--border)' : 'var(--primary)'}`,
+                    marginLeft: msg.role === 'pai' ? 0 : 20 
+                  }}
+                >
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: msg.role === 'pai' ? 'var(--text-muted)' : 'var(--primary-dark)' }}>
+                      {msg.role === 'pai' ? 'Você' : 'Escola'} • {msg.horario}
+                    </span>
+                    {msg.role === 'pai' && (
+                      <span style={{ fontSize: 10, fontWeight: 700, color: msg.lida ? "var(--success)" : "var(--warning)" }}>
+                        {msg.lida ? "✓ LIDO" : "PENDENTE"}
+                      </span>
+                    )}
+                  </div>
+                  <p style={{ margin: 0, fontSize: 14, color: "var(--text-primary)" }}>{msg.texto}</p>
+                </div>
+              ));
+            })()}
+          </div>
+        )}
+
+        <textarea
+          className="text-input"
+          rows={2}
+          placeholder="Escreva um recado para a professora..."
+          value={recado}
+          onChange={(e) => {
+            setRecado(e.target.value);
+            setRecadoSent(false);
+          }}
+        />
+        <button
+          className="btn btn--primary btn--block"
+          style={{
+            marginTop: 10,
+            fontSize: 14,
+          }}
+          onClick={async () => {
+            await handleSendRecado();
+            setRecado(""); // Clear input after send
+            // Refresh local state to show the new message
+            const updated = await getDailyRecord(selectedStudent!.id, today);
+            setTodayRecord(updated);
+          }}
+          disabled={sendingRecado || !recado.trim()}
+        >
+          {sendingRecado ? "Enviando..." : "Enviar Recado"}
+        </button>
+      </div>
 
       {/* History toggle */}
       <div style={{ textAlign: "center", marginBottom: 24 }}>

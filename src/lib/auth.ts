@@ -14,6 +14,7 @@ import {
   query,
   where,
   setDoc,
+  deleteDoc,
 } from "firebase/firestore";
 import { auth, db } from "./firebase";
 import { UserProfile } from "@/types";
@@ -79,6 +80,11 @@ export async function resolveUserProfile(
 
     // Save with the correct UID as document ID
     await setDoc(doc(db(), "usuarios", user.uid), newProfile);
+
+    // Delete the old template document to avoid duplicates
+    if (existingDoc.id !== user.uid) {
+      await deleteDoc(doc(db(), "usuarios", existingDoc.id));
+    }
 
     return newProfile as UserProfile;
   }

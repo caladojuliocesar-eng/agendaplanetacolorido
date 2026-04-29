@@ -1,233 +1,220 @@
 "use client";
 
-import { useState } from "react";
-import { signInWithGoogle, signInWithEmail } from "@/lib/auth";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import {
+  signInWithGoogle,
+  signInWithEmail,
+  resolveUserProfile,
+} from "@/lib/auth";
+import { useAuth } from "@/contexts/AuthContext";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { auth } from "@/lib/firebase";
 
 export default function LoginPage() {
-  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [isRegistering, setIsRegistering] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [mode, setMode] = useState<"select" | "email">("select");
+  const [error, setError] = useState<string | null>(null);
+  const [showEmailForm, setShowEmailForm] = useState(false);
+
+  const router = useRouter();
+  const { user } = useAuth();
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("error") === "no_profile") {
+      setError("Seu email não foi encontrado no sistema da escola. Verifique se o cadastro está correto.");
+    }
+  }, []);
+
+  // If already logged in, go to home
+  if (user) {
+    router.push("/");
+    return null;
+  }
 
   const handleGoogleLogin = async () => {
     setLoading(true);
-    setError("");
+    setError(null);
     try {
       const profile = await signInWithGoogle();
-      if (profile) {
-        router.replace("/");
+      if (!profile) {
+        setError("Email não pré-cadastrado. Entre em contato com a escola.");
       } else {
-        setError(
-          "Seu email não está cadastrado. Procure a secretaria da escola."
-        );
+        router.push("/");
       }
     } catch (err: any) {
-      setError("Erro ao fazer login. Tente novamente.");
+      setError("Erro ao entrar com Google. Verifique se o domínio está autorizado.");
       console.error(err);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
-  const handleEmailLogin = async (e: React.FormEvent) => {
+  const handleEmailAction = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError("");
+    setError(null);
+
     try {
-      const profile = await signInWithEmail(email, password);
-      if (profile) {
-        router.replace("/");
+      if (isRegistering) {
+        // 1. Create account (Firebase will error if exists)
+        const userCredential = await createUserWithEmailAndPassword(auth(), email, password);
+        // 2. Resolve profile (this links UID if email matches a pre-registered one)
+        const profile = await resolveUserProfile(userCredential.user);
+        
+        if (!profile) {
+          setError("Sua conta foi criada, mas seu email não está na lista de alunos/professores da escola.");
+        } else {
+          router.push("/");
+        }
       } else {
-        setError(
-          "Seu email não está cadastrado. Procure a secretaria da escola."
-        );
+        // Login
+        const profile = await signInWithEmail(email, password);
+        if (!profile) {
+          setError("Usuário não encontrado ou senha incorreta.");
+        } else {
+          router.push("/");
+        }
       }
     } catch (err: any) {
-      if (err.code === "auth/invalid-credential") {
-        setError("Email ou senha incorretos.");
-      } else if (err.code === "auth/user-not-found") {
-        setError("Nenhuma conta encontrada com este email.");
+      if (err.code === "auth/email-already-in-use") {
+        // Se a pessoa tentar criar conta mas já existir, tentamos fazer o login automaticamente
+        try {
+          const profile = await signInWithEmail(email, password);
+          if (!profile) {
+            setError("O usuário existe, mas a senha que você digitou está incorreta.");
+          } else {
+            router.push("/");
+          }
+        } catch (loginErr: any) {
+          setError("O e-mail já existe, mas a senha está incorreta. Verifique sua senha.");
+        }
+      } else if (err.code === "auth/weak-password") {
+        setError("A senha deve ter pelo menos 6 caracteres.");
+      } else if (err.code === "auth/invalid-credential" || err.code === "auth/wrong-password") {
+        setError("Senha incorreta. Verifique se digitou certinho.");
       } else {
-        setError("Erro ao fazer login. Tente novamente.");
+        setError("Erro ao processar. Verifique seus dados.");
       }
       console.error(err);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        minHeight: "100dvh",
-        padding: "32px 24px",
-        gap: "32px",
-      }}
-    >
-      {/* Logo Area */}
-      <div style={{ textAlign: "center" }}>
-        <div
-          style={{
-            width: 80,
-            height: 80,
-            borderRadius: "var(--radius-xl)",
-            background: "linear-gradient(135deg, var(--primary), var(--primary-dark))",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            margin: "0 auto 16px",
-            fontSize: 36,
-            boxShadow: "var(--shadow-lg)",
-          }}
-        >
-          📓
-        </div>
-        <h1
-          style={{
-            fontSize: 28,
-            margin: "0 0 4px",
-            background: "linear-gradient(135deg, var(--primary), var(--primary-dark))",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-          }}
-        >
-          Agenda Ottomatic
-        </h1>
-        <p style={{ color: "var(--text-muted)", fontSize: 14, margin: 0 }}>
-          Escola Planeta Colorido
-        </p>
-      </div>
-
-      {/* Login Card */}
-      <div
-        className="card"
-        style={{ width: "100%", maxWidth: 400, padding: "32px 24px" }}
-      >
-        {mode === "select" ? (
-          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            <button
-              className="btn btn--google btn--block btn--lg"
-              onClick={handleGoogleLogin}
-              disabled={loading}
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24">
-                <path
-                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"
-                  fill="#4285F4"
-                />
-                <path
-                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                  fill="#34A853"
-                />
-                <path
-                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                  fill="#FBBC05"
-                />
-                <path
-                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                  fill="#EA4335"
-                />
-              </svg>
-              {loading ? "Entrando..." : "Entrar com Google"}
-            </button>
-
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 12,
-                color: "var(--text-muted)",
-                fontSize: 13,
+    <div className="min-h-screen flex items-center justify-center bg-[#FFF7ED] p-4">
+      <div className="max-w-md w-full bg-white rounded-3xl shadow-xl p-8 border border-[#FED7AA]">
+        <div className="text-center mb-8">
+          <div className="flex items-center justify-center mb-6">
+            <img 
+              src="https://agenda-ottomatic.vercel.app/images/logo.png" 
+              className="h-20 w-auto object-contain" 
+              alt="Logo Planeta Colorido" 
+              onError={(e) => {
+                // Fallback if image not yet deployed
+                e.currentTarget.style.display = 'none';
+                e.currentTarget.parentElement!.innerHTML = '<span class="text-4xl">📓</span>';
+                e.currentTarget.parentElement!.className = 'w-20 h-20 bg-[#F97316] rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg';
               }}
-            >
-              <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
-              <span>ou</span>
-              <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
-            </div>
-
-            <button
-              className="btn btn--secondary btn--block"
-              onClick={() => setMode("email")}
-            >
-              Entrar com Email
-            </button>
+            />
           </div>
-        ) : (
-          <form
-            onSubmit={handleEmailLogin}
-            style={{ display: "flex", flexDirection: "column", gap: 16 }}
-          >
-            <button
-              type="button"
-              onClick={() => setMode("select")}
-              style={{
-                background: "none",
-                border: "none",
-                color: "var(--text-muted)",
-                cursor: "pointer",
-                fontSize: 14,
-                alignSelf: "flex-start",
-                padding: 0,
-              }}
-            >
-              ← Voltar
-            </button>
-
-            <input
-              type="email"
-              className="text-input"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              autoComplete="email"
-            />
-
-            <input
-              type="password"
-              className="text-input"
-              placeholder="Senha"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              autoComplete="current-password"
-            />
-
-            <button
-              type="submit"
-              className="btn btn--primary btn--block btn--lg"
-              disabled={loading}
-            >
-              {loading ? "Entrando..." : "Entrar"}
-            </button>
-          </form>
-        )}
+          <h1 className="text-3xl font-bold text-[#431407]">Agenda Planeta Colorido</h1>
+          <p className="text-[#9A3412]">Tudo o que acontece no dia do seu filho</p>
+        </div>
 
         {error && (
-          <div
-            style={{
-              marginTop: 16,
-              padding: "12px 16px",
-              borderRadius: "var(--radius-sm)",
-              background: "var(--danger-light)",
-              color: "var(--danger)",
-              fontSize: 14,
-              textAlign: "center",
-            }}
-          >
+          <div className="bg-red-50 text-red-600 p-4 rounded-xl mb-6 text-sm border border-red-100 animate-shake">
             {error}
           </div>
         )}
-      </div>
 
-      <p style={{ color: "var(--text-muted)", fontSize: 12, textAlign: "center" }}>
-        Acesso restrito a professores e responsáveis cadastrados.
-      </p>
+        {!showEmailForm ? (
+          <div className="space-y-4">
+            <button
+              onClick={handleGoogleLogin}
+              disabled={loading}
+              className="w-full flex items-center justify-center gap-3 bg-white border-2 border-[#FED7AA] text-[#431407] font-semibold py-4 px-6 rounded-2xl hover:bg-[#FFF7ED] transition-all disabled:opacity-50 shadow-sm"
+            >
+              <img src="https://www.google.com/favicon.ico" className="w-5 h-5" alt="Google" />
+              {loading ? "Entrando..." : "Entrar com Google"}
+            </button>
+
+            <div className="relative py-4">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-[#FED7AA]"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white text-[#D97706]">ou</span>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setShowEmailForm(true)}
+              className="w-full bg-[#FFF7ED] text-[#F97316] font-semibold py-4 px-6 rounded-2xl hover:bg-[#FED7AA] transition-all border border-[#FED7AA]"
+            >
+              Entrar com Email (Hotmail, etc)
+            </button>
+          </div>
+        ) : (
+          <form onSubmit={handleEmailAction} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-[#431407] mb-1">Email</label>
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full p-4 rounded-2xl border-2 border-[#FED7AA] focus:border-[#F97316] focus:outline-none bg-[#FFF7ED]/30"
+                placeholder="seu@email.com"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[#431407] mb-1">Senha</label>
+              <input
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full p-4 rounded-2xl border-2 border-[#FED7AA] focus:border-[#F97316] focus:outline-none bg-[#FFF7ED]/30"
+                placeholder="••••••"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-[#F97316] text-white font-bold py-4 px-6 rounded-2xl hover:bg-[#EA580C] transition-all shadow-lg shadow-orange-200 disabled:opacity-50"
+            >
+              {loading ? "Aguarde..." : isRegistering ? "Cadastrar Senha" : "Entrar"}
+            </button>
+
+            <div className="flex flex-col gap-2 mt-4">
+              <button
+                type="button"
+                onClick={() => setIsRegistering(!isRegistering)}
+                className="text-sm text-[#F97316] hover:underline"
+              >
+                {isRegistering ? "Já tenho senha, quero entrar" : "Primeiro acesso? Cadastre sua senha"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowEmailForm(false)}
+                className="text-sm text-[#9A3412] hover:underline"
+              >
+                Voltar
+              </button>
+            </div>
+          </form>
+        )}
+
+        <p className="mt-8 text-center text-xs text-[#D97706]">
+          Acesso restrito a professores e responsáveis cadastrados.
+        </p>
+      </div>
     </div>
   );
 }

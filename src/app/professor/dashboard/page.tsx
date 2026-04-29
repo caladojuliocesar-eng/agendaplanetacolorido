@@ -7,6 +7,8 @@ import {
   getStudentsByTurma,
   getTurmaRecords,
   getTodayDateString,
+  getPendingParentMessages,
+  markParentMessageRead,
 } from "@/lib/firestore";
 import { Student, DailyRecord } from "@/types";
 
@@ -41,6 +43,7 @@ export default function TeacherDashboard() {
   const [loading, setLoading] = useState(true);
   const [selectedStudents, setSelectedStudents] = useState<Set<string>>(new Set());
   const [selectMode, setSelectMode] = useState(false);
+  const [pendingRecords, setPendingRecords] = useState<DailyRecord[]>([]);
 
   const today = getTodayDateString();
 
@@ -60,6 +63,10 @@ export default function TeacherDashboard() {
         const recordMap = new Map<string, DailyRecord>();
         recordList.forEach((r) => recordMap.set(r.alunoId, r));
         setRecords(recordMap);
+
+        // Load all pending messages (unread parent messages from any date)
+        const pending = await getPendingParentMessages(profile!.escolaId, profile!.turma!);
+        setPendingRecords(pending);
       } catch (err) {
         console.error("Error loading dashboard:", err);
       }
@@ -98,9 +105,31 @@ export default function TeacherDashboard() {
     router.push(`/professor/registro-turma?ids=${ids}`);
   };
 
+  const handleMarkAsRead = async (recordId: string) => {
+    try {
+      await markParentMessageRead(recordId);
+      // Update local state to remove the message
+      setPendingRecords(prev => prev.filter(r => r.id !== recordId));
+      
+      // Update the records map if it contains this record (to remove the icon on the avatar)
+      const updatedRecords = new Map(records);
+      for (const [alunoId, rec] of updatedRecords.entries()) {
+        if (rec.id === recordId) {
+          updatedRecords.set(alunoId, { ...rec, recadoLidoProfessor: true });
+        }
+      }
+      setRecords(updatedRecords);
+    } catch (err) {
+      console.error("Error marking message as read:", err);
+      alert("Erro ao marcar como lido.");
+    }
+  };
+
   // Count unread parent messages
   const unreadCount = Array.from(records.values()).filter(
-    (r) => r.recadoPais && !r.recadoLidoProfessor
+    (r) => 
+      (r.recadoPais && !r.recadoLidoProfessor) || 
+      (r.mensagensPais && r.mensagensPais.some(m => !m.lida))
   ).length;
 
   if (loading) {
@@ -165,6 +194,92 @@ export default function TeacherDashboard() {
         )}
       </div>
 
+      {/* Pending Messages Alert */}
+      {pendingRecords.length > 0 && (
+        <div
+          className="card"
+          style={{
+            padding: "16px 20px",
+            marginBottom: 20,
+            background: "var(--accent-light)",
+            borderLeft: "4px solid var(--accent)",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
+            <span style={{ fontSize: 24 }}>📩</span>
+            <div>
+              <p style={{ margin: 0, fontWeight: 700, color: "var(--accent-dark)", fontSize: 14 }}>
+                Recados pendentes dos pais
+              </p>
+              <p style={{ margin: 0, fontSize: 12, color: "var(--text-muted)" }}>
+                Você tem {pendingRecords.length} mensagem(ns) não lida(s).
+              </p>
+            </div>
+          </div>
+          
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {pendingRecords.map((rec) => {
+              const student = students.find(s => s.id === rec.alunoId);
+              // Handle both old string format and new array format
+              const messages = rec.mensagensPais || (rec.recadoPais ? [{ id: "legacy", texto: rec.recadoPais, horario: "", lida: false }] : []);
+              const unreadMessages = messages.filter(m => !m.lida);
+
+              if (unreadMessages.length === 0) return null;
+
+              return (
+                <div 
+                  key={rec.id} 
+                  style={{ 
+                    background: "white", 
+                    padding: "12px", 
+                    borderRadius: 8, 
+                    border: "1px solid var(--border)",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 8
+                  }}
+                >
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                    <span style={{ fontWeight: 700, fontSize: 13, color: "var(--text-primary)" }}>
+                      {student?.nome || "Aluno"}
+                    </span>
+                    <span style={{ fontSize: 11, color: "var(--text-muted)" }}>
+                      {rec.data === today ? "Hoje" : rec.data}
+                    </span>
+                  </div>
+                  
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                    {unreadMessages.map((msg, idx) => (
+                      <p key={msg.id || idx} style={{ margin: 0, fontSize: 13, color: "var(--text-secondary)", fontStyle: "italic", borderLeft: "2px solid var(--accent)", paddingLeft: 8 }}>
+                        {msg.horario && <span style={{ fontSize: 10, fontStyle: "normal", fontWeight: 700, opacity: 0.6, marginRight: 4 }}>[{msg.horario}]</span>}
+                        "{msg.texto}"
+                      </p>
+                    ))}
+                  </div>
+
+                  <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
+                    <button
+                      className="btn btn--secondary"
+                      style={{ fontSize: 11, padding: "4px 10px", flex: 1 }}
+                      onClick={() => handleMarkAsRead(rec.id)}
+                    >
+                      ✓ Marcar Tudo Lido
+                    </button>
+                    <button
+                      className="btn btn--outline"
+                      style={{ fontSize: 11, padding: "4px 10px", flex: 1 }}
+                      onClick={() => router.push(`/professor/registro/${rec.alunoId}`)}
+                    >
+                      Ir para Ficha
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Multi-select toggle */}
       <div
         style={{
@@ -212,11 +327,17 @@ export default function TeacherDashboard() {
       {students.length === 0 ? (
         <div
           className="card"
-          style={{ padding: 32, textAlign: "center" }}
+          style={{ padding: 32, textAlign: "center", border: "2px dashed var(--border)" }}
         >
-          <p style={{ fontSize: 48, margin: "0 0 12px" }}>🎒</p>
-          <p style={{ color: "var(--text-secondary)" }}>
-            Nenhum aluno cadastrado nesta turma.
+          <p style={{ fontSize: 48, margin: "0 0 12px" }}>🔍</p>
+          <h3 style={{ fontSize: 18, marginBottom: 8 }}>Nenhum aluno encontrado</h3>
+          <p style={{ color: "var(--text-secondary)", fontSize: 14 }}>
+            Não encontramos alunos cadastrados para:<br/>
+            <strong>Turma:</strong> {profile?.turma || "Não definida"}<br/>
+            <strong>Escola:</strong> {profile?.escolaId || "Não definida"}
+          </p>
+          <p style={{ marginTop: 16, fontSize: 12, color: "var(--text-muted)" }}>
+            Verifique se os nomes coincidem exatamente no Firestore (letras maiúsculas, espaços, etc).
           </p>
         </div>
       ) : (
@@ -231,7 +352,8 @@ export default function TeacherDashboard() {
             const record = records.get(student.id);
             const hasRecord = !!record;
             const hasUnreadMessage =
-              record?.recadoPais && !record?.recadoLidoProfessor;
+              (record?.recadoPais && !record?.recadoLidoProfessor) ||
+              (record?.mensagensPais && record?.mensagensPais.some(m => !m.lida));
 
             return (
               <div

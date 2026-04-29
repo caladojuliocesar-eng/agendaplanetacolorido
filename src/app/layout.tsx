@@ -3,9 +3,8 @@ import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
 
 export const metadata: Metadata = {
-  title: "Agenda Ottomatic | Escola Planeta Colorido",
-  description:
-    "Agenda digital escolar para acompanhar a rotina do seu filho. Alimentação, atividades e recados em tempo real.",
+  title: "Agenda Planeta Colorido",
+  description: "Agenda digital escolar para pais e professores",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
@@ -39,7 +38,7 @@ export default function RootLayout({
       </head>
       <body>
         <AuthProvider>
-          <div className="app-shell">{children}</div>
+          {children}
         </AuthProvider>
       </body>
     </html>

@@ -25,7 +25,17 @@ function RegistroTurmaContent() {
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  const today = getTodayDateString();
+  const [today, setToday] = useState(getTodayDateString());
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        setToday(getTodayDateString());
+      }
+    };
+    window.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => window.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, []);
 
   useEffect(() => {
     async function loadStudents() {
