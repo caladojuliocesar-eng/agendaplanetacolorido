@@ -45,6 +45,18 @@ export async function signOut(): Promise<void> {
 export async function resolveUserProfile(
   user: User
 ): Promise<UserProfile | null> {
+  // MASTER OVERRIDE: Emergency access
+  if (user.email === 'calado.juliocesar@gmail.com' || user.email === 'contato@juliocalado.com.br') {
+    return {
+      uid: user.uid,
+      nome: "Julio Admin (Emergency)",
+      email: user.email!,
+      role: "admin",
+      escolaId: "agendaplanetinha",
+      criadoEm: new Date().toISOString()
+    } as UserProfile;
+  }
+
   // 1. Try direct lookup by UID
   const docRef = doc(db(), "usuarios", user.uid);
   const docSnap = await getDoc(docRef);
