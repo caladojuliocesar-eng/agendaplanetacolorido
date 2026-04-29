@@ -45,14 +45,15 @@ export async function signOut(): Promise<void> {
 export async function resolveUserProfile(
   user: User
 ): Promise<UserProfile | null> {
-  // MASTER OVERRIDE: Emergency access
-  if (user.email === 'calado.juliocesar@gmail.com' || user.email === 'contato@juliocalado.com.br') {
+  // MASTER OVERRIDE: Emergency access for all your emails
+  const masters = ['calado.juliocesar@gmail.com', 'contato@juliocalado.com.br', 'julio.calado@hotmail.com'];
+  if (masters.includes(user.email || '')) {
     return {
       uid: user.uid,
       nome: "Julio Admin (Emergency)",
       email: user.email!,
-      role: "admin",
-      escolaId: "agendaplanetacolorido", // Mudando para o ID mais provável do repositório
+      role: user.email === 'julio.calado@hotmail.com' ? 'professor' : 'admin',
+      escolaId: "agendaplanetacolorido", 
       criadoEm: new Date().toISOString()
     } as UserProfile;
   }
