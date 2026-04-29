@@ -49,22 +49,27 @@ export default function NewChargePage() {
     }
 
     setSaving(true);
+    console.log("Iniciando processo de salvamento...");
+    
     try {
       let urlDemonstrativo = "";
       
       // 1. Upload image if exists
       if (file) {
+        console.log("Fazendo upload da imagem:", file.name);
         try {
           const fileRef = ref(storage(), `financeiro/${profile!.escolaId}/${formData.alunoId}/${Date.now()}_${file.name}`);
           await uploadBytes(fileRef, file);
           urlDemonstrativo = await getDownloadURL(fileRef);
+          console.log("Upload concluído. URL:", urlDemonstrativo);
         } catch (uploadError: any) {
           console.error("Erro no upload:", uploadError);
-          throw new Error("Falha ao subir a imagem. Verifique as permissões do Firebase Storage.");
+          throw new Error(`Falha no Storage: ${uploadError.message}. Verifique se o Storage está ativado e as regras permitem o envio.`);
         }
       }
 
       // 2. Create charge in Firestore
+      console.log("Gravando dados no Firestore...");
       const valorLimpo = formData.valor.replace(/\./g, '').replace(',', '.');
       const valorNum = parseFloat(valorLimpo);
 
@@ -83,9 +88,10 @@ export default function NewChargePage() {
         urlDemonstrativo: urlDemonstrativo || "",
       });
 
+      console.log("Cobrança criada com sucesso!");
       router.push("/admin/financeiro");
     } catch (error: any) {
-      console.error("Erro detalhado:", error);
+      console.error("Erro completo:", error);
       alert(error.message || "Erro ao salvar cobrança. Verifique as regras de segurança do Firebase.");
     } finally {
       setSaving(false);
