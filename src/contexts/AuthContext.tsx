@@ -31,21 +31,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       try {
         setUser(firebaseUser);
         if (firebaseUser) {
-          let p = await resolveUserProfile(firebaseUser);
-          
-          // MASTER OVERRIDE: If it's your email, force admin even if not in DB
-          if (firebaseUser.email === 'calado.juliocesar@gmail.com') {
-            p = p || {
-              uid: firebaseUser.uid,
-              nome: "Julio Master",
-              email: firebaseUser.email!,
-              role: "admin",
-              escolaId: "agendaplanetinha", // Garante que você caia na escola certa
-              criadoEm: new Date().toISOString()
-            };
-            p.role = 'admin';
-          }
-          
+          const p = await resolveUserProfile(firebaseUser);
           setProfile(p);
         } else {
           setProfile(null);
