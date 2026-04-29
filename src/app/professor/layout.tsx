@@ -16,7 +16,7 @@ export default function TeacherLayout({
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading && (!profile || profile.role === "pai")) {
+    if (!loading && (!profile || (profile.role !== "professor" && profile.role !== "admin"))) {
       router.replace("/");
     }
   }, [profile, loading, router]);

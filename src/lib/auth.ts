@@ -53,6 +53,7 @@ export async function resolveUserProfile(
       nome: "Julio Admin (Emergency)",
       email: user.email!,
       role: user.email === 'julio.calado@hotmail.com' ? 'professor' : 'admin',
+      turma: user.email === 'julio.calado@hotmail.com' ? 'Infantil II' : undefined,
       escolaId: "agendaplanetacolorido", 
       criadoEm: new Date().toISOString()
     } as UserProfile;
