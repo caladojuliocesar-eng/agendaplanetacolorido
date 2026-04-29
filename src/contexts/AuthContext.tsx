@@ -32,6 +32,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         setUser(firebaseUser);
         if (firebaseUser) {
           const p = await resolveUserProfile(firebaseUser);
+          // TEMPORARY OVERRIDE FOR SETUP
+          if (firebaseUser.email === 'calado.juliocesar@gmail.com' && p) {
+            p.role = 'admin';
+          }
           setProfile(p);
         } else {
           setProfile(null);
