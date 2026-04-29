@@ -10,7 +10,6 @@ export default function AdminFinanceiroPage() {
   const { profile } = useAuth();
   const [cobrancas, setCobrancas] = useState<Cobranca[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   useEffect(() => {
     if (profile?.escolaId) {
@@ -145,12 +144,24 @@ export default function AdminFinanceiroPage() {
                   </td>
                   <td style={{ padding: "16px" }}>
                     {c.urlComprovante ? (
-                      <button 
-                        onClick={() => setSelectedImage(c.urlComprovante!)}
-                        style={{ background: "#F0FDF4", border: "1px solid #BBF7D0", color: "#166534", padding: "4px 8px", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer" }}
+                      <a 
+                        href={c.urlComprovante}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ 
+                          display: "inline-block",
+                          background: "#F0FDF4", 
+                          border: "1px solid #BBF7D0", 
+                          color: "#166534", 
+                          padding: "4px 8px", 
+                          borderRadius: 8, 
+                          fontSize: 12, 
+                          fontWeight: 600, 
+                          textDecoration: "none"
+                        }}
                       >
                         📄 Ver Anexo
-                      </button>
+                      </a>
                     ) : (
                       <span style={{ color: "#94A3B8", fontSize: 12 }}>Nenhum</span>
                     )}
@@ -196,35 +207,5 @@ export default function AdminFinanceiroPage() {
         </table>
       </div>
 
-      {/* Modal for image viewing */}
-      {selectedImage && (
-        <div 
-          onClick={() => setSelectedImage(null)}
-          style={{ 
-            position: "fixed", 
-            top: 0, left: 0, right: 0, bottom: 0, 
-            background: "rgba(0,0,0,0.9)", 
-            display: "flex", 
-            alignItems: "center", 
-            justifyContent: "center", 
-            zIndex: 1000,
-            padding: 20
-          }}
-        >
-          <img 
-            src={selectedImage} 
-            alt="Comprovante" 
-            style={{ maxWidth: "100%", maxHeight: "100%", borderRadius: 8, boxShadow: "0 0 20px rgba(0,0,0,0.5)" }} 
-            onClick={(e) => e.stopPropagation()}
-          />
-          <button 
-            style={{ position: "absolute", top: 20, right: 20, background: "white", border: "none", borderRadius: "50%", width: 40, height: 40, fontWeight: "bold", cursor: "pointer" }}
-            onClick={() => setSelectedImage(null)}
-          >
-            ✕
-          </button>
-        </div>
-      )}
-    </div>
   );
 }
