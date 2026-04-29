@@ -93,7 +93,39 @@ export interface Student {
   escolaId: string;
   fotoUrl: string | null;
   paiIds: string[];
+  
+  // Informações Pessoais
+  dataNascimento?: string;
+  genero?: string;
+  endereco?: string;
+  
+  // Ficha Médica
+  alergias?: string;
+  medicamentosContinuos?: string;
+  restricoesAlimentares?: string;
+  tipoSanguineo?: string;
+  convenioMedico?: string;
+  contatoPediatra?: string;
+  
+  // Contatos e Autorizações
+  contatosEmergencia?: ContatoEmergencia[];
+  autorizadosRetirada?: AutorizadoRetirada[];
+  
   criadoEm: string;
+  atualizadoEm?: string;
+}
+
+export interface ContatoEmergencia {
+  nome: string;
+  parentesco: string;
+  telefone: string;
+}
+
+export interface AutorizadoRetirada {
+  nome: string;
+  parentesco: string;
+  documento?: string;
+  fotoUrl?: string;
 }
 
 export interface DailyRecord {
