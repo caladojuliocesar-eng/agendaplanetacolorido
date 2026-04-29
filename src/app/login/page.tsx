@@ -46,8 +46,8 @@ export default function LoginPage() {
         router.push("/");
       }
     } catch (err: any) {
-      setError("Erro ao entrar com Google. Verifique se o domínio está autorizado.");
-      console.error(err);
+      setError(`Erro do Google: ${err.message || "Falha ao conectar"}`);
+      console.error("Google Login Error:", err);
     } finally {
       setLoading(false);
     }
@@ -97,7 +97,7 @@ export default function LoginPage() {
       } else if (err.code === "auth/invalid-credential" || err.code === "auth/wrong-password") {
         setError("Senha incorreta. Verifique se digitou certinho.");
       } else {
-        setError("Erro ao processar. Verifique seus dados.");
+        setError(`Erro do Firebase: ${err.message || "Erro desconhecido"}`);
       }
       console.error(err);
     } finally {

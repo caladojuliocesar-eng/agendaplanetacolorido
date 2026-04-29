@@ -54,11 +54,19 @@ export async function resolveUserProfile(
   }
 
   // 2. First-time login: search by email and link UID
-  const emailQuery = query(
-    collection(db(), "usuarios"),
-    where("email", "==", user.email)
-  );
-  const emailSnap = await getDocs(emailQuery);
+  let emailSnap;
+  try {
+    const emailQuery = query(
+      collection(db(), "usuarios"),
+      where("email", "==", user.email)
+    );
+    emailSnap = await getDocs(emailQuery);
+  } catch (err: any) {
+    if (err.code === 'permission-denied') {
+      throw new Error(`Permissão negada pelo Firebase. Regras de Segurança estão bloqueando a busca pelo e-mail. UID: ${user.uid}`);
+    }
+    throw err;
+  }
 
   if (!emailSnap.empty) {
     const existingDoc = emailSnap.docs[0];
