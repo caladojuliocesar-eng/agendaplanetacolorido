@@ -54,27 +54,39 @@ export default function NewChargePage() {
       
       // 1. Upload image if exists
       if (file) {
-        const fileRef = ref(storage(), `financeiro/${profile!.escolaId}/${formData.alunoId}/${Date.now()}_${file.name}`);
-        await uploadBytes(fileRef, file);
-        urlDemonstrativo = await getDownloadURL(fileRef);
+        try {
+          const fileRef = ref(storage(), `financeiro/${profile!.escolaId}/${formData.alunoId}/${Date.now()}_${file.name}`);
+          await uploadBytes(fileRef, file);
+          urlDemonstrativo = await getDownloadURL(fileRef);
+        } catch (uploadError: any) {
+          console.error("Erro no upload:", uploadError);
+          throw new Error("Falha ao subir a imagem. Verifique as permissões do Firebase Storage.");
+        }
       }
 
       // 2. Create charge in Firestore
+      const valorLimpo = formData.valor.replace(/\./g, '').replace(',', '.');
+      const valorNum = parseFloat(valorLimpo);
+
+      if (isNaN(valorNum)) {
+        throw new Error("Valor inválido. Use o formato 0000,00");
+      }
+
       await createCobranca({
         alunoId: formData.alunoId,
         escolaId: profile!.escolaId,
         titulo: formData.titulo,
-        valor: parseFloat(formData.valor.replace(',', '.')),
+        valor: valorNum,
         dataVencimento: formData.dataVencimento,
         status: 'pendente',
-        linkBoleto: formData.linkBoleto || undefined,
-        urlDemonstrativo: urlDemonstrativo || undefined,
+        linkBoleto: formData.linkBoleto.trim() || "",
+        urlDemonstrativo: urlDemonstrativo || "",
       });
 
       router.push("/admin/financeiro");
-    } catch (error) {
-      console.error("Erro ao criar cobrança:", error);
-      alert("Erro ao salvar cobrança.");
+    } catch (error: any) {
+      console.error("Erro detalhado:", error);
+      alert(error.message || "Erro ao salvar cobrança. Verifique as regras de segurança do Firebase.");
     } finally {
       setSaving(false);
     }
@@ -96,7 +108,7 @@ export default function NewChargePage() {
             required
             value={formData.alunoId}
             onChange={(e) => setFormData({...formData, alunoId: e.target.value})}
-            style={{ width: "100%", padding: "12px", borderRadius: 10, border: "1px solid #E2E8F0", fontSize: 14 }}
+            style={{ width: "100%", padding: "12px", borderRadius: 10, border: "1px solid #E2E8F0", fontSize: 14, background: "#F8FAFC" }}
           >
             <option value="">Selecione um aluno...</option>
             {students.map(s => (
@@ -155,13 +167,38 @@ export default function NewChargePage() {
 
         <div>
           <label style={{ display: "block", fontSize: 14, fontWeight: 700, color: "#334155", marginBottom: 8 }}>Foto do Demonstrativo (Opcional)</label>
-          <input 
-            type="file"
-            accept="image/*"
-            onChange={(e) => setFile(e.target.files?.[0] || null)}
-            style={{ fontSize: 14 }}
-          />
-          <p style={{ fontSize: 12, color: "#94A3B8", marginTop: 4 }}>Anexe um print ou foto do detalhamento das despesas</p>
+          
+          <div style={{ position: "relative" }}>
+            <input 
+              type="file"
+              id="file-upload"
+              accept="image/*"
+              onChange={(e) => setFile(e.target.files?.[0] || null)}
+              style={{ display: "none" }}
+            />
+            <label 
+              htmlFor="file-upload"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 8,
+                width: "100%",
+                padding: "16px",
+                borderRadius: 12,
+                border: "2px dashed #E2E8F0",
+                background: file ? "#F0FDF4" : "#F8FAFC",
+                color: file ? "#166534" : "#64748B",
+                cursor: "pointer",
+                fontSize: 14,
+                fontWeight: 600,
+                transition: "all 0.2s"
+              }}
+            >
+              {file ? `✅ ${file.name}` : "📁 Clique para anexar o print/foto"}
+            </label>
+          </div>
+          <p style={{ fontSize: 12, color: "#94A3B8", marginTop: 8 }}>Anexe um print ou foto do detalhamento das despesas</p>
         </div>
 
         <div style={{ display: "flex", gap: 12, marginTop: 12 }}>
