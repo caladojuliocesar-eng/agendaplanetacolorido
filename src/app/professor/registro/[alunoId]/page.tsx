@@ -96,8 +96,8 @@ export default function RegistroIndividual() {
         const record = await getDailyRecord(alunoId, today);
         if (record) {
           setRecordId(record.id);
-          setFeeding(record.alimentacao);
-          setActivities(record.atividades);
+          setFeeding(record.alimentacao || { ...DEFAULT_FEEDING });
+          setActivities(record.atividades || { ...DEFAULT_ACTIVITIES });
           setAtividadeTexto(record.atividadeTexto || "");
           setObservacoes(record.observacoes || "");
           setRecadoPais(record.recadoPais || "");

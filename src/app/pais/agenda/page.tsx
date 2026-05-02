@@ -124,7 +124,12 @@ export default function ParentAgenda() {
     setNotifyingAusencia(true);
     try {
       const recordId = todayRecord?.id || `${selectedStudent.id}_${today}`;
-      await markAbsenceByParent(recordId, motivoAusencia.trim());
+      await markAbsenceByParent(recordId, motivoAusencia.trim(), {
+        alunoId: selectedStudent.id,
+        escolaId: selectedStudent.escolaId,
+        turma: selectedStudent.turma,
+        data: today
+      });
       
       // Refresh local state
       const updated = await getDailyRecord(selectedStudent.id, today);
@@ -155,7 +160,12 @@ export default function ParentAgenda() {
     setSendingRecado(true);
     try {
       const recordId = todayRecord?.id || `${selectedStudent.id}_${today}`;
-      await saveParentMessage(recordId, recado.trim());
+      await saveParentMessage(recordId, recado.trim(), {
+        alunoId: selectedStudent.id,
+        escolaId: selectedStudent.escolaId,
+        turma: selectedStudent.turma,
+        data: today
+      });
       setRecadoSent(true);
     } catch (err) {
       console.error("Error sending message:", err);

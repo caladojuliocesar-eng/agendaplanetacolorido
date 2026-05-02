@@ -222,7 +222,8 @@ export async function markAsReadByParent(recordId: string): Promise<void> {
 
 export async function saveParentMessage(
   recordId: string,
-  message: string
+  message: string,
+  studentInfo?: { alunoId: string; escolaId: string; turma: string; data: string }
 ): Promise<void> {
   const newMessage = {
     id: Math.random().toString(36).substring(7),
@@ -231,9 +232,30 @@ export async function saveParentMessage(
     lida: false
   };
 
-  // Use setDoc with merge to create record if it doesn't exist yet
+  const baseData = studentInfo ? {
+    alunoId: studentInfo.alunoId,
+    escolaId: studentInfo.escolaId,
+    turma: studentInfo.turma,
+    data: studentInfo.data,
+    alimentacao: DEFAULT_FEEDING,
+    atividades: DEFAULT_ACTIVITIES,
+    atividadeTexto: "",
+    observacoes: "",
+    recadoLidoProfessor: false,
+    resumoIA: null,
+    lido: false,
+    dataLeitura: null,
+    soninho: false,
+    xixi: false,
+    coco: false,
+    ausente: false,
+    motivoAusencia: "",
+    criadoEm: new Date().toISOString(),
+    atualizadoEm: new Date().toISOString(),
+  } : {};
+
   await setDoc(doc(db(), "registros_diarios", recordId), {
-    recadoPais: message, 
+    ...baseData,
     mensagensPais: arrayUnion(newMessage),
     recadoLidoProfessor: false,
   }, { merge: true });
@@ -241,7 +263,8 @@ export async function saveParentMessage(
 
 export async function markAbsenceByParent(
   recordId: string,
-  motivo: string
+  motivo: string,
+  studentInfo: { alunoId: string; escolaId: string; turma: string; data: string }
 ): Promise<void> {
   const newMessage = {
     id: Math.random().toString(36).substring(7),
@@ -250,7 +273,29 @@ export async function markAbsenceByParent(
     lida: false
   };
 
+  // Garante que o registro tenha todos os campos básicos para não travar a visão da professora
+  const baseData = {
+    alunoId: studentInfo.alunoId,
+    escolaId: studentInfo.escolaId,
+    turma: studentInfo.turma,
+    data: studentInfo.data,
+    alimentacao: DEFAULT_FEEDING,
+    atividades: DEFAULT_ACTIVITIES,
+    atividadeTexto: "",
+    observacoes: "",
+    recadoLidoProfessor: false,
+    resumoIA: null,
+    lido: false,
+    dataLeitura: null,
+    soninho: false,
+    xixi: false,
+    coco: false,
+    criadoEm: new Date().toISOString(),
+    atualizadoEm: new Date().toISOString(),
+  };
+
   await setDoc(doc(db(), "registros_diarios", recordId), {
+    ...baseData,
     ausente: true,
     motivoAusencia: motivo,
     mensagensPais: arrayUnion(newMessage),
