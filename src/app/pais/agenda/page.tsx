@@ -181,12 +181,7 @@ export default function ParentAgenda() {
     setSendingRecado(false);
   };
 
-  const feedingColorMap: Record<string, string> = {
-    success: "#10B981",
-    warning: "#F59E0B",
-    danger: "#EF4444",
-    neutral: "#94A3B8",
-  };
+
 
   if (loading) {
     return (
