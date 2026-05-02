@@ -150,6 +150,9 @@ export interface DailyRecord {
   soninho: boolean;
   xixi: boolean;
   coco: boolean;
+  // Falta / Ausência
+  ausente?: boolean;
+  motivoAusencia?: string;
   criadoEm: string;
   atualizadoEm: string;
 }

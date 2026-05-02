@@ -65,12 +65,15 @@ function buildRecordId(alunoId: string, data: string): string {
   return `${alunoId}_${data}`;
 }
 
-export function getTodayDateString(): string {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, "0");
-  const day = String(now.getDate()).padStart(2, "0");
+export function formatDateLocal(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
+}
+
+export function getTodayDateString(): string {
+  return formatDateLocal(new Date());
 }
 
 export async function getDailyRecord(
@@ -139,6 +142,8 @@ export async function saveBatchRecords(
         soninho: false,
         xixi: false,
         coco: false,
+        ausente: false,
+        motivoAusencia: "",
         ...partialRecord,
         criadoEm: now,
         atualizadoEm: now,
@@ -154,8 +159,10 @@ export async function getStudentHistory(
   const endDate = new Date();
   const startDate = new Date();
   startDate.setDate(startDate.getDate() - days);
-  const startStr = startDate.toISOString().split("T")[0];
-  const endStr = endDate.toISOString().split("T")[0];
+  
+  // Usar data local para bater com os registros salvos
+  const startStr = formatDateLocal(startDate);
+  const endStr = formatDateLocal(endDate);
 
   const q = query(
     collection(db(), "registros_diarios"),
@@ -224,6 +231,25 @@ export async function saveParentMessage(
   // Use setDoc with merge to create record if it doesn't exist yet
   await setDoc(doc(db(), "registros_diarios", recordId), {
     recadoPais: message, 
+    mensagensPais: arrayUnion(newMessage),
+    recadoLidoProfessor: false,
+  }, { merge: true });
+}
+
+export async function markAbsenceByParent(
+  recordId: string,
+  motivo: string
+): Promise<void> {
+  const newMessage = {
+    id: Math.random().toString(36).substring(7),
+    texto: `Aviso de Ausência: ${motivo || "Não informado"}`,
+    horario: new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }),
+    lida: false
+  };
+
+  await setDoc(doc(db(), "registros_diarios", recordId), {
+    ausente: true,
+    motivoAusencia: motivo,
     mensagensPais: arrayUnion(newMessage),
     recadoLidoProfessor: false,
   }, { merge: true });

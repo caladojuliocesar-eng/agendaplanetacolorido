@@ -46,6 +46,8 @@ export default function RegistroIndividual() {
   const [soninho, setSoninho] = useState(false);
   const [xixi, setXixi] = useState(false);
   const [coco, setCoco] = useState(false);
+  const [ausente, setAusente] = useState(false);
+  const [motivoAusencia, setMotivoAusencia] = useState("");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -105,6 +107,8 @@ export default function RegistroIndividual() {
           setSoninho(record.soninho || false);
           setXixi(record.xixi || false);
           setCoco(record.coco || false);
+          setAusente(record.ausente || false);
+          setMotivoAusencia(record.motivoAusencia || "");
         } else {
           // Reset to defaults if no record exists for the new day
           setRecordId(null);
@@ -119,6 +123,8 @@ export default function RegistroIndividual() {
           setSoninho(false);
           setXixi(false);
           setCoco(false);
+          setAusente(false);
+          setMotivoAusencia("");
         }
       } catch (err) {
         console.error("Error loading record:", err);
@@ -181,6 +187,8 @@ export default function RegistroIndividual() {
           soninho,
           xixi,
           coco,
+          ausente,
+          motivoAusencia,
         });
         setRecordId(currentRecordId);
       }
@@ -233,6 +241,8 @@ export default function RegistroIndividual() {
         soninho,
         xixi,
         coco,
+        ausente,
+        motivoAusencia,
       });
 
       setRecordId(savedRecordId);
@@ -259,6 +269,8 @@ export default function RegistroIndividual() {
         soninho,
         xixi,
         coco,
+        ausente,
+        motivoAusencia,
         criadoEm: new Date().toISOString(),
         atualizadoEm: new Date().toISOString(),
       };
@@ -330,6 +342,34 @@ export default function RegistroIndividual() {
           </p>
         </div>
       </div>
+
+      {/* ====== STATUS DE PRESENÇA ====== */}
+      <div className="card" style={{ padding: "12px 16px", marginBottom: 16, display: "flex", alignItems: "center", justifyContent: "space-between", border: ausente ? "1px solid var(--text-muted)" : "1px solid var(--success-light)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <span style={{ fontSize: 20 }}>{ausente ? "🏠" : "🎒"}</span>
+          <div>
+            <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: ausente ? "var(--text-muted)" : "var(--success)" }}>
+              {ausente ? "Aluno Ausente" : "Aluno Presente"}
+            </p>
+            {ausente && motivoAusencia && (
+              <p style={{ margin: 0, fontSize: 11, color: "var(--text-muted)" }}>{motivoAusencia}</p>
+            )}
+          </div>
+        </div>
+        <button
+          onClick={() => {
+            setAusente(!ausente);
+            setSaved(false);
+          }}
+          className={`btn ${ausente ? "btn--secondary" : "btn--outline"}`}
+          style={{ fontSize: 11, padding: "6px 12px" }}
+        >
+          {ausente ? "Marcar Presente" : "Marcar Falta"}
+        </button>
+      </div>
+
+      <div style={{ opacity: ausente ? 0.4 : 1, pointerEvents: ausente ? "none" : "auto", transition: "opacity 0.2s" }}>
+
 
       {/* Parent message alert */}
       {(recadoPais || (mensagensPais && mensagensPais.length > 0)) && (
@@ -580,6 +620,8 @@ export default function RegistroIndividual() {
           }}
         />
       </div>
+
+      </div> {/* End of opacity wrapper */}
 
       {/* ====== SAVE BUTTON ====== */}
       <button

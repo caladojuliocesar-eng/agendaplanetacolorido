@@ -350,7 +350,8 @@ export default function TeacherDashboard() {
         >
           {students.map((student) => {
             const record = records.get(student.id);
-            const hasRecord = !!record;
+            const hasRecord = !!record && !record.ausente;
+            const isAbsent = !!record?.ausente;
             const hasUnreadMessage =
               (record?.recadoPais && !record?.recadoLidoProfessor) ||
               (record?.mensagensPais && record?.mensagensPais.some(m => !m.lida));
@@ -365,8 +366,10 @@ export default function TeacherDashboard() {
                 <div
                   className="student-avatar__circle"
                   style={{
-                    background: stringToColor(student.nome),
+                    background: isAbsent ? "var(--bg-app)" : stringToColor(student.nome),
+                    opacity: isAbsent ? 0.6 : 1,
                     position: "relative",
+                    border: isAbsent ? "1px dashed var(--border)" : "none"
                   }}
                 >
                   {getInitials(student.nome)}
@@ -391,6 +394,27 @@ export default function TeacherDashboard() {
                       ✓
                     </div>
                   )}
+                  {isAbsent && (
+                    <div
+                      style={{
+                        position: "absolute",
+                        bottom: -2,
+                        right: -2,
+                        width: 18,
+                        height: 18,
+                        borderRadius: "50%",
+                        background: "var(--text-muted)",
+                        border: "2px solid white",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontSize: 10,
+                        color: "white",
+                      }}
+                    >
+                      🏠
+                    </div>
+                  )}
                   {hasUnreadMessage && (
                     <div
                       style={{
@@ -412,7 +436,9 @@ export default function TeacherDashboard() {
                     </div>
                   )}
                 </div>
-                <span className="student-avatar__name">{student.nome}</span>
+                <span className="student-avatar__name" style={{ color: isAbsent ? "var(--text-muted)" : "inherit" }}>
+                  {student.nome}
+                </span>
               </div>
             );
           })}

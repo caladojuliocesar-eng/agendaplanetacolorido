@@ -9,6 +9,7 @@ import {
   getTodayDateString,
   markAsReadByParent,
   saveParentMessage,
+  markAbsenceByParent,
 } from "@/lib/firestore";
 import {
   Student,
@@ -32,6 +33,11 @@ export default function ParentAgenda() {
   const [sendingRecado, setSendingRecado] = useState(false);
   const [recadoSent, setRecadoSent] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  // Estados para Ausência
+  const [showAusenciaForm, setShowAusenciaForm] = useState(false);
+  const [motivoAusencia, setMotivoAusencia] = useState("");
+  const [notifyingAusencia, setNotifyingAusencia] = useState(false);
 
   const [today, setToday] = useState(getTodayDateString());
 
@@ -100,8 +106,37 @@ export default function ParentAgenda() {
   const loadHistory = async () => {
     if (!selectedStudent) return;
     setShowHistory(true);
-    const records = await getStudentHistory(selectedStudent.id, 7);
-    setHistory(records.filter((r) => r.data !== today));
+    try {
+      const records = await getStudentHistory(selectedStudent.id, 7);
+      setHistory(records.filter((r) => r.data !== today));
+    } catch (err: any) {
+      console.error("Erro ao carregar histórico:", err);
+      // Se for erro de índice, o Firebase costuma enviar um link no console
+      if (err.message?.includes("index")) {
+        console.error("⚠️ [FIREBASE] Link para criar índice:", err.message);
+      }
+    }
+  };
+
+  const handleAvisarAusencia = async () => {
+    if (!selectedStudent || notifyingAusencia) return;
+    
+    setNotifyingAusencia(true);
+    try {
+      const recordId = todayRecord?.id || `${selectedStudent.id}_${today}`;
+      await markAbsenceByParent(recordId, motivoAusencia.trim());
+      
+      // Refresh local state
+      const updated = await getDailyRecord(selectedStudent.id, today);
+      setTodayRecord(updated);
+      setShowAusenciaForm(false);
+      setMotivoAusencia("");
+      alert("Ausência comunicada com sucesso.");
+    } catch (err) {
+      console.error("Error notifying absence:", err);
+      alert("Erro ao comunicar ausência.");
+    }
+    setNotifyingAusencia(false);
   };
 
   const handleSendRecado = async () => {
@@ -209,6 +244,73 @@ export default function ParentAgenda() {
         </p>
       </div>
 
+      {/* Botão de Ausência */}
+      {!todayRecord?.ausente && !showAusenciaForm && (
+        <div style={{ marginBottom: 16 }}>
+          <button 
+            className="btn btn--outline btn--block" 
+            style={{ fontSize: 12, padding: "8px", color: "var(--text-muted)" }}
+            onClick={() => setShowAusenciaForm(true)}
+          >
+            🏠 Avisar que meu filho não vai hoje
+          </button>
+        </div>
+      )}
+
+      {showAusenciaForm && (
+        <div className="card" style={{ padding: 16, marginBottom: 16, border: "1px solid var(--accent)" }}>
+          <h4 style={{ margin: "0 0 12px", fontSize: 14 }}>Avisar Ausência</h4>
+          <textarea
+            className="text-input"
+            rows={2}
+            placeholder="Motivo (opcional). Ex: Consulta médica, febre..."
+            value={motivoAusencia}
+            onChange={(e) => setMotivoAusencia(e.target.value)}
+            style={{ fontSize: 13, marginBottom: 10 }}
+          />
+          <div style={{ display: "flex", gap: 8 }}>
+            <button 
+              className="btn btn--secondary" 
+              style={{ flex: 1, fontSize: 12 }}
+              onClick={() => setShowAusenciaForm(false)}
+            >
+              Cancelar
+            </button>
+            <button 
+              className="btn btn--primary" 
+              style={{ flex: 1, fontSize: 12 }}
+              onClick={handleAvisarAusencia}
+              disabled={notifyingAusencia}
+            >
+              {notifyingAusencia ? "Enviando..." : "Confirmar Aviso"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {todayRecord?.ausente && (
+        <div className="card" style={{ 
+          padding: 24, 
+          textAlign: "center", 
+          background: "var(--bg-app)", 
+          border: "2px dashed var(--border)", 
+          marginBottom: 16 
+        }}>
+          <p style={{ fontSize: 40, margin: "0 0 12px" }}>🏠</p>
+          <h3 style={{ margin: "0 0 8px", fontSize: 18, color: "var(--text-primary)" }}>
+            Aluno Ausente
+          </h3>
+          <p style={{ color: "var(--text-secondary)", fontSize: 14, margin: 0 }}>
+            {todayRecord.motivoAusencia 
+              ? `Motivo: ${todayRecord.motivoAusencia}` 
+              : "A ausência foi comunicada à escola."}
+          </p>
+          <p style={{ marginTop: 12, fontSize: 12, color: "var(--primary)", fontWeight: 600 }}>
+            Hoje não haverá preenchimento de atividades.
+          </p>
+        </div>
+      )}
+
 
       {!todayRecord ? (
         <div className="card" style={{ padding: 32, textAlign: "center" }}>
@@ -220,7 +322,7 @@ export default function ParentAgenda() {
             A professora ainda não preencheu o relatório de atividades de hoje.
           </p>
         </div>
-      ) : (
+      ) : todayRecord.ausente ? null : (
         <>
           {/* AI Summary Banner */}
           {todayRecord.resumoIA && (
