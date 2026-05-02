@@ -28,6 +28,7 @@ export default function ShowroomLanding() {
         </div>
         <Link 
           href="/login" 
+          target="_blank"
           className="px-6 py-2.5 rounded-full border-2 border-[#F97316] text-[#F97316] font-bold hover:bg-[#F97316] hover:text-white transition-all duration-300"
         >
           Entrar no Sistema
@@ -52,10 +53,17 @@ export default function ShowroomLanding() {
         
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
           <Link 
-            href="#acesso" 
+            href="/login" 
+            target="_blank"
             className="w-full sm:w-auto px-10 py-5 bg-[#F97316] text-white rounded-2xl font-bold text-lg shadow-xl shadow-orange-200 hover:scale-105 active:scale-95 transition-all"
           >
-            Experimentar Agora
+            Começar Agora
+          </Link>
+          <Link 
+            href="#acesso" 
+            className="w-full sm:w-auto px-10 py-5 bg-white text-gray-700 border-2 border-gray-100 rounded-2xl font-bold text-lg hover:border-[#F97316] transition-all"
+          >
+            Ver Demonstração
           </Link>
         </div>
       </header>
