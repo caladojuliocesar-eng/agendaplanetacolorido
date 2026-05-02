@@ -160,20 +160,23 @@ export async function getStudentHistory(
   const startDate = new Date();
   startDate.setDate(startDate.getDate() - days);
   
-  // Usar data local para bater com os registros salvos
   const startStr = formatDateLocal(startDate);
   const endStr = formatDateLocal(endDate);
 
+  // Consulta simples (não exige índice composto)
   const q = query(
     collection(db(), "registros_diarios"),
-    where("alunoId", "==", alunoId),
-    where("data", ">=", startStr),
-    where("data", "<=", endStr),
-    orderBy("data", "desc"),
-    limit(days)
+    where("alunoId", "==", alunoId)
   );
+  
   const snap = await getDocs(q);
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as DailyRecord));
+  const allRecords = snap.docs.map((d) => ({ id: d.id, ...d.data() } as DailyRecord));
+
+  // Filtrar e ordenar na memória (mais robusto para desenvolvimento)
+  return allRecords
+    .filter(r => r.data >= startStr && r.data <= endStr)
+    .sort((a, b) => b.data.localeCompare(a.data))
+    .slice(0, days);
 }
 
 export async function getTurmaRecords(
