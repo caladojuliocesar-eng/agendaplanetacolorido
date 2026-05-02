@@ -154,7 +154,7 @@ export async function saveBatchRecords(
 
 export async function getStudentHistory(
   alunoId: string,
-  days: number = 7
+  days: number = 15
 ): Promise<DailyRecord[]> {
   const endDate = new Date();
   const startDate = new Date();

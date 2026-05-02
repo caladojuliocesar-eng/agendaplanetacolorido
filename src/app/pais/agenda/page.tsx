@@ -107,7 +107,7 @@ export default function ParentAgenda() {
     if (!selectedStudent) return;
     setShowHistory(true);
     try {
-      const records = await getStudentHistory(selectedStudent.id, 7);
+      const records = await getStudentHistory(selectedStudent.id, 15);
       setHistory(records.filter((r) => r.data !== today));
     } catch (err: any) {
       console.error("Erro ao carregar histórico:", err);
@@ -554,7 +554,7 @@ export default function ParentAgenda() {
               margin: 0,
             }}
           >
-            Últimos 7 dias
+            Últimos 15 dias
           </h3>
           {history.length === 0 ? (
             <p style={{ color: "var(--text-muted)", fontSize: 14 }}>
