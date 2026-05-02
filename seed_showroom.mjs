@@ -1,39 +1,27 @@
 import admin from "firebase-admin";
 import { readFileSync } from "fs";
-import path from "path";
 
 // Inicialização com Admin SDK
-const serviceAccount = JSON.parse(readFileSync("./service-account.json", "utf8"));
-
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount)
-});
+let serviceAccount;
+try {
+    serviceAccount = JSON.parse(readFileSync("./service-account.json", "utf8"));
+    admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount)
+    });
+} catch (e) {
+    console.error("❌ Erro ao ler service-account.json. O script precisa desse arquivo para rodar.");
+    process.exit(1);
+}
 
 const db = admin.firestore();
 const auth = admin.auth();
 
 const ESCOLA_ID = "escola_showroom";
-const ESCOLA_NOME = "Escola Modelo Ottomatic";
-
-async function clearOldData(collectionName, field = "escolaId") {
-  const snap = await db.collection(collectionName).where(field, "==", ESCOLA_ID).get();
-  const batch = db.batch();
-  snap.docs.forEach((d) => batch.delete(d.ref));
-  await batch.commit();
-  console.log(`[Limpeza] ${snap.size} registros removidos de ${collectionName}`);
-}
 
 async function seed() {
-  console.log("🚀 Iniciando Seed do Showroom (Correção Alimentação)...");
+  console.log("🚀 Iniciando Seed do Showroom (Modo Preservação - Blindado)...");
 
-  // 1. Limpeza
-  await clearOldData("usuarios");
-  await clearOldData("alunos");
-  await clearOldData("registros_diarios");
-  await clearOldData("cobrancas");
-  await clearOldData("avisos");
-
-  // 2. Usuários
+  // 1. Usuários (Só cria se não existir)
   const users = [
     { uid: "demo_diretora", nome: "Dra. Helena (Diretora)", email: "diretora@demo.com", role: "admin" },
     { uid: "demo_professora", nome: "Prof. Ana Cláudia", email: "profe@demo.com", role: "professor", turma: "Maternal II" },
@@ -41,13 +29,19 @@ async function seed() {
   ];
 
   for (const u of users) {
-    try {
-      await auth.createUser({ uid: u.uid, email: u.email, password: "demo123", displayName: u.nome });
-    } catch (e) {}
-    await db.collection("usuarios").doc(u.uid).set({ ...u, escolaId: ESCOLA_ID, criadoEm: new Date().toISOString() });
+    const userRef = db.collection("usuarios").doc(u.uid);
+    const doc = await userRef.get();
+    if (!doc.exists) {
+        try {
+            await auth.createUser({ uid: u.uid, email: u.email, password: "demo123", displayName: u.nome });
+            console.log(`✅ Usuário Auth criado: ${u.email}`);
+        } catch (e) {}
+        await userRef.set({ ...u, escolaId: ESCOLA_ID, criadoEm: new Date().toISOString() });
+        console.log(`✅ Usuário Firestore criado: ${u.email}`);
+    }
   }
 
-  // 3. Alunos
+  // 2. Alunos (Só cria se não existir)
   const alunos = [
     { id: "aluno_otto", nome: "Otto", turma: "Maternal II", paiIds: ["demo_pai"] },
     { id: "aluno_maya", nome: "Maya", turma: "Maternal II", paiIds: [] },
@@ -56,10 +50,15 @@ async function seed() {
   ];
 
   for (const a of alunos) {
-    await db.collection("alunos").doc(a.id).set({ ...a, escolaId: ESCOLA_ID, criadoEm: new Date().toISOString() });
+    const alunoRef = db.collection("alunos").doc(a.id);
+    const doc = await alunoRef.get();
+    if (!doc.exists) {
+        await alunoRef.set({ ...a, escolaId: ESCOLA_ID, fotoUrl: null, criadoEm: new Date().toISOString() });
+        console.log(`✅ Aluno criado: ${a.nome}`);
+    }
   }
 
-  // 4. Histórico (Correção: Alimentação agora é NÚMERO 0-2)
+  // 3. Histórico (Preenche apenas os buracos vazios dos últimos 10 dias)
   const daysCount = 10;
   const resumos = [
     "O Otto teve um dia excelente! Participou ativamente da roda de música e comeu todo o almoço.",
@@ -81,54 +80,61 @@ async function seed() {
 
     for (const a of alunos) {
         const recordId = `${a.id}_${dateStr}`;
-        await db.collection("registros_diarios").doc(recordId).set({
-            id: recordId,
-            alunoId: a.id,
-            escolaId: ESCOLA_ID,
-            turma: a.turma,
-            data: dateStr,
-            // 1: Bom, 2: Pouco, 3: Recusou
-            alimentacao: { 
-                frutas: 1, 
-                almoco: 1, 
-                lancheTarde: 1, 
-                jantar: 0, 
-                outros: 0 
-            },
-            atividades: { rodaHistoria: true, parque: true, rodaConversa: true },
-            atividadeTexto: "Atividades lúdicas e integração social.",
-            observacoes: "Dia tranquilo e de muito aprendizado.",
-            resumoIA: a.id === "aluno_otto" ? resumos[i] : "O aluno teve um ótimo desempenho nas atividades propostas hoje.",
-            recadoLidoProfessor: true,
-            lido: true,
-            professorId: "demo_professora",
-            soninho: "Dormiu tranquilo",
-            xixi: "Normal",
-            coco: "Normal",
-            criadoEm: date.toISOString(),
-            atualizadoEm: date.toISOString()
-        });
+        const recordRef = db.collection("registros_diarios").doc(recordId);
+        const doc = await recordRef.get();
+        
+        if (!doc.exists) {
+            await recordRef.set({
+                id: recordId,
+                alunoId: a.id,
+                escolaId: ESCOLA_ID,
+                turma: a.turma,
+                data: dateStr,
+                alimentacao: { frutas: 1, almoco: 1, lancheTarde: 1, jantar: 0, outros: 0 },
+                atividades: { rodaHistoria: true, parque: true, rodaConversa: true },
+                atividadeTexto: "Atividades lúdicas e integração social.",
+                observacoes: "Dia tranquilo e de muito aprendizado.",
+                resumoIA: a.id === "aluno_otto" ? resumos[i] : "O aluno teve um ótimo desempenho nas atividades propostas hoje.",
+                recadoLidoProfessor: true,
+                lido: true,
+                professorId: "demo_professora",
+                soninho: "Dormiu tranquilo",
+                xixi: "Normal",
+                coco: "Normal",
+                criadoEm: date.toISOString(),
+                atualizadoEm: date.toISOString()
+            });
+            console.log(`✅ Registro automático gerado para ${a.nome} em ${dateStr}`);
+        }
     }
   }
 
-  // 5. Cobranças
+  // 4. Cobranças Financeiras (Só cria se não existir)
   const cobrancas = [
     { id: "cob_1", titulo: "Mensalidade - Maio", valor: 1200, status: "pendente", vencimento: "2026-05-10" },
     { id: "cob_2", titulo: "Mensalidade - Abril", valor: 1200, status: "pago", vencimento: "2026-04-10" }
   ];
+
   for (const c of cobrancas) {
-    await db.collection("cobrancas").doc(c.id).set({ ...c, alunoId: "aluno_otto", alunoNome: "Otto", escolaId: ESCOLA_ID, dataVencimento: c.vencimento, visualizado: true, criadoEm: new Date().toISOString() });
+    const cobRef = db.collection("cobrancas").doc(c.id);
+    const doc = await cobRef.get();
+    if (!doc.exists) {
+        await cobRef.set({
+          ...c,
+          alunoId: "aluno_otto",
+          alunoNome: "Otto",
+          escolaId: ESCOLA_ID,
+          dataVencimento: c.vencimento,
+          visualizado: true,
+          criadoEm: new Date().toISOString()
+        });
+        console.log(`✅ Cobrança criada: ${c.titulo}`);
+    }
   }
 
-  // 6. Avisos
-  const avisos = [
-    { id: "av_1", titulo: "Festa da Família", mensagem: "Convidamos todos para nossa festa!", tipo: "info", escolaId: ESCOLA_ID, ativo: true, criadoEm: new Date().toISOString() }
-  ];
-  for (const av of avisos) {
-    await db.collection("avisos").doc(av.id).set(av);
-  }
-
-  console.log("\n✨ SHOWROOM ATUALIZADO (Alimentação Corrigida)!");
+  console.log("\n✨ SHOWROOM SINCRONIZADO!");
+  console.log("Nota: Seus dados manuais foram preservados.");
+  console.log("-----------------------------------------");
   process.exit(0);
 }
 
