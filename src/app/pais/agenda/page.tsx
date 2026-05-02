@@ -28,6 +28,13 @@ export default function ParentAgenda() {
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [todayRecord, setTodayRecord] = useState<DailyRecord | null>(null);
   const [history, setHistory] = useState<DailyRecord[]>([]);
+
+  const feedingColorMap: Record<string, string> = {
+    success: "var(--success)",
+    warning: "var(--warning)",
+    danger: "var(--danger)",
+    neutral: "var(--text-muted)",
+  };
   const [showHistory, setShowHistory] = useState(false);
   const [recado, setRecado] = useState("");
   const [sendingRecado, setSendingRecado] = useState(false);
@@ -348,9 +355,9 @@ export default function ParentAgenda() {
               style={{ display: "flex", flexDirection: "column", gap: 12 }}
             >
               {FEEDING_ITEMS.map((item) => {
-                const status = todayRecord.alimentacao[item.key] as FeedingStatus;
-                if (status === 0) return null;
+                const status = (todayRecord.alimentacao?.[item.key] || 0) as FeedingStatus;
                 const colorKey = FEEDING_COLORS[status];
+                
                 return (
                   <div
                     key={item.key}
@@ -358,27 +365,26 @@ export default function ParentAgenda() {
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "space-between",
-                      padding: "10px 14px",
+                      padding: "12px 16px",
                       borderRadius: "var(--radius-md)",
-                      background:
-                        colorKey === "success"
-                          ? "var(--success-light)"
-                          : colorKey === "warning"
-                          ? "var(--warning-light)"
-                          : "var(--danger-light)",
+                      background: status === 0 ? "var(--bg-app)" : 
+                        colorKey === "success" ? "var(--success-light)" : 
+                        colorKey === "warning" ? "var(--warning-light)" : 
+                        "var(--danger-light)",
+                      border: status === 0 ? "1px dashed var(--border)" : "none"
                     }}
                   >
-                    <span style={{ fontSize: 15, fontWeight: 500 }}>
+                    <span style={{ fontSize: 14, fontWeight: 600, color: status === 0 ? "var(--text-muted)" : "var(--text-primary)" }}>
                       {item.label}
                     </span>
                     <span
                       style={{
-                        fontSize: 15,
-                        fontWeight: 600,
-                        color: feedingColorMap[colorKey] || "inherit",
+                        fontSize: 14,
+                        fontWeight: 700,
+                        color: status === 0 ? "var(--text-muted)" : feedingColorMap[colorKey],
                       }}
                     >
-                      {FEEDING_EMOJI[status]} {FEEDING_LABELS[status]}
+                      {status === 0 ? "⏳ Não informado" : `${FEEDING_EMOJI[status]} ${FEEDING_LABELS[status]}`}
                     </span>
                   </div>
                 );
