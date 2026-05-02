@@ -209,9 +209,17 @@ function LoginContent() {
           </form>
         )}
 
-        <p className="mt-8 text-center text-xs text-[#D97706]">
-          Acesso restrito a professores e responsáveis cadastrados.
-        </p>
+        <div className="mt-8 flex flex-col items-center gap-4">
+          <p className="text-center text-xs text-[#D97706]">
+            Acesso restrito a professores e responsáveis cadastrados.
+          </p>
+          <a 
+            href="/showroom" 
+            className="text-[10px] text-gray-300 hover:text-[#F97316] transition-colors"
+          >
+            Apresentação Institucional
+          </a>
+        </div>
       </div>
     </div>
   );
