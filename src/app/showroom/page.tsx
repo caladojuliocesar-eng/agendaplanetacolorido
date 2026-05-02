@@ -75,14 +75,14 @@ export default function ShowroomLanding() {
               <div className="text-4xl mb-6">👩‍🏫</div>
               <h3 className="text-xl font-bold mb-4">Para Professores</h3>
               <p className="text-gray-500 leading-relaxed">
-                Nossa IA gera o resumo do dia automaticamente. Menos burocracia, mais tempo com os alunos.
+                Registro de rotina simplificado e comunicação eficiente. Menos papel e mais tempo com os alunos.
               </p>
             </div>
             <div className="p-8 bg-white rounded-3xl shadow-sm border border-gray-100 hover:shadow-xl transition-shadow">
               <div className="text-4xl mb-6">❤️</div>
               <h3 className="text-xl font-bold mb-4">Para os Pais</h3>
               <p className="text-gray-500 leading-relaxed">
-                Acompanhamento diário com fotos, avisos de falta e mensagens diretas com a coordenação.
+                Acompanhamento diário da rotina, avisos de falta e mensagens diretas com a coordenação.
               </p>
             </div>
           </div>
@@ -109,7 +109,7 @@ export default function ShowroomLanding() {
                 <span className="block text-3xl mb-4">👩‍🏫</span>
                 <span className="block text-xs uppercase tracking-widest text-orange-400 font-bold mb-2">Professora</span>
                 <code className="block text-sm bg-black/30 p-2 rounded mb-2">profe@demo.com</code>
-                <p className="text-xs text-slate-500">Registro de rotina e IA</p>
+                <p className="text-xs text-slate-500">Registro de rotina diária</p>
               </div>
               <div className="bg-white/5 backdrop-blur-sm border border-white/10 p-6 rounded-2xl">
                 <span className="block text-3xl mb-4">🧔</span>
@@ -122,9 +122,10 @@ export default function ShowroomLanding() {
             <div className="flex flex-col items-center gap-4">
               <Link 
                 href="/login" 
+                target="_blank"
                 className="inline-flex items-center gap-2 px-12 py-5 bg-[#F97316] text-white rounded-full font-black text-lg hover:bg-orange-600 transition-all shadow-lg shadow-orange-900/20"
               >
-                Ir para o Login 🚀
+                Acessar Sistema (Nova Aba) 🚀
               </Link>
               <p className="text-slate-400 text-sm">Use a senha <b className="text-white">demo123</b> para todos os perfis.</p>
             </div>
