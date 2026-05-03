@@ -193,6 +193,33 @@ export default function ShowroomLanding() {
         </div>
       </section>
 
+      {/* Collaborative Evolution Section */}
+      <section className="max-w-6xl mx-auto px-6 py-24 border-t border-gray-100">
+        <div className="grid md:grid-cols-2 gap-12">
+          <div>
+            <h3 className="text-2xl font-black mb-4 flex items-center gap-2 text-slate-800">
+              <span>🌱</span> Projeto Sustentável
+            </h3>
+            <p className="text-gray-600 leading-relaxed">
+              O sistema foi construído com tecnologia de ponta para ser leve, seguro e escalável. 
+              Isso garante uma infraestrutura de baixo custo, permitindo que a Planeta Colorido 
+              tenha uma gestão profissional de alta performance sem os altos custos de licenciamento de softwares genéricos do mercado.
+            </p>
+          </div>
+          <div>
+            <h3 className="text-2xl font-black mb-4 flex items-center gap-2 text-slate-800">
+              <span>🚀</span> Evolução Colaborativa
+            </h3>
+            <p className="text-gray-600 leading-relaxed">
+              O app não é estático. Nosso próximo passo é estudar junto com a escola como os 
+              registros diários podem ajudar a pré-estruturar os <b>Relatórios de Performance</b>. 
+              O objetivo é reduzir o trabalho braçal de redação das professoras, mantendo 
+              totalmente o olhar pedagógico e humano sobre o desenvolvimento de cada criança.
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* Footer */}
       <footer className="py-12 border-t border-gray-100 text-center text-gray-400 text-sm">
         <p>© {new Date().getFullYear()} Ottomatic AI • Projeto Planeta Colorido</p>
