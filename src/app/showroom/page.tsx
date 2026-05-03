@@ -44,14 +44,14 @@ export default function ShowroomLanding() {
           ✨ Oi, Fabiana! Dá uma olhada no que preparei.
         </div>
         <h1 className="text-5xl md:text-7xl font-black mb-8 leading-[1.1] tracking-tight max-w-4xl">
-          Transformei nossa <br />
+          Nossa agenda de papel <br />
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F97316] to-[#EA580C]">
-            agenda de papel nisso aqui.
+            agora é 100% digital.
           </span>
         </h1>
         <p className="text-lg md:text-xl text-gray-600 mb-12 max-w-2xl mx-auto leading-relaxed">
-          O plano original era digitalizar a agenda, mas aproveitei para inserir 
-          um controle financeiro completo e uma visão administrativa geral para facilitar sua vida.
+          O foco total foi transformar a experiência da agenda física em algo moderno e simples. 
+          E para deixar tudo ainda melhor, aproveitei e inseri uma visão financeira e ADM completa.
         </p>
         
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
@@ -59,13 +59,13 @@ export default function ShowroomLanding() {
             href="#acesso" 
             className="w-full sm:w-auto px-10 py-5 bg-[#F97316] text-white rounded-2xl font-bold text-lg shadow-xl shadow-orange-200 hover:scale-105 active:scale-95 transition-all"
           >
-            Testar Sistema Agora
+            Ver a Nova Agenda
           </Link>
           <Link 
             href="#evolucao" 
             className="w-full sm:w-auto px-10 py-5 bg-white text-gray-700 border-2 border-gray-100 rounded-2xl font-bold text-lg hover:border-[#F97316] transition-all"
           >
-            Ver a Evolução
+            A Beleza do Digital
           </Link>
         </div>
       </header>
@@ -78,67 +78,66 @@ export default function ShowroomLanding() {
             <div className="relative rounded-[2rem] overflow-hidden shadow-2xl border-8 border-white">
               <img 
                 src="/images/agenda-evolution.png" 
-                alt="Do papel ao digital"
+                alt="A Agenda Digital"
                 className="w-full h-auto transform group-hover:scale-105 transition-transform duration-700"
               />
             </div>
           </div>
           <div>
             <h2 className="text-4xl font-black mb-6 leading-tight">
-              Adeus papelada, <br />
-              <span className="text-orange-500 text-3xl">olá gestão inteligente.</span>
+              A beleza de uma <br />
+              <span className="text-orange-500 text-3xl">agenda que se preenche "sozinha".</span>
             </h2>
             <div className="space-y-6 text-gray-600 leading-relaxed">
               <p>
-                Sabe aquela correria de conferir agenda por agenda? Agora as professoras 
-                registram tudo em segundos.
+                O coração do app é a <b>Agenda Digital</b>. Aquela papelada toda que as professoras tinham que escrever 
+                na mão, agora é feita com poucos toques, mantendo todo o carinho e cuidado.
               </p>
               <div className="p-6 bg-orange-50 rounded-2xl border-l-4 border-orange-500">
                 <p className="font-bold text-orange-900 mb-2 flex items-center gap-2">
-                  <span>📶</span> Segurança de Sinal
+                  <span>📶</span> Sempre Disponível
                 </p>
                 <p className="text-orange-800/80 text-sm">
-                  O sinal caiu na sala? Sem problemas. As professoras continuam preenchendo 
-                  normalmente e o app sincroniza tudo automaticamente assim que a internet voltar. 
-                  Resiliência total para o dia a dia.
+                  Mesmo que o Wi-Fi da escola oscile, a professora continua preenchendo a agenda normalmente. 
+                  O sistema sincroniza tudo assim que o sinal estabiliza. Confiável como o papel, mas rápido como o digital.
                 </p>
               </div>
               <p>
-                E para você, Fabiana, o app já gera o financeiro direto do Mural e da Agenda. 
-                Tudo centralizado em um só lugar.
+                Com a agenda digitalizada, ganhamos super-poderes: avisos imediatos para os pais, 
+                histórico organizado e mais tempo para o que importa: as crianças.
               </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Features Grid */}
+      {/* Extra Features Grid */}
       <section className="bg-gray-50 py-24">
         <div className="max-w-6xl mx-auto px-6 text-center mb-16">
-          <h2 className="text-3xl font-black mb-4">O que eu inseri de novo:</h2>
-          <p className="text-gray-500">Recursos que vão além da simples comunicação.</p>
+          <h2 className="text-3xl font-black mb-4">E para completar a experiência...</h2>
+          <p className="text-gray-500">Aproveitei a inteligência da agenda para automatizar o resto da escola.</p>
         </div>
         <div className="max-w-6xl mx-auto px-6">
           <div className="grid md:grid-cols-3 gap-8">
             <div className="p-8 bg-white rounded-3xl shadow-sm border border-gray-100 hover:shadow-xl transition-shadow group">
               <div className="text-4xl mb-6 group-hover:scale-110 transition-transform">💰</div>
-              <h3 className="text-xl font-bold mb-4 text-[#F97316]">Financeiro Agilizado</h3>
+              <h3 className="text-xl font-bold mb-4 text-[#F97316]">Gestão Financeira</h3>
               <p className="text-gray-500 leading-relaxed text-sm">
-                Controle de mensalidades, taxas de materiais e eventos tudo integrado. Menos planilhas, mais precisão.
+                As mensalidades e taxas agora conversam com a agenda. Controle total de recebimentos sem esforço.
               </p>
             </div>
             <div className="p-8 bg-white rounded-3xl shadow-sm border border-gray-100 hover:shadow-xl transition-shadow group">
               <div className="text-4xl mb-6 group-hover:scale-110 transition-transform">📊</div>
-              <h3 className="text-xl font-bold mb-4 text-[#F97316]">Visão ADM Geral</h3>
+              <h3 className="text-xl font-bold mb-4 text-[#F97316]">Painel Administrativo</h3>
               <p className="text-gray-500 leading-relaxed text-sm">
-                Monitoramento de salas em tempo real e avisos de faltas. Você no controle de tudo o que acontece.
+                Uma visão panorâmica de todas as salas, frequências e avisos. A escola inteira na palma da sua mão.
               </p>
             </div>
             <div className="p-8 bg-white rounded-3xl shadow-sm border border-gray-100 hover:shadow-xl transition-shadow group">
-              <div className="text-4xl mb-6 group-hover:scale-110 transition-transform">📱</div>
-              <h3 className="text-xl font-bold mb-4 text-[#F97316]">UX Premium</h3>
+              <div className="text-4xl mb-6 group-hover:scale-110 transition-transform">✨</div>
+              <h3 className="text-xl font-bold mb-4 text-[#F97316]">Simplicidade e Estilo</h3>
               <p className="text-gray-500 leading-relaxed text-sm">
-                Interface pensada para ser rápida. Menos toques para registrar a rotina e mais tempo para educar.
+                Tudo foi desenhado para ser premium e intuitivo. Uma ferramenta que orgulha a escola e encanta os pais.
               </p>
             </div>
           </div>
@@ -151,7 +150,7 @@ export default function ShowroomLanding() {
           <div className="relative z-10">
             <h2 className="text-4xl md:text-5xl font-black mb-8">Espaço do Teste</h2>
             <p className="text-slate-400 text-lg mb-12 max-w-xl mx-auto leading-relaxed">
-              Criei três perfis para você ver como cada um interage com o sistema. 
+              Criei três perfis para você ver como a nossa nova agenda funciona na prática. 
               Pode testar à vontade:
             </p>
             
