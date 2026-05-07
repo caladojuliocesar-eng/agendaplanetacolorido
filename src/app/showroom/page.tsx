@@ -133,13 +133,14 @@ export default function ShowroomLanding() {
                 Uma visão panorâmica de todas as salas, frequências e avisos. A escola inteira na palma da sua mão.
               </p>
             </div>
-            <div className="p-8 bg-white rounded-3xl shadow-sm border border-gray-100 hover:shadow-xl transition-shadow group">
-              <div className="text-4xl mb-6 group-hover:scale-110 transition-transform">✨</div>
-              <h3 className="text-xl font-bold mb-4 text-[#F97316]">Simplicidade e Estilo</h3>
+            <Link href="/showroom/pedagogico" className="p-8 bg-white rounded-3xl shadow-sm border border-gray-100 hover:shadow-xl transition-shadow group block no-underline" style={{ textDecoration: "none" }}>
+              <div className="text-4xl mb-6 group-hover:scale-110 transition-transform">🧠</div>
+              <h3 className="text-xl font-bold mb-4 text-[#F97316]">Inteligência Pedagógica</h3>
               <p className="text-gray-500 leading-relaxed text-sm">
-                Tudo foi desenhado para ser premium e intuitivo. Uma ferramenta que orgulha a escola e encanta os pais.
+                Relatórios trimestrais gerados a partir das observações diárias. A evolução do aluno, pilar por pilar. Clique para ver o demo ao vivo.
               </p>
-            </div>
+              <span className="inline-block mt-4 text-xs font-bold text-orange-500 uppercase tracking-wider">Ver Dashboard →</span>
+            </Link>
           </div>
         </div>
       </section>

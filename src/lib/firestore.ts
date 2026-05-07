@@ -518,3 +518,32 @@ export async function markCobrancaAsViewed(id: string): Promise<void> {
     dataVisualizacao: new Date().toISOString()
   });
 }
+
+// ============================================
+// Pedagógico (Logs de Observação)
+// ============================================
+
+export interface LogPedagogico {
+  id: string;
+  alunoId: string;
+  escolaId: string;
+  turma: string;
+  professorId: string;
+  data: string;
+  pilar: string;
+  pilarLabel: string;
+  nota: string;
+  sentimento: "positivo" | "neutro" | "atencao";
+  criadoEm: string;
+}
+
+export async function getLogsPedagogicos(alunoId: string): Promise<LogPedagogico[]> {
+  const q = query(
+    collection(db(), "logs_pedagogicos"),
+    where("alunoId", "==", alunoId)
+  );
+  const snap = await getDocs(q);
+  return snap.docs
+    .map((d) => ({ id: d.id, ...d.data() } as LogPedagogico))
+    .sort((a, b) => a.data.localeCompare(b.data));
+}
