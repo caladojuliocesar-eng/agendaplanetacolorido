@@ -1,24 +1,31 @@
 import { NextResponse } from "next/server";
 import admin from "firebase-admin";
 
-// Initialize Admin SDK if not already
-if (!admin.apps.length) {
-  admin.initializeApp({
-    credential: admin.credential.cert({
-      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
-    }),
-  });
+// Initialize Admin SDK lazily to avoid build errors on Vercel
+function getDb() {
+  if (!admin.apps.length) {
+    if (!process.env.FIREBASE_PRIVATE_KEY) {
+      console.warn("FIREBASE_PRIVATE_KEY is missing. Admin SDK initialization skipped.");
+      return null;
+    }
+    admin.initializeApp({
+      credential: admin.credential.cert({
+        projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+        privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n"),
+      }),
+    });
+  }
+  return admin.firestore();
 }
-
-const db = admin.firestore();
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const alunoId = searchParams.get("alunoId") || "aluno_otto";
 
   try {
+    const db = getDb();
+    if (!db) return NextResponse.json({ error: "Configuração do Firebase ausente." }, { status: 500 });
     const snap = await db
       .collection("logs_pedagogicos")
       .where("alunoId", "==", alunoId)
