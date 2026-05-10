@@ -52,9 +52,10 @@ export async function GET(request: Request) {
       return NextResponse.json({
         error: "Configuração do Firebase ausente ou inválida no servidor.",
         envCheck: {
-          hasKey: !!process.env.FIREBASE_PRIVATE_KEY,
-          hasEmail: !!process.env.FIREBASE_CLIENT_EMAIL,
-          hasProject: !!process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID
+          keyLength: process.env.FIREBASE_PRIVATE_KEY?.length || 0,
+          emailLength: process.env.FIREBASE_CLIENT_EMAIL?.length || 0,
+          projectLength: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID?.length || 0,
+          hasAdmin: !!admin
         }
       }, { status: 500 });
     }
