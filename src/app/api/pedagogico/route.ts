@@ -48,20 +48,36 @@ export async function GET(request: Request) {
 
   try {
     const db = getDb();
-    if (!db) return NextResponse.json({ error: "Configuração do Firebase ausente." }, { status: 500 });
-    const snap = await db
-      .collection("logs_pedagogicos")
+    if (!db) {
+      return NextResponse.json({ 
+        error: "Configuração do Firebase ausente ou inválida no servidor.",
+        envCheck: {
+          hasKey: !!process.env.FIREBASE_PRIVATE_KEY,
+          hasEmail: !!process.env.FIREBASE_CLIENT_EMAIL,
+          hasProject: !!process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID
+        }
+      }, { status: 500 });
+    }
+
+    console.log("Buscando logs para aluno:", alunoId);
+    const snapshot = await db.collection("logs_pedagogicos")
       .where("alunoId", "==", alunoId)
+      .orderBy("data", "desc")
       .get();
 
-    const logs = snap.docs
-      .map((d) => ({ id: d.id, ...d.data() }))
-      .sort((a: any, b: any) => (a.data as string).localeCompare(b.data as string));
+    const logs = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
 
     return NextResponse.json({ logs });
   } catch (error: any) {
-    console.error("Erro ao buscar logs pedagógicos:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("Erro detalhado na API Pedagogico:", error);
+    return NextResponse.json({ 
+      error: "Erro ao buscar logs no Firestore.",
+      details: error.message,
+      stack: error.stack?.split('\n')[0] // Apenas a primeira linha do stack para segurança
+    }, { status: 500 });
   }
 }
 
