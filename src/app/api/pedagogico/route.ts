@@ -41,3 +41,30 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+
+export async function POST(request: Request) {
+  try {
+    const db = getDb();
+    if (!db) return NextResponse.json({ error: "Configuração do Firebase ausente." }, { status: 500 });
+    
+    const body = await request.json();
+    const newLog = {
+      alunoId: body.alunoId || "aluno_otto",
+      escolaId: body.escolaId || "escola_default",
+      turma: body.turma || "Berçário II",
+      professorId: body.professorId || "prof_ana",
+      data: body.data || new Date().toISOString().split("T")[0],
+      pilar: body.pilar,
+      pilarLabel: body.pilarLabel,
+      nota: body.nota,
+      sentimento: body.sentimento,
+      criadoEm: new Date().toISOString(),
+    };
+
+    const docRef = await db.collection("logs_pedagogicos").add(newLog);
+    return NextResponse.json({ id: docRef.id, ...newLog });
+  } catch (error: any) {
+    console.error("Erro ao salvar log pedagógico:", error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}

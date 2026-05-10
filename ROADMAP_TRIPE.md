@@ -54,8 +54,8 @@ O Ottomatic se sustenta em três pilares (o "Tripé"):
 
 ### Pilar Pedagógico (Próxima Sessão)
 - [x] **Gerar Relatório com Gemini:** Integrar a API do Gemini para ler os 108 logs e produzir um relatório trimestral em prosa, respeitando os 10 pilares. Botão "Gerar Relatório" no dashboard.
-- [ ] **Workflow de Revisão:** Professora revisa → Coordenação aprova → Libera para os pais em PDF.
-- [ ] **Tela da Professora (Notas Rápidas):** Adicionar um campo simples de "Nota Rápida" + tags de pilar na tela de preenchimento diário. Fricção mínima — só texto curto ou tag.
+- [x] **Workflow de Revisão:** Professora revisa → Coordenação aprova → Libera para os pais em PDF (Documento Oficial A4).
+- [x] **Tela da Professora (Notas Rápidas):** Simulador de registro com classificação automática via IA. Fricção zero para a professora.
 - [ ] **Validação com Fabiana:** Mostrar o dashboard do Showroom e colher feedback sobre pilares, tom de voz e formato do relatório.
 
 ### Pilar Financeiro (Futuro)
@@ -64,6 +64,7 @@ O Ottomatic se sustenta em três pilares (o "Tripé"):
 - [ ] **Categorização por Centro de Custo:** Pedagógico vs. Administrativo vs. Manutenção.
 
 ### Infraestrutura
+- [ ] **Variáveis de Ambiente (Vercel):** Adicionar `GEMINI_API_KEY`, `FIREBASE_CLIENT_EMAIL` e `FIREBASE_PRIVATE_KEY` no painel da Vercel para que a geração de relatórios via IA funcione em produção.
 - [ ] **Revogar chave do service-account.json** no Firebase Console (foi compartilhada em texto aberto).
 - [ ] **Regras do Firestore:** Avaliar se `logs_pedagogicos` precisa de regra de leitura para professores autenticados (quando sair do Showroom para produção).
 - [ ] **Path do projeto:** O diretório com parênteses e acentos (`03_LAB (Testes & IA Studio Free)`) impede `npx`/`npm run dev` de funcionar normalmente. Funciona com `node "node_modules/next/dist/bin/next" dev`.
