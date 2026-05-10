@@ -40,7 +40,7 @@ Responda APENAS com um objeto JSON válido, sem formatação markdown (\`\`\`jso
 **Observação da professora:**
 "${texto}"`;
 
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
     const result = await model.generateContent(prompt);
     let text = result.response.text().trim();
     
