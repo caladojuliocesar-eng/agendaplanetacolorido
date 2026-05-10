@@ -17,15 +17,18 @@ function getDb() {
       return null;
     }
 
-    // Limpeza "Ninja" da chave: remove aspas, espaços e garante que as quebras de linha sejam reais
     const formattedKey = privateKey
       .replace(/^['"]|['"]$/g, '') // Remove aspas simples ou duplas no início/fim
       .trim()
       .replace(/\\n/g, '\n'); // Converte \n literais em quebras de linha
 
-    console.log("Tentando inicializar Firebase Admin para o projeto:", projectId);
-    console.log("Email do Service Account:", clientEmail);
-    console.log("Tamanho da Private Key:", formattedKey.length);
+    console.log("=== DIAGNÓSTICO FIREBASE ===");
+    console.log("Projeto:", projectId);
+    console.log("Email:", clientEmail);
+    console.log("Tamanho da Key:", formattedKey.length, "caracteres");
+    console.log("Início da Key:", formattedKey.substring(0, 30) + "...");
+    console.log("Fim da Key:", "..." + formattedKey.substring(formattedKey.length - 30).replace(/\n/g, '[\\n]'));
+    console.log("============================");
 
     try {
       admin.initializeApp({
