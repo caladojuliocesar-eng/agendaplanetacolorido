@@ -2,6 +2,26 @@ import { NextResponse } from "next/server";
 import admin from "firebase-admin";
 
 // Initialize Admin SDK lazily to avoid build errors on Vercel
+function formatPrivateKey(rawKey: string): string {
+  let key = rawKey.replace(/^['"]|['"]$/g, '').trim();
+
+  // Se não começa com o header PEM, assume Base64
+  if (!key.startsWith('-----BEGIN')) {
+    key = Buffer.from(key, 'base64').toString('utf8');
+  }
+
+  // Normaliza TODAS as variações possíveis de newline:
+  // 1. \\n literal (4 chars: backslash backslash n) -> real newline
+  // 2. \n literal (2 chars: backslash n) -> real newline  
+  // 3. \r\n Windows style -> real newline
+  key = key
+    .replace(/\\\\n/g, '\n')
+    .replace(/\\n/g, '\n')
+    .replace(/\r\n/g, '\n');
+
+  return key;
+}
+
 function getDb() {
   try {
     if (admin.apps.length > 0) {
@@ -16,18 +36,20 @@ function getDb() {
       return { db: null, error: "Variáveis de ambiente ausentes." };
     }
 
-    // Limpeza e Decodificação robusta da chave
-    let formattedKey = privateKey.replace(/^['"]|['"]$/g, '').trim();
-
-    if (!formattedKey.startsWith('-----BEGIN')) {
-      try {
-        formattedKey = Buffer.from(formattedKey, 'base64').toString('utf8');
-      } catch (e: any) {
-        return { db: null, error: "Erro Base64: " + e.message };
-      }
+    let formattedKey: string;
+    try {
+      formattedKey = formatPrivateKey(privateKey);
+    } catch (e: any) {
+      return { db: null, error: "Erro ao formatar chave: " + e.message };
     }
 
-    formattedKey = formattedKey.split('\\n').join('\n');
+    // Validação: a chave deve começar e terminar com os marcadores PEM
+    if (!formattedKey.includes('-----BEGIN PRIVATE KEY-----') || !formattedKey.includes('-----END PRIVATE KEY-----')) {
+      return { 
+        db: null, 
+        error: "Chave não contém marcadores PEM válidos após processamento. Primeiros 40 chars: " + formattedKey.substring(0, 40)
+      };
+    }
 
     const app = admin.initializeApp({
       credential: admin.credential.cert({

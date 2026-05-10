@@ -3,6 +3,21 @@ import admin from "firebase-admin";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 // Initialize Admin SDK lazily to avoid build errors on Vercel
+function formatPrivateKey(rawKey: string): string {
+  let key = rawKey.replace(/^['"]|['"]$/g, '').trim();
+
+  if (!key.startsWith('-----BEGIN')) {
+    key = Buffer.from(key, 'base64').toString('utf8');
+  }
+
+  key = key
+    .replace(/\\\\n/g, '\n')
+    .replace(/\\n/g, '\n')
+    .replace(/\r\n/g, '\n');
+
+  return key;
+}
+
 function getDb() {
   try {
     if (admin.apps.length > 0) {
@@ -17,17 +32,19 @@ function getDb() {
       return { db: null, error: "Variáveis de ambiente ausentes." };
     }
 
-    let formattedKey = privateKey.replace(/^['"]|['"]$/g, '').trim();
-
-    if (!formattedKey.startsWith('-----BEGIN')) {
-      try {
-        formattedKey = Buffer.from(formattedKey, 'base64').toString('utf8');
-      } catch (e: any) {
-        return { db: null, error: "Erro Base64: " + e.message };
-      }
+    let formattedKey: string;
+    try {
+      formattedKey = formatPrivateKey(privateKey);
+    } catch (e: any) {
+      return { db: null, error: "Erro ao formatar chave: " + e.message };
     }
 
-    formattedKey = formattedKey.split('\\n').join('\n');
+    if (!formattedKey.includes('-----BEGIN PRIVATE KEY-----') || !formattedKey.includes('-----END PRIVATE KEY-----')) {
+      return { 
+        db: null, 
+        error: "Chave não contém marcadores PEM válidos após processamento."
+      };
+    }
 
     const app = admin.initializeApp({
       credential: admin.credential.cert({
