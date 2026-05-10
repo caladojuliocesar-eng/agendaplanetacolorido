@@ -49,7 +49,10 @@ export async function GET(request: Request) {
   const alunoId = searchParams.get("alunoId") || "aluno_otto";
 
   try {
-    const { db, error: initError } = getDb();
+    const result = getDb();
+    const db = result.db;
+    const initError = result.error;
+
     if (!db) {
       return NextResponse.json({ 
         error: "Falha na inicialização do Firebase Admin.",
