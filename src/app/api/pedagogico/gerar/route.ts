@@ -21,10 +21,17 @@ function getDb() {
     return null;
   }
 
-  const formattedKey = privateKey
-    .replace(/^['"]|['"]$/g, '')
-    .trim()
-    .split('\\n').join('\n');
+  let formattedKey = privateKey.replace(/^['"]|['"]$/g, '').trim();
+
+  if (!formattedKey.startsWith('-----BEGIN')) {
+    try {
+      formattedKey = Buffer.from(formattedKey, 'base64').toString('utf8');
+    } catch (e) {
+      console.error("Erro ao decodificar chave Base64 no gerador:", e);
+    }
+  }
+
+  formattedKey = formattedKey.split('\\n').join('\n');
 
   try {
     const app = admin.initializeApp({

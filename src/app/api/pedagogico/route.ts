@@ -12,10 +12,10 @@ function getDb() {
   const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
   if (!privateKey || !clientEmail || !projectId) {
-    console.error("ERRO: Faltam variáveis de ambiente para o Firebase Admin.", { 
-      hasKey: !!privateKey, 
-      hasEmail: !!clientEmail, 
-      hasProject: !!projectId 
+    console.error("ERRO: Faltam variáveis de ambiente para o Firebase Admin.", {
+      hasKey: !!privateKey,
+      hasEmail: !!clientEmail,
+      hasProject: !!projectId
     });
     return null;
   }
@@ -49,7 +49,7 @@ export async function GET(request: Request) {
   try {
     const db = getDb();
     if (!db) {
-      return NextResponse.json({ 
+      return NextResponse.json({
         error: "Configuração do Firebase ausente ou inválida no servidor.",
         envCheck: {
           hasKey: !!process.env.FIREBASE_PRIVATE_KEY,
@@ -73,7 +73,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ logs });
   } catch (error: any) {
     console.error("Erro detalhado na API Pedagogico:", error);
-    return NextResponse.json({ 
+    return NextResponse.json({
       error: "Erro ao buscar logs no Firestore.",
       details: error.message,
       stack: error.stack?.split('\n')[0] // Apenas a primeira linha do stack para segurança
@@ -85,7 +85,7 @@ export async function POST(request: Request) {
   try {
     const db = getDb();
     if (!db) return NextResponse.json({ error: "Configuração do Firebase ausente." }, { status: 500 });
-    
+
     const body = await request.json();
     const newLog = {
       alunoId: body.alunoId || "aluno_otto",
