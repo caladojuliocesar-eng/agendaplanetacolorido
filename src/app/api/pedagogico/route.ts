@@ -89,7 +89,9 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const db = getDb();
+    const result = getDb();
+    const db = result.db;
+    
     if (!db) return NextResponse.json({ error: "Configuração do Firebase ausente." }, { status: 500 });
 
     const body = await request.json();

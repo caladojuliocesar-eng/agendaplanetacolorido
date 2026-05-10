@@ -4,36 +4,31 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 
 // Initialize Admin SDK lazily to avoid build errors on Vercel
 function getDb() {
-  if (admin.apps.length > 0) {
-    return admin.app().firestore();
-  }
-
-  const privateKey = process.env.FIREBASE_PRIVATE_KEY;
-  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-  const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
-
-  if (!privateKey || !clientEmail || !projectId) {
-    console.error("ERRO: Faltam variáveis de ambiente para o Firebase Admin.", { 
-      hasKey: !!privateKey, 
-      hasEmail: !!clientEmail, 
-      hasProject: !!projectId 
-    });
-    return null;
-  }
-
-  let formattedKey = privateKey.replace(/^['"]|['"]$/g, '').trim();
-
-  if (!formattedKey.startsWith('-----BEGIN')) {
-    try {
-      formattedKey = Buffer.from(formattedKey, 'base64').toString('utf8');
-    } catch (e) {
-      console.error("Erro ao decodificar chave Base64 no gerador:", e);
-    }
-  }
-
-  formattedKey = formattedKey.split('\\n').join('\n');
-
   try {
+    if (admin.apps.length > 0) {
+      return { db: admin.app().firestore(), error: null };
+    }
+
+    const privateKey = process.env.FIREBASE_PRIVATE_KEY;
+    const clientEmail = process.env.FIREBASE_CLIENT_EMAIL?.replace(/^['"]|['"]$/g, '').trim();
+    const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID?.replace(/^['"]|['"]$/g, '').trim();
+
+    if (!privateKey || !clientEmail || !projectId) {
+      return { db: null, error: "Variáveis de ambiente ausentes." };
+    }
+
+    let formattedKey = privateKey.replace(/^['"]|['"]$/g, '').trim();
+
+    if (!formattedKey.startsWith('-----BEGIN')) {
+      try {
+        formattedKey = Buffer.from(formattedKey, 'base64').toString('utf8');
+      } catch (e: any) {
+        return { db: null, error: "Erro Base64: " + e.message };
+      }
+    }
+
+    formattedKey = formattedKey.split('\\n').join('\n');
+
     const app = admin.initializeApp({
       credential: admin.credential.cert({
         projectId,
@@ -41,10 +36,11 @@ function getDb() {
         privateKey: formattedKey,
       }),
     });
-    return app.firestore();
-  } catch (initError) {
+    
+    return { db: app.firestore(), error: null };
+  } catch (initError: any) {
     console.error("Falha ao inicializar Firebase Admin no gerador:", initError);
-    return null;
+    return { db: null, error: initError.message };
   }
 }
 
@@ -52,8 +48,16 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
 export async function POST(request: Request) {
   try {
-    const db = getDb();
-    if (!db) return NextResponse.json({ error: "Configuração do Firebase ausente." }, { status: 500 });
+    const result = getDb();
+    const db = result.db;
+    
+    if (!db) {
+      return NextResponse.json({ 
+        error: "Falha na inicialização do Firebase Admin no gerador.",
+        details: result.error 
+      }, { status: 500 });
+    }
+
     const { alunoId = "aluno_otto" } = await request.json();
 
     const snap = await db
