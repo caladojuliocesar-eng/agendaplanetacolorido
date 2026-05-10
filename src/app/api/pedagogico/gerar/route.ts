@@ -4,39 +4,41 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 
 // Initialize Admin SDK lazily to avoid build errors on Vercel
 function getDb() {
-  if (!admin.apps.length) {
-    const privateKey = process.env.FIREBASE_PRIVATE_KEY;
-    const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-    const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
-
-    if (!privateKey || !clientEmail || !projectId) {
-      console.error("ERRO: Faltam variáveis de ambiente para o Firebase Admin.", { 
-        hasKey: !!privateKey, 
-        hasEmail: !!clientEmail, 
-        hasProject: !!projectId 
-      });
-      return null;
-    }
-
-    const formattedKey = privateKey
-      .replace(/^['"]|['"]$/g, '')
-      .trim()
-      .replace(/\\n/g, '\n');
-
-    try {
-      admin.initializeApp({
-        credential: admin.credential.cert({
-          projectId,
-          clientEmail,
-          privateKey: formattedKey,
-        }),
-      });
-    } catch (initError) {
-      console.error("Falha ao inicializar Firebase Admin no gerador:", initError);
-      return null;
-    }
+  if (admin.apps.length > 0) {
+    return admin.app().firestore();
   }
-  return admin.firestore();
+
+  const privateKey = process.env.FIREBASE_PRIVATE_KEY;
+  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+  const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+
+  if (!privateKey || !clientEmail || !projectId) {
+    console.error("ERRO: Faltam variáveis de ambiente para o Firebase Admin.", { 
+      hasKey: !!privateKey, 
+      hasEmail: !!clientEmail, 
+      hasProject: !!projectId 
+    });
+    return null;
+  }
+
+  const formattedKey = privateKey
+    .replace(/^['"]|['"]$/g, '')
+    .trim()
+    .split('\\n').join('\n');
+
+  try {
+    const app = admin.initializeApp({
+      credential: admin.credential.cert({
+        projectId,
+        clientEmail,
+        privateKey: formattedKey,
+      }),
+    });
+    return app.firestore();
+  } catch (initError) {
+    console.error("Falha ao inicializar Firebase Admin no gerador:", initError);
+    return null;
+  }
 }
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");

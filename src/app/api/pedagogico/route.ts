@@ -3,48 +3,43 @@ import admin from "firebase-admin";
 
 // Initialize Admin SDK lazily to avoid build errors on Vercel
 function getDb() {
-  if (!admin.apps.length) {
-    const privateKey = process.env.FIREBASE_PRIVATE_KEY;
-    const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-    const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
-
-    if (!privateKey || !clientEmail || !projectId) {
-      console.error("ERRO: Faltam variáveis de ambiente para o Firebase Admin.", { 
-        hasKey: !!privateKey, 
-        hasEmail: !!clientEmail, 
-        hasProject: !!projectId 
-      });
-      return null;
-    }
-
-    const formattedKey = privateKey
-      .replace(/^['"]|['"]$/g, '') // Remove aspas simples ou duplas no início/fim
-      .trim()
-      .replace(/\\n/g, '\n'); // Converte \n literais em quebras de linha
-
-    console.log("=== DIAGNÓSTICO FIREBASE ===");
-    console.log("Projeto:", projectId);
-    console.log("Email:", clientEmail);
-    console.log("Tamanho da Key:", formattedKey.length, "caracteres");
-    console.log("Início da Key:", formattedKey.substring(0, 30) + "...");
-    console.log("Fim da Key:", "..." + formattedKey.substring(formattedKey.length - 30).replace(/\n/g, '[\\n]'));
-    console.log("============================");
-
-    try {
-      admin.initializeApp({
-        credential: admin.credential.cert({
-          projectId,
-          clientEmail,
-          privateKey: formattedKey,
-        }),
-      });
-      console.log("Firebase Admin inicializado com sucesso!");
-    } catch (initError) {
-      console.error("Falha crítica ao inicializar Firebase Admin:", initError);
-      return null;
-    }
+  if (admin.apps.length > 0) {
+    return admin.app().firestore();
   }
-  return admin.firestore();
+
+  const privateKey = process.env.FIREBASE_PRIVATE_KEY;
+  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+  const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+
+  if (!privateKey || !clientEmail || !projectId) {
+    console.error("ERRO: Faltam variáveis de ambiente para o Firebase Admin.", { 
+      hasKey: !!privateKey, 
+      hasEmail: !!clientEmail, 
+      hasProject: !!projectId 
+    });
+    return null;
+  }
+
+  // Limpeza robusta da chave para Vercel
+  const formattedKey = privateKey
+    .replace(/^['"]|['"]$/g, '')
+    .trim()
+    .split('\\n').join('\n'); // Garante conversão de \n literais
+
+  try {
+    const app = admin.initializeApp({
+      credential: admin.credential.cert({
+        projectId,
+        clientEmail,
+        privateKey: formattedKey,
+      }),
+    });
+    console.log("Firebase Admin inicializado com sucesso para o projeto:", projectId);
+    return app.firestore();
+  } catch (initError) {
+    console.error("Falha ao inicializar Firebase Admin:", initError);
+    return null;
+  }
 }
 
 export async function GET(request: Request) {
