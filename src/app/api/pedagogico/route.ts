@@ -3,30 +3,32 @@ import admin from "firebase-admin";
 
 // Initialize Admin SDK lazily to avoid build errors on Vercel
 function getDb() {
-  if (admin.apps.length > 0) {
-    return admin.app().firestore();
-  }
-
-  const privateKey = process.env.FIREBASE_PRIVATE_KEY;
-  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-  const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
-
-  if (!privateKey || !clientEmail || !projectId) {
-    console.error("ERRO: Faltam variáveis de ambiente para o Firebase Admin.", {
-      hasKey: !!privateKey,
-      hasEmail: !!clientEmail,
-      hasProject: !!projectId
-    });
-    return null;
-  }
-
-  // Limpeza robusta da chave para Vercel
-  const formattedKey = privateKey
-    .replace(/^['"]|['"]$/g, '')
-    .trim()
-    .split('\\n').join('\n'); // Garante conversão de \n literais
-
   try {
+    if (admin.apps.length > 0) {
+      return { db: admin.app().firestore(), error: null };
+    }
+
+    const privateKey = process.env.FIREBASE_PRIVATE_KEY;
+    const clientEmail = process.env.FIREBASE_CLIENT_EMAIL?.replace(/^['"]|['"]$/g, '').trim();
+    const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID?.replace(/^['"]|['"]$/g, '').trim();
+
+    if (!privateKey || !clientEmail || !projectId) {
+      return { db: null, error: "Variáveis de ambiente ausentes." };
+    }
+
+    // Limpeza e Decodificação robusta da chave
+    let formattedKey = privateKey.replace(/^['"]|['"]$/g, '').trim();
+
+    if (!formattedKey.startsWith('-----BEGIN')) {
+      try {
+        formattedKey = Buffer.from(formattedKey, 'base64').toString('utf8');
+      } catch (e: any) {
+        return { db: null, error: "Erro Base64: " + e.message };
+      }
+    }
+
+    formattedKey = formattedKey.split('\\n').join('\n');
+
     const app = admin.initializeApp({
       credential: admin.credential.cert({
         projectId,
@@ -34,11 +36,11 @@ function getDb() {
         privateKey: formattedKey,
       }),
     });
-    console.log("Firebase Admin inicializado com sucesso para o projeto:", projectId);
-    return app.firestore();
-  } catch (initError) {
+    
+    return { db: app.firestore(), error: null };
+  } catch (initError: any) {
     console.error("Falha ao inicializar Firebase Admin:", initError);
-    return null;
+    return { db: null, error: initError.message };
   }
 }
 
@@ -47,15 +49,15 @@ export async function GET(request: Request) {
   const alunoId = searchParams.get("alunoId") || "aluno_otto";
 
   try {
-    const db = getDb();
+    const { db, error: initError } = getDb();
     if (!db) {
-      return NextResponse.json({
-        error: "Configuração do Firebase ausente ou inválida no servidor.",
+      return NextResponse.json({ 
+        error: "Falha na inicialização do Firebase Admin.",
+        initError: initError,
         envCheck: {
           keyLength: process.env.FIREBASE_PRIVATE_KEY?.length || 0,
           emailLength: process.env.FIREBASE_CLIENT_EMAIL?.length || 0,
           projectLength: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID?.length || 0,
-          hasAdmin: !!admin
         }
       }, { status: 500 });
     }
