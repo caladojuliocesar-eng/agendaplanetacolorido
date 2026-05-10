@@ -49,9 +49,9 @@ export async function GET(request: Request) {
   const alunoId = searchParams.get("alunoId") || "aluno_otto";
 
   try {
-    const result = getDb();
-    const db = result.db;
-    const initError = result.error;
+    const dbResult = getDb();
+    const db = dbResult.db;
+    const initError = dbResult.error;
 
     if (!db) {
       return NextResponse.json({ 
@@ -89,8 +89,8 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const result = getDb();
-    const db = result.db;
+    const dbResult = getDb();
+    const db = dbResult.db;
     
     if (!db) return NextResponse.json({ error: "Configuração do Firebase ausente." }, { status: 500 });
 

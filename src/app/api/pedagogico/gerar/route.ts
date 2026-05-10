@@ -48,13 +48,13 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
 export async function POST(request: Request) {
   try {
-    const result = getDb();
-    const db = result.db;
+    const dbResult = getDb();
+    const db = dbResult.db;
     
     if (!db) {
       return NextResponse.json({ 
         error: "Falha na inicialização do Firebase Admin no gerador.",
-        details: result.error 
+        details: dbResult.error 
       }, { status: 500 });
     }
 
