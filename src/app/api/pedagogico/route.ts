@@ -5,23 +5,41 @@ import admin from "firebase-admin";
 function getDb() {
   if (!admin.apps.length) {
     const privateKey = process.env.FIREBASE_PRIVATE_KEY;
-    if (!privateKey) {
-      console.warn("FIREBASE_PRIVATE_KEY is missing. Admin SDK initialization skipped.");
+    const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+    const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+
+    if (!privateKey || !clientEmail || !projectId) {
+      console.error("ERRO: Faltam variáveis de ambiente para o Firebase Admin.", { 
+        hasKey: !!privateKey, 
+        hasEmail: !!clientEmail, 
+        hasProject: !!projectId 
+      });
       return null;
     }
 
-    // Limpeza robusta da chave para evitar erros comuns de cópia/cola na Vercel
+    // Limpeza "Ninja" da chave: remove aspas, espaços e garante que as quebras de linha sejam reais
     const formattedKey = privateKey
-      .replace(/^"|"$/g, '') // Remove aspas no início e fim
-      .replace(/\\n/g, "\n"); // Converte \n literais em quebras de linha reais
+      .replace(/^['"]|['"]$/g, '') // Remove aspas simples ou duplas no início/fim
+      .trim()
+      .replace(/\\n/g, '\n'); // Converte \n literais em quebras de linha
 
-    admin.initializeApp({
-      credential: admin.credential.cert({
-        projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-        privateKey: formattedKey,
-      }),
-    });
+    console.log("Tentando inicializar Firebase Admin para o projeto:", projectId);
+    console.log("Email do Service Account:", clientEmail);
+    console.log("Tamanho da Private Key:", formattedKey.length);
+
+    try {
+      admin.initializeApp({
+        credential: admin.credential.cert({
+          projectId,
+          clientEmail,
+          privateKey: formattedKey,
+        }),
+      });
+      console.log("Firebase Admin inicializado com sucesso!");
+    } catch (initError) {
+      console.error("Falha crítica ao inicializar Firebase Admin:", initError);
+      return null;
+    }
   }
   return admin.firestore();
 }

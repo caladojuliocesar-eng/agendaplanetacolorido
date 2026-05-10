@@ -6,23 +6,35 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 function getDb() {
   if (!admin.apps.length) {
     const privateKey = process.env.FIREBASE_PRIVATE_KEY;
-    if (!privateKey) {
-      console.warn("FIREBASE_PRIVATE_KEY is missing. Admin SDK initialization skipped.");
+    const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+    const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+
+    if (!privateKey || !clientEmail || !projectId) {
+      console.error("ERRO: Faltam variáveis de ambiente para o Firebase Admin.", { 
+        hasKey: !!privateKey, 
+        hasEmail: !!clientEmail, 
+        hasProject: !!projectId 
+      });
       return null;
     }
 
-    // Limpeza robusta da chave para evitar erros comuns de cópia/cola na Vercel
     const formattedKey = privateKey
-      .replace(/^"|"$/g, '') // Remove aspas no início e fim
-      .replace(/\\n/g, "\n"); // Converte \n literais em quebras de linha reais
+      .replace(/^['"]|['"]$/g, '')
+      .trim()
+      .replace(/\\n/g, '\n');
 
-    admin.initializeApp({
-      credential: admin.credential.cert({
-        projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-        privateKey: formattedKey,
-      }),
-    });
+    try {
+      admin.initializeApp({
+        credential: admin.credential.cert({
+          projectId,
+          clientEmail,
+          privateKey: formattedKey,
+        }),
+      });
+    } catch (initError) {
+      console.error("Falha ao inicializar Firebase Admin no gerador:", initError);
+      return null;
+    }
   }
   return admin.firestore();
 }
