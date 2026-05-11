@@ -56,7 +56,7 @@ export async function resolveUserProfile(
       
       const cleanEmail = user.email?.toLowerCase().trim();
       
-      // Fallback robusto - Produção
+      // Fallback robusto
       if (cleanEmail === 'contato@juliocalado.com.br' || cleanEmail === 'diretoria@ottomatic.com.br') {
         return { uid: user.uid, email: user.email, role: 'admin', escolaId: 'planeta-colorido', nome: 'Admin' } as UserProfile;
       }
@@ -73,17 +73,6 @@ export async function resolveUserProfile(
           nome: isGracielly ? 'Gracielly' : 'Julio Calado', 
           filhos: [isGracielly ? 'helena' : 'otto'] 
         } as UserProfile;
-      }
-
-      // Fallback - Usuários Demo (Showroom)
-      if (cleanEmail === 'diretora@demo.com') {
-        return { uid: user.uid, email: user.email, role: 'admin', escolaId: 'planeta-colorido', nome: 'Fabiana (Demo)' } as UserProfile;
-      }
-      if (cleanEmail === 'profe@demo.com') {
-        return { uid: user.uid, email: user.email, role: 'professor', escolaId: 'planeta-colorido', nome: 'Ana (Demo)', turma: 'Berçário II' } as UserProfile;
-      }
-      if (cleanEmail === 'pai@demo.com') {
-        return { uid: user.uid, email: user.email, role: 'pai', escolaId: 'planeta-colorido', nome: 'Pai do Otto (Demo)', filhos: ['otto'] } as UserProfile;
       }
       
       throw new Error(`Permissão negada pelo Firebase. Regras bloqueando ID: ${user.uid}`);
