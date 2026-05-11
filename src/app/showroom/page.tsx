@@ -187,24 +187,19 @@ export default function ShowroomLanding() {
               <p className="text-slate-400 text-sm">Use a senha <b className="text-white">demo123</b> para todos.</p>
             </div>
 
-            {/* Novo: Card Inteligência Pedagógica (Clones Isolados) */}
+            {/* Novo: Portas de Entrada por Papel */}
             <div className="border-t border-white/10 pt-8 mt-8">
-              <p className="text-slate-500 text-xs uppercase tracking-widest font-bold mb-4">✨ Fluxo do Relatório Pedagógico (Showroom)</p>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <p className="text-slate-500 text-xs uppercase tracking-widest font-bold mb-4">✨ Experiência Completa</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Link href="/showroom/professora" className="bg-emerald-500/10 border border-emerald-500/20 p-5 rounded-2xl group hover:bg-emerald-500/20 transition-all block" style={{ textDecoration: "none" }}>
-                  <span className="block text-2xl mb-2">1️⃣</span>
-                  <span className="block text-xs font-bold text-emerald-400 mb-1">Rotina da Professora</span>
-                  <p className="text-xs text-slate-400">Inserção de dados via voz ou texto no dia a dia.</p>
-                </Link>
-                <Link href="/showroom/pedagogico" className="bg-violet-500/10 border border-violet-500/20 p-5 rounded-2xl group hover:bg-violet-500/20 transition-all block" style={{ textDecoration: "none" }}>
-                  <span className="block text-2xl mb-2">2️⃣</span>
-                  <span className="block text-xs font-bold text-violet-400 mb-1">Fechamento (Professora)</span>
-                  <p className="text-xs text-slate-400">Dashboard de notas, geração de rascunho com IA e envio.</p>
+                  <span className="block text-3xl mb-3">👩‍🏫</span>
+                  <span className="block text-sm font-bold text-emerald-400 mb-1">App da Professora</span>
+                  <p className="text-xs text-slate-400">Vivencie o registro diário com input de voz integrado e o painel de fechamento de relatórios, tudo no mesmo ambiente.</p>
                 </Link>
                 <Link href="/showroom/diretora" className="bg-orange-500/10 border border-orange-500/20 p-5 rounded-2xl group hover:bg-orange-500/20 transition-all block" style={{ textDecoration: "none" }}>
-                  <span className="block text-2xl mb-2">3️⃣</span>
-                  <span className="block text-xs font-bold text-orange-400 mb-1">Aprovação (Coordenação)</span>
-                  <p className="text-xs text-slate-400">Revisão final, edição guiada por IA e geração do PDF.</p>
+                  <span className="block text-3xl mb-3">👩‍💼</span>
+                  <span className="block text-sm font-bold text-orange-400 mb-1">Painel da Coordenação</span>
+                  <p className="text-xs text-slate-400">Acesse a caixa de entrada de aprovações, edite textos com ajuda da IA e publique o documento final aos pais.</p>
                 </Link>
               </div>
             </div>
