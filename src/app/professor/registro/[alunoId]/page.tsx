@@ -54,6 +54,13 @@ export default function RegistroIndividual() {
 
   const [today, setToday] = useState(getTodayDateString());
 
+  // ====== AI Pedagogical Assistant States ======
+  const [iaText, setIaText] = useState("");
+  const [iaState, setIaState] = useState<"idle" | "analyzing" | "result" | "saving">("idle");
+  const [iaResult, setIaResult] = useState<any>(null);
+  const [isPedagogicoOpen, setIsPedagogicoOpen] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+
   // Refresh today's date when app becomes visible or at intervals
   useEffect(() => {
     const handleVisibilityChange = () => {
@@ -141,6 +148,65 @@ export default function RegistroIndividual() {
     }));
     setSaved(false);
   };
+
+  // ====== AI Pedagogical Assistant Functions ======
+  async function handleAnalyze() {
+    if (!iaText.trim()) return;
+    setIaState("analyzing");
+    try {
+      const res = await fetch("/api/pedagogico/classificar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ texto: iaText }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      setIaResult(data);
+      setIaState("result");
+    } catch (err) {
+      console.error(err);
+      alert("Erro ao analisar texto.");
+      setIaState("idle");
+    }
+  }
+
+  async function handleSavePedagogico() {
+    if (!iaResult || !profile) return;
+    setIaState("saving");
+    try {
+      const payload = {
+        alunoId: alunoId,
+        escolaId: profile.escolaId,
+        turma: student?.turma || profile.turma || "",
+        professorId: profile.uid,
+        pilar: iaResult.pilar,
+        pilarLabel: iaResult.pilarLabel,
+        nota: iaResult.notaRefinada,
+        sentimento: iaResult.sentimento
+      };
+
+      const res = await fetch("/api/pedagogico/salvar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+
+      // Reset
+      setIaText("");
+      setIaResult(null);
+      setIaState("idle");
+      setIsPedagogicoOpen(false);
+      // Optional: Add a simple toast or notification instead of native alert
+      alert("Registro pedagógico salvo com sucesso!");
+    } catch (err) {
+      console.error(err);
+      alert("Erro ao salvar log pedagógico.");
+      setIaState("result");
+    }
+  }
 
   const toggleActivity = (key: keyof Activities) => {
     setActivities((prev) => ({
@@ -622,6 +688,86 @@ export default function RegistroIndividual() {
       </div>
 
       </div> {/* End of opacity wrapper */}
+
+      {/* ====== ASSISTENTE PEDAGÓGICO (IA) ====== */}
+      <div className="card" style={{ padding: "20px 24px", marginBottom: 24, border: "2px solid transparent", backgroundImage: "linear-gradient(white, white), linear-gradient(135deg, #8B5CF6, #3B82F6)", backgroundOrigin: "border-box", backgroundClip: "padding-box, border-box" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }} onClick={() => setIsPedagogicoOpen(!isPedagogicoOpen)}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <div style={{ width: 40, height: 40, borderRadius: 12, background: "linear-gradient(135deg, #F3E8FF, #DBEAFE)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>
+              🧠
+            </div>
+            <div>
+              <p style={{ margin: 0, fontSize: 15, fontWeight: 800, color: "#1E293B" }}>Assistente Pedagógico</p>
+              <p style={{ margin: 0, fontSize: 12, color: "#64748B" }}>Relatar comportamento via Voz</p>
+            </div>
+          </div>
+          <span style={{ transform: isPedagogicoOpen ? "rotate(180deg)" : "rotate(0)", transition: "0.2s", color: "#64748B" }}>▼</span>
+        </div>
+
+        {isPedagogicoOpen && (
+          <div style={{ marginTop: 20, paddingTop: 20, borderTop: "1px solid #E2E8F0" }}>
+            <p style={{ margin: "0 0 12px", fontSize: 13, color: "#334155" }}>
+              O que você observou no {student?.nome || "aluno"} hoje?
+            </p>
+            <div style={{ position: "relative" }}>
+              <textarea
+                value={iaText}
+                onChange={e => setIaText(e.target.value)}
+                placeholder="Ex: O Otto conseguiu montar o quebra-cabeça de 10 peças sozinho e ficou muito orgulhoso..."
+                style={{ width: "100%", padding: "16px", paddingRight: "60px", borderRadius: 16, border: "1px solid #CBD5E1", fontSize: 14, minHeight: 100, resize: "none", boxSizing: "border-box" }}
+                disabled={iaState !== "idle"}
+              />
+              <button
+                onClick={() => setIsListening(!isListening)}
+                style={{ position: "absolute", right: 12, bottom: 16, width: 40, height: 40, borderRadius: 20, border: "none", background: isListening ? "#EF4444" : "#F1F5F9", color: isListening ? "white" : "#64748B", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", transition: "0.2s" }}
+              >
+                {isListening ? "⏹️" : "🎤"}
+              </button>
+            </div>
+
+            {iaState === "idle" && (
+              <button onClick={handleAnalyze} disabled={!iaText.trim()} style={{ width: "100%", marginTop: 12, padding: "14px", borderRadius: 12, border: "none", background: iaText.trim() ? "linear-gradient(135deg, #8B5CF6, #6366F1)" : "#E2E8F0", color: iaText.trim() ? "white" : "#94A3B8", fontWeight: 700, fontSize: 14, cursor: iaText.trim() ? "pointer" : "not-allowed", transition: "0.2s" }}>
+                ✨ Analisar com Inteligência Artificial
+              </button>
+            )}
+
+            {iaState === "analyzing" && (
+              <div style={{ marginTop: 16, padding: 16, background: "#F8FAFC", borderRadius: 12, textAlign: "center" }}>
+                <div className="spinner" style={{ margin: "0 auto 12px", width: 24, height: 24, borderWidth: 3 }} />
+                <p style={{ margin: 0, fontSize: 13, color: "#64748B", fontWeight: 600 }}>A IA está classificando sua observação...</p>
+              </div>
+            )}
+
+            {iaState === "result" && iaResult && (
+              <div style={{ marginTop: 16, animation: "fadeIn 0.3s ease-out" }}>
+                <div style={{ padding: 16, background: "#F8FAFC", borderRadius: 12, border: "1px solid #E2E8F0", marginBottom: 16 }}>
+                  <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+                    <span style={{ background: "white", padding: "4px 10px", borderRadius: 20, fontSize: 11, fontWeight: 700, color: "#6366F1", border: "1px solid #E0E7FF" }}>{iaResult.pilarLabel}</span>
+                    <span style={{ background: iaResult.sentimento === "positivo" ? "#DCFCE7" : iaResult.sentimento === "atencao" ? "#FEE2E2" : "#F1F5F9", color: iaResult.sentimento === "positivo" ? "#166534" : iaResult.sentimento === "atencao" ? "#991B1B" : "#475569", padding: "4px 10px", borderRadius: 20, fontSize: 11, fontWeight: 700 }}>
+                      {iaResult.sentimento === "positivo" ? "✅ Positivo" : iaResult.sentimento === "atencao" ? "⚠️ Atenção" : "➖ Neutro"}
+                    </span>
+                  </div>
+                  <p style={{ margin: 0, fontSize: 14, color: "#334155", lineHeight: 1.5 }}>
+                    "{iaResult.notaRefinada}"
+                  </p>
+                </div>
+                <div style={{ display: "flex", gap: 12 }}>
+                  <button onClick={() => setIaState("idle")} style={{ flex: 1, padding: "12px", borderRadius: 12, border: "1px solid #CBD5E1", background: "white", color: "#64748B", fontWeight: 700, cursor: "pointer" }}>Descartar</button>
+                  <button onClick={handleSavePedagogico} style={{ flex: 2, padding: "12px", borderRadius: 12, border: "none", background: "linear-gradient(135deg, #10B981, #059669)", color: "white", fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                    💾 Salvar no Histórico
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {iaState === "saving" && (
+              <div style={{ marginTop: 16, padding: 16, background: "#F0FDF4", borderRadius: 12, textAlign: "center", color: "#166534" }}>
+                Salvando no prontuário do aluno...
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* ====== SAVE BUTTON ====== */}
       <button
