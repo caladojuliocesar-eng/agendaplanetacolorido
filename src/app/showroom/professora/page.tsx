@@ -47,6 +47,8 @@ export default function ShowroomProfessora() {
   const [iaState, setIaState] = useState<"idle" | "analyzing" | "result" | "saving">("idle");
   const [iaResult, setIaResult] = useState<any>(null);
   const [pedagogicoLogs, setPedagogicoLogs] = useState<LogPedagogico[]>([]);
+  const [isPedagogicoOpen, setIsPedagogicoOpen] = useState(false);
+  const [isListening, setIsListening] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -114,12 +116,39 @@ export default function ShowroomProfessora() {
       setIaText("");
       setIaResult(null);
       setIaState("idle");
+      setIsPedagogicoOpen(false); // Fecha ao salvar
     } catch (err) {
       console.error(err);
       alert("Erro ao salvar.");
       setIaState("result");
     }
   }
+
+  // Função Simples de Voz (Usa a Web Speech API do navegador)
+  const toggleVoice = () => {
+    if (!("webkitSpeechRecognition" in window) && !("SpeechRecognition" in window)) {
+      alert("Seu navegador não suporta digitação por voz. Tente usar o botão de microfone do seu teclado no celular.");
+      return;
+    }
+    
+    if (isListening) return; // Parar a gravação não é manual na api simples, ela para ao silêncio.
+
+    setIsListening(true);
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    recognition.lang = "pt-BR";
+    recognition.interimResults = false;
+    
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript;
+      setIaText(prev => prev ? prev + " " + transcript : transcript);
+    };
+
+    recognition.onerror = (e: any) => console.error("Erro de voz", e);
+    recognition.onend = () => setIsListening(false);
+
+    recognition.start();
+  };
 
   if (!mounted) return null;
 
@@ -193,88 +222,129 @@ export default function ShowroomProfessora() {
         <div style={{ opacity: ausente ? 0.4 : 1, pointerEvents: ausente ? "none" : "auto", transition: "opacity 0.2s" }}>
 
           {/* ====== MÓDULO NOVO: INPUT PEDAGÓGICO IA ====== */}
-          <div className="card" style={{ padding: 20, marginBottom: 16, border: "2px solid #818CF8", background: "#EEF2FF" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-              <span style={{ fontSize: 20 }}>🧠</span>
-              <p className="section-title" style={{ margin: 0, color: "#4F46E5" }}>Observação Pedagógica</p>
-            </div>
-            
-            <p style={{ fontSize: 13, color: "#4338CA", margin: "0 0 12px", lineHeight: 1.4 }}>
-              Deixe a IA organizar o Diário de Bordo do Otto. Escreva livremente o que aconteceu hoje.
-            </p>
-
-            <textarea
-              className="text-input"
-              rows={3}
-              placeholder="Ex: Hoje ele dividiu o brinquedo, brincou bastante no tanque de areia..."
-              value={iaText}
-              onChange={(e) => setIaText(e.target.value)}
-              disabled={iaState === "analyzing" || iaState === "saving"}
-              style={{ background: "white", border: "1px solid #C7D2FE", marginBottom: 12 }}
-            />
-
-            {(iaState === "idle" || iaState === "analyzing") && (
+          <div style={{ marginBottom: 16 }}>
+            {!isPedagogicoOpen ? (
               <button
-                onClick={handleAnalyze}
-                disabled={iaState === "analyzing" || !iaText.trim()}
-                className="btn btn--primary btn--block"
+                onClick={() => setIsPedagogicoOpen(true)}
+                className="btn btn--block"
                 style={{
-                  background: iaState === "analyzing" || !iaText.trim() ? "#A5B4FC" : "#6366F1",
-                  border: "none", fontSize: 14
+                  background: "#EEF2FF",
+                  color: "#4F46E5",
+                  border: "2px dashed #A5B4FC",
+                  padding: "16px",
+                  fontSize: 14,
+                  fontWeight: 700,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 8,
+                  transition: "all 0.2s"
                 }}
               >
-                {iaState === "analyzing" ? "🔄 A IA está lendo..." : "✨ Classificar Observação"}
+                <span style={{ fontSize: 18 }}>📝</span> Adicionar Observação Pedagógica
               </button>
-            )}
+            ) : (
+              <div className="card" style={{ padding: 20, border: "2px solid #818CF8", background: "#EEF2FF" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ fontSize: 20 }}>🧠</span>
+                    <p className="section-title" style={{ margin: 0, color: "#4F46E5" }}>Nova Observação</p>
+                  </div>
+                  <button 
+                    onClick={() => setIsPedagogicoOpen(false)}
+                    style={{ background: "none", border: "none", fontSize: 16, cursor: "pointer", color: "#6366F1", padding: 4 }}
+                  >
+                    ✕
+                  </button>
+                </div>
 
-            {iaState === "result" && iaResult && (
-              <div style={{ background: "white", borderRadius: 12, padding: 16, border: "1px solid #C7D2FE" }}>
-                <p style={{ margin: "0 0 12px", fontSize: 11, fontWeight: 800, color: "#4F46E5", textTransform: "uppercase" }}>
-                  Resultado da IA
-                </p>
-                <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
-                  <span style={{ padding: "4px 10px", borderRadius: 20, fontSize: 12, fontWeight: 700, background: "#F1F5F9", color: "#334155" }}>
-                    {PILAR_CONFIG[iaResult.pilarId]?.icon} {iaResult.pilarLabel}
-                  </span>
-                  <span style={{
-                    padding: "4px 10px", borderRadius: 20, fontSize: 12, fontWeight: 700,
-                    background: iaResult.sentimento === "positivo" ? "#DCFCE7" : iaResult.sentimento === "atencao" ? "#FEE2E2" : "#F1F5F9",
-                    color: iaResult.sentimento === "positivo" ? "#166534" : iaResult.sentimento === "atencao" ? "#991B1B" : "#475569",
-                  }}>
-                    {iaResult.sentimento === "positivo" ? "✅ Positivo" : iaResult.sentimento === "atencao" ? "⚠️ Atenção" : "➖ Neutro"}
-                  </span>
-                </div>
-                <div style={{ display: "flex", gap: 8 }}>
-                  <button onClick={handleSavePedagogico} className="btn btn--primary" style={{ flex: 1, background: "#4F46E5", border: "none", fontSize: 13 }}>
-                    Salvar
+                <div style={{ position: "relative" }}>
+                  <textarea
+                    className="text-input"
+                    rows={3}
+                    placeholder="Ex: Hoje ele dividiu o brinquedo, brincou bastante no tanque de areia..."
+                    value={iaText}
+                    onChange={(e) => setIaText(e.target.value)}
+                    disabled={iaState === "analyzing" || iaState === "saving"}
+                    style={{ background: "white", border: "1px solid #C7D2FE", marginBottom: 12, paddingRight: 40 }}
+                  />
+                  {/* Botão de Gravação por Voz */}
+                  <button
+                    onClick={toggleVoice}
+                    disabled={iaState === "analyzing" || iaState === "saving"}
+                    style={{
+                      position: "absolute", right: 8, top: 8,
+                      background: isListening ? "#EF4444" : "#EEF2FF",
+                      color: isListening ? "white" : "#4F46E5",
+                      border: "none", borderRadius: "50%",
+                      width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center",
+                      cursor: "pointer", fontSize: 16, transition: "background 0.2s"
+                    }}
+                    title="Falar"
+                  >
+                    {isListening ? "🔴" : "🎤"}
                   </button>
-                  <button onClick={() => { setIaState("idle"); setIaResult(null); }} className="btn btn--secondary" style={{ flex: 1, fontSize: 13 }}>
-                    Descartar
-                  </button>
                 </div>
+
+                {(iaState === "idle" || iaState === "analyzing") && (
+                  <button
+                    onClick={handleAnalyze}
+                    disabled={iaState === "analyzing" || !iaText.trim()}
+                    className="btn btn--primary btn--block"
+                    style={{
+                      background: iaState === "analyzing" || !iaText.trim() ? "#A5B4FC" : "#6366F1",
+                      border: "none", fontSize: 14
+                    }}
+                  >
+                    {iaState === "analyzing" ? "🔄 A IA está lendo..." : "✨ Salvar Observação"}
+                  </button>
+                )}
+
+                {iaState === "result" && iaResult && (
+                  <div style={{ background: "white", borderRadius: 12, padding: 16, border: "1px solid #C7D2FE" }}>
+                    <p style={{ margin: "0 0 12px", fontSize: 11, fontWeight: 800, color: "#4F46E5", textTransform: "uppercase" }}>
+                      Classificado como:
+                    </p>
+                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
+                      <span style={{ padding: "4px 10px", borderRadius: 20, fontSize: 12, fontWeight: 700, background: "#F1F5F9", color: "#334155" }}>
+                        {PILAR_CONFIG[iaResult.pilarId]?.icon} {iaResult.pilarLabel}
+                      </span>
+                      <span style={{
+                        padding: "4px 10px", borderRadius: 20, fontSize: 12, fontWeight: 700,
+                        background: iaResult.sentimento === "positivo" ? "#DCFCE7" : iaResult.sentimento === "atencao" ? "#FEE2E2" : "#F1F5F9",
+                        color: iaResult.sentimento === "positivo" ? "#166534" : iaResult.sentimento === "atencao" ? "#991B1B" : "#475569",
+                      }}>
+                        {iaResult.sentimento === "positivo" ? "✅ Positivo" : iaResult.sentimento === "atencao" ? "⚠️ Atenção" : "➖ Neutro"}
+                      </span>
+                    </div>
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <button onClick={handleSavePedagogico} className="btn btn--primary" style={{ flex: 1, background: "#4F46E5", border: "none", fontSize: 13 }}>
+                        Confirmar
+                      </button>
+                      <button onClick={() => { setIaState("idle"); setIaResult(null); }} className="btn btn--secondary" style={{ flex: 1, fontSize: 13 }}>
+                        Refazer
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {iaState === "saving" && (
+                  <p style={{ margin: 0, textAlign: "center", color: "#4F46E5", fontSize: 14, fontWeight: 600 }}>✓ Salvo!</p>
+                )}
               </div>
             )}
-
-            {iaState === "saving" && (
-              <p style={{ margin: 0, textAlign: "center", color: "#4F46E5", fontSize: 14, fontWeight: 600 }}>✓ Salvo no Diário de Bordo!</p>
-            )}
-
-            {/* Lista dos últimos 2 registros hoje */}
-            {pedagogicoLogs.length > 0 && (
-              <div style={{ marginTop: 16, borderTop: "1px dashed #C7D2FE", paddingTop: 16 }}>
-                <p style={{ fontSize: 11, fontWeight: 700, color: "#6366F1", margin: "0 0 8px", textTransform: "uppercase" }}>Últimos registros de hoje</p>
-                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                  {pedagogicoLogs.slice(0, 2).map((log) => (
-                    <div key={log.id} style={{ background: "white", padding: 10, borderRadius: 8, fontSize: 12, color: "#475569" }}>
-                      <div style={{ display: "flex", gap: 6, marginBottom: 4 }}>
-                        <strong>{PILAR_CONFIG[log.pilar]?.icon} {log.pilarLabel}</strong>
-                        <span>•</span>
-                        <span>{log.sentimento === "positivo" ? "✅" : log.sentimento === "atencao" ? "⚠️" : "➖"}</span>
-                      </div>
-                      <p style={{ margin: 0 }}>"{log.nota}"</p>
+            
+            {/* Lista dos últimos 2 registros hoje (Visível apenas se houver registros) */}
+            {!isPedagogicoOpen && pedagogicoLogs.length > 0 && (
+              <div style={{ marginTop: 8 }}>
+                {pedagogicoLogs.slice(0, 2).map((log) => (
+                  <div key={log.id} style={{ background: "white", padding: 10, borderRadius: 8, fontSize: 12, color: "#475569", border: "1px solid #E2E8F0", marginBottom: 6 }}>
+                    <div style={{ display: "flex", gap: 6, marginBottom: 2 }}>
+                      <strong>{PILAR_CONFIG[log.pilar]?.icon} {log.pilarLabel}</strong>
                     </div>
-                  ))}
-                </div>
+                    <p style={{ margin: 0, fontStyle: "italic" }}>"{log.nota}"</p>
+                  </div>
+                ))}
               </div>
             )}
           </div>
