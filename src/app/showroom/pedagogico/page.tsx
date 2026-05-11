@@ -159,6 +159,8 @@ function TimelineItem({ log }: { log: LogPedagogico }) {
 
 // ── Main Page ────────────────────────────────────────
 export default function ShowroomPedagogico() {
+  const [selectedAluno, setSelectedAluno] = useState<string | null>(null);
+
   const [logs, setLogs] = useState<LogPedagogico[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<"visao" | "timeline">("visao");
@@ -166,59 +168,18 @@ export default function ShowroomPedagogico() {
   const [reportContent, setReportContent] = useState<string | null>(null);
   const [reportApproved, setReportApproved] = useState(false);
 
-  // States for Simulator
-  const [simulatorText, setSimulatorText] = useState("");
-  const [simulatorState, setSimulatorState] = useState<"idle" | "analyzing" | "result" | "saving">("idle");
-  const [simulatorResult, setSimulatorResult] = useState<any>(null);
-
-  async function handleAnalyze() {
-    if (!simulatorText.trim()) return;
-    setSimulatorState("analyzing");
-    try {
-      const res = await fetch("/api/pedagogico/classificar", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ texto: simulatorText }),
-      });
-      const data = await res.json();
-      if (data.error) throw new Error(data.error);
-      setSimulatorResult(data);
-      setSimulatorState("result");
-    } catch (err) {
-      console.error(err);
-      alert("Erro ao analisar texto.");
-      setSimulatorState("idle");
+  useEffect(() => {
+    if (selectedAluno === ALUNO_ID) {
+      setLoading(true);
+      fetch(`/api/pedagogico?alunoId=${ALUNO_ID}`)
+        .then(res => res.json())
+        .then(data => setLogs(data.logs || []))
+        .catch(console.error)
+        .finally(() => setLoading(false));
+    } else {
+      setLoading(false);
     }
-  }
-
-  async function handleSaveLog() {
-    if (!simulatorResult) return;
-    setSimulatorState("saving");
-    try {
-      const res = await fetch("/api/pedagogico", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          nota: simulatorText,
-          pilar: simulatorResult.pilarId,
-          pilarLabel: simulatorResult.pilarLabel,
-          sentimento: simulatorResult.sentimento,
-          data: new Date().toISOString().split("T")[0],
-        }),
-      });
-      const newLog = await res.json();
-      if (newLog.error) throw new Error(newLog.error);
-      
-      setLogs((prev) => [...prev, newLog]);
-      setSimulatorText("");
-      setSimulatorResult(null);
-      setSimulatorState("idle");
-    } catch (err) {
-      console.error(err);
-      alert("Erro ao salvar log.");
-      setSimulatorState("result");
-    }
-  }
+  }, [selectedAluno]);
 
   async function handleGenerateReport() {
     if (generatingReport) return;
@@ -245,14 +206,6 @@ export default function ShowroomPedagogico() {
     }
   }
 
-  useEffect(() => {
-    fetch(`/api/pedagogico?alunoId=${ALUNO_ID}`)
-      .then(res => res.json())
-      .then(data => setLogs(data.logs || []))
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, []);
-
   const grouped = useMemo(() => groupByPilar(logs), [logs]);
   const globalScore = useMemo(() => calcScore(logs), [logs]);
   const positivos = useMemo(() => logs.filter(l => l.sentimento === "positivo").length, [logs]);
@@ -273,6 +226,62 @@ export default function ShowroomPedagogico() {
     return (
       <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#FAFBFC" }}>
         <div className="spinner" />
+      </div>
+    );
+  }
+
+  if (!selectedAluno) {
+    return (
+      <div style={{ minHeight: "100vh", background: "#FAFBFC" }}>
+        <header style={{
+          background: "linear-gradient(135deg, #1E293B 0%, #0F172A 100%)",
+          padding: "32px 24px 80px", color: "white", position: "relative", overflow: "hidden",
+        }}>
+          <div style={{ maxWidth: 900, margin: "0 auto", position: "relative", zIndex: 1 }}>
+            <Link href="/showroom" style={{ color: "#94A3B8", fontSize: 13, textDecoration: "none", fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 6, marginBottom: 24 }}>
+              ← Voltar ao Showroom
+            </Link>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
+              <span style={{ background: "rgba(249,115,22,0.2)", padding: "6px 14px", borderRadius: 20, fontSize: 12, fontWeight: 800, color: "#FB923C", letterSpacing: "0.05em" }}>
+                👩‍🏫 VISÃO PROFESSORA (FECHAMENTO)
+              </span>
+            </div>
+            <h1 style={{ fontSize: 32, fontWeight: 800, margin: "12px 0 8px", letterSpacing: "-0.02em" }}>
+              Meus Alunos — Fechamento
+            </h1>
+            <p style={{ color: "#94A3B8", margin: 0, fontSize: 15 }}>Selecione um aluno para gerar o relatório do trimestre.</p>
+          </div>
+        </header>
+
+        <div style={{ maxWidth: 900, margin: "-48px auto 0", padding: "0 24px 64px", position: "relative", zIndex: 2 }}>
+          <div style={{ background: "white", borderRadius: 20, padding: 24, border: "1px solid #F1F5F9", boxShadow: "0 4px 20px rgba(0,0,0,0.05)", display: "flex", flexDirection: "column", gap: 12 }}>
+            <button onClick={() => setSelectedAluno(ALUNO_ID)} style={{ background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: 16, padding: "20px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer", transition: "all 0.2s" }} className="hover:border-indigo-400 hover:bg-indigo-50">
+              <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                <span style={{ fontSize: 32 }}>👦🏼</span>
+                <div style={{ textAlign: "left" }}>
+                  <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: "#1E293B" }}>Otto</h3>
+                  <p style={{ margin: "4px 0 0", fontSize: 13, color: "#64748B" }}>Berçário II</p>
+                </div>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <span style={{ background: "#FEF2F2", color: "#991B1B", padding: "6px 12px", borderRadius: 20, fontSize: 12, fontWeight: 700 }}>Pendente de Geração</span>
+                <span style={{ color: "#94A3B8" }}>→</span>
+              </div>
+            </button>
+            <div style={{ background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: 16, padding: "20px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", opacity: 0.6 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                <span style={{ fontSize: 32 }}>👧🏽</span>
+                <div style={{ textAlign: "left" }}>
+                  <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: "#1E293B" }}>Helena</h3>
+                  <p style={{ margin: "4px 0 0", fontSize: 13, color: "#64748B" }}>Berçário II</p>
+                </div>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <span style={{ background: "#F0FDF4", color: "#166534", padding: "6px 12px", borderRadius: 20, fontSize: 12, fontWeight: 700 }}>✅ Enviado</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
