@@ -176,7 +176,7 @@ export default function ShowroomLanding() {
               </div>
             </div>
 
-            <div className="flex flex-col items-center gap-4">
+            <div className="flex flex-col items-center gap-4 mb-10">
               <Link 
                 href="/login" 
                 target="_blank"
@@ -185,6 +185,28 @@ export default function ShowroomLanding() {
                 Acessar Demonstração (Nova Aba) 🚀
               </Link>
               <p className="text-slate-400 text-sm">Use a senha <b className="text-white">demo123</b> para todos.</p>
+            </div>
+
+            {/* Novo: Card Inteligência Pedagógica (Clones Isolados) */}
+            <div className="border-t border-white/10 pt-8">
+              <p className="text-slate-500 text-xs uppercase tracking-widest font-bold mb-4">✨ Módulo Inteligência Pedagógica (Teste)</p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Link href="/showroom/pedagogico" className="bg-violet-500/10 border border-violet-500/20 p-5 rounded-2xl group hover:bg-violet-500/20 transition-all block" style={{ textDecoration: "none" }}>
+                  <span className="block text-2xl mb-2">🧠</span>
+                  <span className="block text-xs font-bold text-violet-400 mb-1">Inteligência Pedagógica</span>
+                  <p className="text-xs text-slate-400">Dashboard completo + relatório IA</p>
+                </Link>
+                <Link href="/showroom/professora" className="bg-emerald-500/10 border border-emerald-500/20 p-5 rounded-2xl group hover:bg-emerald-500/20 transition-all block" style={{ textDecoration: "none" }}>
+                  <span className="block text-2xl mb-2">👩‍🏫</span>
+                  <span className="block text-xs font-bold text-emerald-400 mb-1">Visão Professora (Clone)</span>
+                  <p className="text-xs text-slate-400">Veja o input de IA dentro da rotina</p>
+                </Link>
+                <Link href="/showroom/diretora" className="bg-orange-500/10 border border-orange-500/20 p-5 rounded-2xl group hover:bg-orange-500/20 transition-all block" style={{ textDecoration: "none" }}>
+                  <span className="block text-2xl mb-2">👩‍💼</span>
+                  <span className="block text-xs font-bold text-orange-400 mb-1">Relatório da Diretora</span>
+                  <p className="text-xs text-slate-400">Geração, edição e aprovação</p>
+                </Link>
+              </div>
             </div>
           </div>
           
