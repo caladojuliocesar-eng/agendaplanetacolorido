@@ -282,22 +282,21 @@ export default function ShowroomPedagogico() {
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Bottom Navigation (Mock) */}
-      <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: "white", borderTop: "1px solid #E2E8F0", display: "flex", justifyContent: "space-around", padding: "12px 0", paddingBottom: "max(12px, env(safe-area-inset-bottom))", zIndex: 50 }}>
-        <Link href="/showroom/professora" style={{ display: "flex", flexDirection: "column", alignItems: "center", textDecoration: "none", color: "#94A3B8" }}>
-          <span style={{ fontSize: 24, marginBottom: 4 }}>📋</span>
-          <span style={{ fontSize: 11, fontWeight: 600 }}>Agenda Diária</span>
-        </Link>
-        <Link href="/showroom/pedagogico" style={{ display: "flex", flexDirection: "column", alignItems: "center", textDecoration: "none", color: "#6366F1" }}>
-          <span style={{ fontSize: 24, marginBottom: 4 }}>🧠</span>
-          <span style={{ fontSize: 11, fontWeight: 700 }}>Relatórios</span>
-        </Link>
+        {/* Bottom Navigation (Mock) */}
+        <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: "white", borderTop: "1px solid #E2E8F0", display: "flex", justifyContent: "space-around", padding: "12px 0", paddingBottom: "max(12px, env(safe-area-inset-bottom))", zIndex: 50 }}>
+          <Link href="/showroom/professora" style={{ display: "flex", flexDirection: "column", alignItems: "center", textDecoration: "none", color: "#94A3B8" }}>
+            <span style={{ fontSize: 24, marginBottom: 4 }}>📋</span>
+            <span style={{ fontSize: 11, fontWeight: 600 }}>Agenda Diária</span>
+          </Link>
+          <Link href="/showroom/pedagogico" style={{ display: "flex", flexDirection: "column", alignItems: "center", textDecoration: "none", color: "#6366F1" }}>
+            <span style={{ fontSize: 24, marginBottom: 4 }}>🧠</span>
+            <span style={{ fontSize: 11, fontWeight: 700 }}>Relatórios</span>
+          </Link>
+        </div>
       </div>
-    </div>
-  );
-}
+    );
+  }
 
   return (
     <div style={{ minHeight: "100vh", background: "#FAFBFC" }}>
