@@ -31,6 +31,7 @@ export default function AdminLayout({
   const menuItems = [
     { href: "/admin", label: "Dashboard", icon: "📊" },
     { href: "/admin/monitor", label: "Monitor", icon: "🖥️" },
+    { href: "/admin/aprovacoes", label: "Aprovações", icon: "✅" },
     { href: "/admin/mural", label: "Mural", icon: "📌" },
     { href: "/admin/eventos", label: "Eventos", icon: "📅" },
     { href: "/admin/financeiro", label: "Financeiro", icon: "💰" },

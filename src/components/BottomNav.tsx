@@ -85,6 +85,7 @@ export default function BottomNav({ role }: BottomNavProps) {
         ]
       : [
           { href: "/professor/dashboard", label: "Turma", icon: "👥", badge: false },
+          { href: "/professor/relatorios", label: "Relatórios", icon: "🧠", badge: false },
           { href: "/professor/escola", label: "Escola", icon: "🏫", badge: false },
         ];
 
