@@ -149,31 +149,42 @@ export default function ShowroomLanding() {
       <section id="acesso" className="max-w-5xl mx-auto px-6 py-32 text-center">
         <div className="bg-gradient-to-br from-[#1e293b] to-[#0f172a] rounded-[3rem] p-12 md:p-20 text-white relative overflow-hidden shadow-2xl">
           <div className="relative z-10">
-            <h2 className="text-4xl md:text-5xl font-black mb-8">Explore por Dentro</h2>
+            <h2 className="text-4xl md:text-5xl font-black mb-8">Espaço do Teste</h2>
             <p className="text-slate-400 text-lg mb-12 max-w-xl mx-auto leading-relaxed">
-              Cada perfil mostra uma visão diferente do sistema. 
-              Clique e navegue livremente — sem login, sem fricção.
+              Criei três perfis para você ver como a nossa nova agenda funciona na prática. 
+              Pode testar à vontade:
             </p>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-              <Link href="/showroom/diretora" className="bg-white/5 backdrop-blur-sm border border-white/10 p-6 rounded-2xl group hover:bg-white/10 transition-all hover:scale-[1.03] hover:border-orange-500/30 block" style={{ textDecoration: "none" }}>
+              <div className="bg-white/5 backdrop-blur-sm border border-white/10 p-6 rounded-2xl group hover:bg-white/10 transition-colors">
                 <span className="block text-3xl mb-4 group-hover:animate-bounce">👩‍💼</span>
-                <span className="block text-xs uppercase tracking-widest text-orange-400 font-bold mb-2">Visão da Diretora</span>
-                <p className="text-sm text-slate-300 mb-3">Dashboard pedagógico, geração de relatórios com IA e aprovação</p>
-                <span className="inline-block text-xs font-bold text-orange-500 uppercase tracking-wider">Acessar →</span>
-              </Link>
-              <Link href="/showroom/professora" className="bg-white/5 backdrop-blur-sm border border-white/10 p-6 rounded-2xl group hover:bg-white/10 transition-all hover:scale-[1.03] hover:border-emerald-500/30 block" style={{ textDecoration: "none" }}>
+                <span className="block text-xs uppercase tracking-widest text-orange-400 font-bold mb-2">Visão da Fabiana</span>
+                <code className="block text-sm bg-black/30 p-2 rounded mb-2">diretora@demo.com</code>
+                <p className="text-xs text-slate-500">Veja o financeiro e o mural adm</p>
+              </div>
+              <div className="bg-white/5 backdrop-blur-sm border border-white/10 p-6 rounded-2xl group hover:bg-white/10 transition-colors">
                 <span className="block text-3xl mb-4 group-hover:animate-bounce">👩‍🏫</span>
-                <span className="block text-xs uppercase tracking-widest text-emerald-400 font-bold mb-2">Visão da Professora</span>
-                <p className="text-sm text-slate-300 mb-3">Registro de observações com classificação automática por IA</p>
-                <span className="inline-block text-xs font-bold text-emerald-500 uppercase tracking-wider">Acessar →</span>
+                <span className="block text-xs uppercase tracking-widest text-orange-400 font-bold mb-2">Visão Professora</span>
+                <code className="block text-sm bg-black/30 p-2 rounded mb-2">profe@demo.com</code>
+                <p className="text-xs text-slate-500">Veja a facilidade do preenchimento</p>
+              </div>
+              <div className="bg-white/5 backdrop-blur-sm border border-white/10 p-6 rounded-2xl group hover:bg-white/10 transition-colors">
+                <span className="block text-3xl mb-4 group-hover:animate-bounce">🧔</span>
+                <span className="block text-xs uppercase tracking-widest text-orange-400 font-bold mb-2">Visão dos Pais</span>
+                <code className="block text-sm bg-black/30 p-2 rounded mb-2">pai@demo.com</code>
+                <p className="text-xs text-slate-500">Como os pais recebem a agenda</p>
+              </div>
+            </div>
+
+            <div className="flex flex-col items-center gap-4">
+              <Link 
+                href="/login" 
+                target="_blank"
+                className="inline-flex items-center gap-2 px-12 py-5 bg-[#F97316] text-white rounded-full font-black text-lg hover:bg-orange-600 transition-all shadow-lg shadow-orange-900/20"
+              >
+                Acessar Demonstração (Nova Aba) 🚀
               </Link>
-              <Link href="/showroom/pedagogico" className="bg-white/5 backdrop-blur-sm border border-white/10 p-6 rounded-2xl group hover:bg-white/10 transition-all hover:scale-[1.03] hover:border-violet-500/30 block" style={{ textDecoration: "none" }}>
-                <span className="block text-3xl mb-4 group-hover:animate-bounce">🧠</span>
-                <span className="block text-xs uppercase tracking-widest text-violet-400 font-bold mb-2">Inteligência Pedagógica</span>
-                <p className="text-sm text-slate-300 mb-3">Visão completa: dados, timeline, simulador e relatório — tudo junto</p>
-                <span className="inline-block text-xs font-bold text-violet-500 uppercase tracking-wider">Acessar →</span>
-              </Link>
+              <p className="text-slate-400 text-sm">Use a senha <b className="text-white">demo123</b> para todos.</p>
             </div>
           </div>
           
