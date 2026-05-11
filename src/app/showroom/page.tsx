@@ -2,13 +2,34 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { signInWithEmail } from "@/lib/auth";
+import { useRouter } from "next/navigation";
 
 export default function ShowroomLanding() {
   const [mounted, setMounted] = useState(false);
+  const [loggingIn, setLoggingIn] = useState<string | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  const handleQuickLogin = async (email: string) => {
+    setLoggingIn(email);
+    try {
+      const profile = await signInWithEmail(email, "demo123");
+      if (profile) {
+        router.push("/");
+      } else {
+        alert("Erro: Perfil não encontrado.");
+        setLoggingIn(null);
+      }
+    } catch (err: any) {
+      console.error(err);
+      alert("Erro ao entrar: " + err.message);
+      setLoggingIn(null);
+    }
+  };
 
   if (!mounted) return null;
 
@@ -156,35 +177,31 @@ export default function ShowroomLanding() {
             </p>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-              <div className="bg-white/5 backdrop-blur-sm border border-white/10 p-6 rounded-2xl group hover:bg-white/10 transition-colors">
+              <button onClick={() => handleQuickLogin("diretora@demo.com")} disabled={loggingIn !== null} className="text-left bg-white/5 backdrop-blur-sm border border-white/10 p-6 rounded-2xl group hover:bg-white/10 transition-colors relative">
+                {loggingIn === "diretora@demo.com" && <div className="absolute inset-0 bg-black/50 rounded-2xl flex items-center justify-center font-bold">Entrando...</div>}
                 <span className="block text-3xl mb-4 group-hover:animate-bounce">👩‍💼</span>
                 <span className="block text-xs uppercase tracking-widest text-orange-400 font-bold mb-2">Visão da Fabiana</span>
                 <code className="block text-sm bg-black/30 p-2 rounded mb-2">diretora@demo.com</code>
                 <p className="text-xs text-slate-500">Veja o financeiro e o mural adm</p>
-              </div>
-              <div className="bg-white/5 backdrop-blur-sm border border-white/10 p-6 rounded-2xl group hover:bg-white/10 transition-colors">
+              </button>
+              <button onClick={() => handleQuickLogin("profe@demo.com")} disabled={loggingIn !== null} className="text-left bg-white/5 backdrop-blur-sm border border-white/10 p-6 rounded-2xl group hover:bg-white/10 transition-colors relative">
+                {loggingIn === "profe@demo.com" && <div className="absolute inset-0 bg-black/50 rounded-2xl flex items-center justify-center font-bold">Entrando...</div>}
                 <span className="block text-3xl mb-4 group-hover:animate-bounce">👩‍🏫</span>
                 <span className="block text-xs uppercase tracking-widest text-orange-400 font-bold mb-2">Visão Professora</span>
                 <code className="block text-sm bg-black/30 p-2 rounded mb-2">profe@demo.com</code>
                 <p className="text-xs text-slate-500">Veja a facilidade do preenchimento</p>
-              </div>
-              <div className="bg-white/5 backdrop-blur-sm border border-white/10 p-6 rounded-2xl group hover:bg-white/10 transition-colors">
+              </button>
+              <button onClick={() => handleQuickLogin("pai@demo.com")} disabled={loggingIn !== null} className="text-left bg-white/5 backdrop-blur-sm border border-white/10 p-6 rounded-2xl group hover:bg-white/10 transition-colors relative">
+                {loggingIn === "pai@demo.com" && <div className="absolute inset-0 bg-black/50 rounded-2xl flex items-center justify-center font-bold">Entrando...</div>}
                 <span className="block text-3xl mb-4 group-hover:animate-bounce">🧔</span>
                 <span className="block text-xs uppercase tracking-widest text-orange-400 font-bold mb-2">Visão dos Pais</span>
                 <code className="block text-sm bg-black/30 p-2 rounded mb-2">pai@demo.com</code>
                 <p className="text-xs text-slate-500">Como os pais recebem a agenda</p>
-              </div>
+              </button>
             </div>
 
             <div className="flex flex-col items-center gap-4 mb-10">
-              <Link 
-                href="/login" 
-                target="_blank"
-                className="inline-flex items-center gap-2 px-12 py-5 bg-[#F97316] text-white rounded-full font-black text-lg hover:bg-orange-600 transition-all shadow-lg shadow-orange-900/20"
-              >
-                Acessar Demonstração (Nova Aba) 🚀
-              </Link>
-              <p className="text-slate-400 text-sm">Use a senha <b className="text-white">demo123</b> para todos.</p>
+              <p className="text-slate-400 text-sm">Basta clicar nos cards acima para entrar direto sem precisar de senha!</p>
             </div>
 
             {/* Novo: Portas de Entrada por Papel */}
