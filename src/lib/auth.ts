@@ -56,25 +56,6 @@ export async function resolveUserProfile(
       
       const cleanEmail = user.email?.toLowerCase().trim();
       
-      // Fallback robusto
-      if (cleanEmail === 'contato@juliocalado.com.br' || cleanEmail === 'diretoria@ottomatic.com.br') {
-        return { uid: user.uid, email: user.email, role: 'admin', escolaId: 'planeta-colorido', nome: 'Admin' } as UserProfile;
-      }
-      if (cleanEmail === 'julio.calado@hotmail.com') {
-        return { uid: user.uid, email: user.email, role: 'professor', escolaId: 'planeta-colorido', nome: 'Professor', turma: 'Infantil II' } as UserProfile;
-      }
-      if (cleanEmail === 'calado.juliocesar@gmail.com' || cleanEmail === 'gracielly.lourenco@gmail.com') {
-        const isGracielly = cleanEmail.includes('gracielly');
-        return { 
-          uid: user.uid, 
-          email: user.email, 
-          role: 'pai', 
-          escolaId: 'planeta-colorido', 
-          nome: isGracielly ? 'Gracielly' : 'Julio Calado', 
-          filhos: ['aluno_otto'] 
-        } as UserProfile;
-      }
-      
       // Fallback - Usuários Demo (Agora no DB Oficial Limpo)
       if (cleanEmail === 'diretora@demo.com') {
         return { uid: 'demo_diretora', email: user.email, role: 'admin', escolaId: 'planeta-colorido', nome: 'Helena (Demo)' } as UserProfile;
