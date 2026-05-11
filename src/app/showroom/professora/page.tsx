@@ -221,134 +221,7 @@ export default function ShowroomProfessora() {
 
         <div style={{ opacity: ausente ? 0.4 : 1, pointerEvents: ausente ? "none" : "auto", transition: "opacity 0.2s" }}>
 
-          {/* ====== MÓDULO NOVO: INPUT PEDAGÓGICO IA ====== */}
-          <div style={{ marginBottom: 16 }}>
-            {!isPedagogicoOpen ? (
-              <button
-                onClick={() => setIsPedagogicoOpen(true)}
-                className="btn btn--block"
-                style={{
-                  background: "#EEF2FF",
-                  color: "#4F46E5",
-                  border: "2px dashed #A5B4FC",
-                  padding: "16px",
-                  fontSize: 14,
-                  fontWeight: 700,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 8,
-                  transition: "all 0.2s"
-                }}
-              >
-                <span style={{ fontSize: 18 }}>📝</span> Adicionar Observação Pedagógica
-              </button>
-            ) : (
-              <div className="card" style={{ padding: 20, border: "2px solid #818CF8", background: "#EEF2FF" }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <span style={{ fontSize: 20 }}>🧠</span>
-                    <p className="section-title" style={{ margin: 0, color: "#4F46E5" }}>Nova Observação</p>
-                  </div>
-                  <button 
-                    onClick={() => setIsPedagogicoOpen(false)}
-                    style={{ background: "none", border: "none", fontSize: 16, cursor: "pointer", color: "#6366F1", padding: 4 }}
-                  >
-                    ✕
-                  </button>
-                </div>
 
-                <div style={{ position: "relative" }}>
-                  <textarea
-                    className="text-input"
-                    rows={3}
-                    placeholder="Ex: Hoje ele dividiu o brinquedo, brincou bastante no tanque de areia..."
-                    value={iaText}
-                    onChange={(e) => setIaText(e.target.value)}
-                    disabled={iaState === "analyzing" || iaState === "saving"}
-                    style={{ background: "white", border: "1px solid #C7D2FE", marginBottom: 12, paddingRight: 40 }}
-                  />
-                  {/* Botão de Gravação por Voz */}
-                  <button
-                    onClick={toggleVoice}
-                    disabled={iaState === "analyzing" || iaState === "saving"}
-                    style={{
-                      position: "absolute", right: 8, top: 8,
-                      background: isListening ? "#EF4444" : "#EEF2FF",
-                      color: isListening ? "white" : "#4F46E5",
-                      border: "none", borderRadius: "50%",
-                      width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center",
-                      cursor: "pointer", fontSize: 16, transition: "background 0.2s"
-                    }}
-                    title="Falar"
-                  >
-                    {isListening ? "🔴" : "🎤"}
-                  </button>
-                </div>
-
-                {(iaState === "idle" || iaState === "analyzing") && (
-                  <button
-                    onClick={handleAnalyze}
-                    disabled={iaState === "analyzing" || !iaText.trim()}
-                    className="btn btn--primary btn--block"
-                    style={{
-                      background: iaState === "analyzing" || !iaText.trim() ? "#A5B4FC" : "#6366F1",
-                      border: "none", fontSize: 14
-                    }}
-                  >
-                    {iaState === "analyzing" ? "🔄 A IA está lendo..." : "✨ Salvar Observação"}
-                  </button>
-                )}
-
-                {iaState === "result" && iaResult && (
-                  <div style={{ background: "white", borderRadius: 12, padding: 16, border: "1px solid #C7D2FE" }}>
-                    <p style={{ margin: "0 0 12px", fontSize: 11, fontWeight: 800, color: "#4F46E5", textTransform: "uppercase" }}>
-                      Classificado como:
-                    </p>
-                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
-                      <span style={{ padding: "4px 10px", borderRadius: 20, fontSize: 12, fontWeight: 700, background: "#F1F5F9", color: "#334155" }}>
-                        {PILAR_CONFIG[iaResult.pilarId]?.icon} {iaResult.pilarLabel}
-                      </span>
-                      <span style={{
-                        padding: "4px 10px", borderRadius: 20, fontSize: 12, fontWeight: 700,
-                        background: iaResult.sentimento === "positivo" ? "#DCFCE7" : iaResult.sentimento === "atencao" ? "#FEE2E2" : "#F1F5F9",
-                        color: iaResult.sentimento === "positivo" ? "#166534" : iaResult.sentimento === "atencao" ? "#991B1B" : "#475569",
-                      }}>
-                        {iaResult.sentimento === "positivo" ? "✅ Positivo" : iaResult.sentimento === "atencao" ? "⚠️ Atenção" : "➖ Neutro"}
-                      </span>
-                    </div>
-                    <div style={{ display: "flex", gap: 8 }}>
-                      <button onClick={handleSavePedagogico} className="btn btn--primary" style={{ flex: 1, background: "#4F46E5", border: "none", fontSize: 13 }}>
-                        Confirmar
-                      </button>
-                      <button onClick={() => { setIaState("idle"); setIaResult(null); }} className="btn btn--secondary" style={{ flex: 1, fontSize: 13 }}>
-                        Refazer
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {iaState === "saving" && (
-                  <p style={{ margin: 0, textAlign: "center", color: "#4F46E5", fontSize: 14, fontWeight: 600 }}>✓ Salvo!</p>
-                )}
-              </div>
-            )}
-            
-            {/* Lista dos últimos 2 registros hoje (Visível apenas se houver registros) */}
-            {!isPedagogicoOpen && pedagogicoLogs.length > 0 && (
-              <div style={{ marginTop: 8 }}>
-                {pedagogicoLogs.slice(0, 2).map((log) => (
-                  <div key={log.id} style={{ background: "white", padding: 10, borderRadius: 8, fontSize: 12, color: "#475569", border: "1px solid #E2E8F0", marginBottom: 6 }}>
-                    <div style={{ display: "flex", gap: 6, marginBottom: 2 }}>
-                      <strong>{PILAR_CONFIG[log.pilar]?.icon} {log.pilarLabel}</strong>
-                    </div>
-                    <p style={{ margin: 0, fontStyle: "italic" }}>"{log.nota}"</p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-          {/* ================================================= */}
 
           {/* Agenda Tradicional: Alimentação */}
           <div className="card" style={{ padding: "16px 20px", marginBottom: 12 }}>
@@ -413,6 +286,135 @@ export default function ShowroomProfessora() {
         <button className="btn btn--block btn--lg btn--primary" onClick={() => alert("Demonstração: No app real, isso salvaria a agenda do dia.")}>
           Salvar Agenda de Hoje
         </button>
+
+        {/* ====== MÓDULO NOVO: INPUT PEDAGÓGICO IA ====== */}
+        <div style={{ marginTop: 32, paddingTop: 32, borderTop: "2px dashed #CBD5E1" }}>
+          {!isPedagogicoOpen ? (
+            <button
+              onClick={() => setIsPedagogicoOpen(true)}
+              className="btn btn--block"
+              style={{
+                background: "#EEF2FF",
+                color: "#4F46E5",
+                border: "2px dashed #A5B4FC",
+                padding: "16px",
+                fontSize: 14,
+                fontWeight: 700,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 8,
+                transition: "all 0.2s"
+              }}
+            >
+              <span style={{ fontSize: 18 }}>📝</span> Adicionar Observação Pedagógica
+            </button>
+          ) : (
+            <div className="card" style={{ padding: 20, border: "2px solid #818CF8", background: "#EEF2FF" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ fontSize: 20 }}>🧠</span>
+                  <p className="section-title" style={{ margin: 0, color: "#4F46E5" }}>Nova Observação</p>
+                </div>
+                <button 
+                  onClick={() => setIsPedagogicoOpen(false)}
+                  style={{ background: "none", border: "none", fontSize: 16, cursor: "pointer", color: "#6366F1", padding: 4 }}
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div style={{ position: "relative" }}>
+                <textarea
+                  className="text-input"
+                  rows={3}
+                  placeholder="Ex: Hoje ele dividiu o brinquedo, brincou bastante no tanque de areia..."
+                  value={iaText}
+                  onChange={(e) => setIaText(e.target.value)}
+                  disabled={iaState === "analyzing" || iaState === "saving"}
+                  style={{ background: "white", border: "1px solid #C7D2FE", marginBottom: 12, paddingRight: 40 }}
+                />
+                {/* Botão de Gravação por Voz */}
+                <button
+                  onClick={toggleVoice}
+                  disabled={iaState === "analyzing" || iaState === "saving"}
+                  style={{
+                    position: "absolute", right: 8, top: 8,
+                    background: isListening ? "#EF4444" : "#EEF2FF",
+                    color: isListening ? "white" : "#4F46E5",
+                    border: "none", borderRadius: "50%",
+                    width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center",
+                    cursor: "pointer", fontSize: 16, transition: "background 0.2s"
+                  }}
+                  title="Falar"
+                >
+                  {isListening ? "🔴" : "🎤"}
+                </button>
+              </div>
+
+              {(iaState === "idle" || iaState === "analyzing") && (
+                <button
+                  onClick={handleAnalyze}
+                  disabled={iaState === "analyzing" || !iaText.trim()}
+                  className="btn btn--primary btn--block"
+                  style={{
+                    background: iaState === "analyzing" || !iaText.trim() ? "#A5B4FC" : "#6366F1",
+                    border: "none", fontSize: 14
+                  }}
+                >
+                  {iaState === "analyzing" ? "🔄 A IA está lendo..." : "✨ Salvar Observação"}
+                </button>
+              )}
+
+              {iaState === "result" && iaResult && (
+                <div style={{ background: "white", borderRadius: 12, padding: 16, border: "1px solid #C7D2FE" }}>
+                  <p style={{ margin: "0 0 12px", fontSize: 11, fontWeight: 800, color: "#4F46E5", textTransform: "uppercase" }}>
+                    Classificado como:
+                  </p>
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
+                    <span style={{ padding: "4px 10px", borderRadius: 20, fontSize: 12, fontWeight: 700, background: "#F1F5F9", color: "#334155" }}>
+                      {PILAR_CONFIG[iaResult.pilarId]?.icon} {iaResult.pilarLabel}
+                    </span>
+                    <span style={{
+                      padding: "4px 10px", borderRadius: 20, fontSize: 12, fontWeight: 700,
+                      background: iaResult.sentimento === "positivo" ? "#DCFCE7" : iaResult.sentimento === "atencao" ? "#FEE2E2" : "#F1F5F9",
+                      color: iaResult.sentimento === "positivo" ? "#166534" : iaResult.sentimento === "atencao" ? "#991B1B" : "#475569",
+                    }}>
+                      {iaResult.sentimento === "positivo" ? "✅ Positivo" : iaResult.sentimento === "atencao" ? "⚠️ Atenção" : "➖ Neutro"}
+                    </span>
+                  </div>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <button onClick={handleSavePedagogico} className="btn btn--primary" style={{ flex: 1, background: "#4F46E5", border: "none", fontSize: 13 }}>
+                      Confirmar
+                    </button>
+                    <button onClick={() => { setIaState("idle"); setIaResult(null); }} className="btn btn--secondary" style={{ flex: 1, fontSize: 13 }}>
+                      Refazer
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {iaState === "saving" && (
+                <p style={{ margin: 0, textAlign: "center", color: "#4F46E5", fontSize: 14, fontWeight: 600 }}>✓ Salvo!</p>
+              )}
+            </div>
+          )}
+          
+          {/* Lista dos últimos 2 registros hoje (Visível apenas se houver registros) */}
+          {!isPedagogicoOpen && pedagogicoLogs.length > 0 && (
+            <div style={{ marginTop: 16 }}>
+              {pedagogicoLogs.slice(0, 2).map((log) => (
+                <div key={log.id} style={{ background: "white", padding: 10, borderRadius: 8, fontSize: 12, color: "#475569", border: "1px solid #E2E8F0", marginBottom: 6 }}>
+                  <div style={{ display: "flex", gap: 6, marginBottom: 2 }}>
+                    <strong>{PILAR_CONFIG[log.pilar]?.icon} {log.pilarLabel}</strong>
+                  </div>
+                  <p style={{ margin: 0, fontStyle: "italic" }}>"{log.nota}"</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        {/* ================================================= */}
 
       </main>
     </div>
