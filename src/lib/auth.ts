@@ -71,19 +71,19 @@ export async function resolveUserProfile(
           role: 'pai', 
           escolaId: 'planeta-colorido', 
           nome: isGracielly ? 'Gracielly' : 'Julio Calado', 
-          filhos: [isGracielly ? '7LHwYHrsbXxES4f2U41A' : '1Q1ua1rkJfTAuHDKIkeR'] 
+          filhos: ['aluno_otto'] 
         } as UserProfile;
       }
       
-      // Fallback - Usuários Demo (Showroom) apontando para o DB escola_showroom
+      // Fallback - Usuários Demo (Agora no DB Oficial Limpo)
       if (cleanEmail === 'diretora@demo.com') {
-        return { uid: 'demo_diretora', email: user.email, role: 'admin', escolaId: 'escola_showroom', nome: 'Helena (Demo)' } as UserProfile;
+        return { uid: 'demo_diretora', email: user.email, role: 'admin', escolaId: 'planeta-colorido', nome: 'Helena (Demo)' } as UserProfile;
       }
       if (cleanEmail === 'profe@demo.com') {
-        return { uid: 'demo_professora', email: user.email, role: 'professor', escolaId: 'escola_showroom', nome: 'Ana Cláudia (Demo)', turma: 'Maternal II' } as UserProfile;
+        return { uid: 'demo_professora', email: user.email, role: 'professor', escolaId: 'planeta-colorido', nome: 'Ana Cláudia (Demo)', turma: 'Berçário II' } as UserProfile;
       }
       if (cleanEmail === 'pai@demo.com') {
-        return { uid: 'demo_pai', email: user.email, role: 'pai', escolaId: 'escola_showroom', nome: 'Ricardo (Demo)', filhos: ['aluno_otto'] } as UserProfile;
+        return { uid: 'demo_pai', email: user.email, role: 'pai', escolaId: 'planeta-colorido', nome: 'Ricardo (Demo)', filhos: ['aluno_otto'] } as UserProfile;
       }
 
       throw new Error(`Permissão negada pelo Firebase. Regras bloqueando ID: ${user.uid}`);
