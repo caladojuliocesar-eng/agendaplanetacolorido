@@ -301,13 +301,13 @@ export default function ShowroomPedagogico() {
             <span style={{
               background: "rgba(249,115,22,0.2)", padding: "6px 14px", borderRadius: 20,
               fontSize: 12, fontWeight: 800, color: "#FB923C", letterSpacing: "0.05em",
-            }}>🧠 INTELIGÊNCIA PEDAGÓGICA</span>
+            }}>👩‍🏫 VISÃO PROFESSORA (FECHAMENTO)</span>
           </div>
           <h1 style={{ fontSize: 32, fontWeight: 800, margin: "12px 0 8px", letterSpacing: "-0.02em" }}>
-            Relatório Trimestral — Otto
+            Fechamento Trimestral — Otto
           </h1>
           <p style={{ color: "#94A3B8", margin: 0, fontSize: 15 }}>
-            Evolução baseada em {logs.length} observações da professora • {periodoStr}
+            Evolução baseada em {logs.length} observações coletadas no dia a dia • {periodoStr}
           </p>
         </div>
       </header>
@@ -322,91 +322,7 @@ export default function ShowroomPedagogico() {
           <StatCard icon="⚠️" label="Pontos de Atenção" value={atencoes} sub={`${Math.round((atencoes / logs.length) * 100)}% do total`} />
         </div>
 
-        {/* Simulator Area */}
-        <div style={{
-          background: "linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%)",
-          borderRadius: 24, padding: 32, marginBottom: 32,
-          border: "1px solid #BBF7D0", boxShadow: "0 4px 12px rgba(22,163,74,0.05)",
-          position: "relative", overflow: "hidden"
-        }}>
-          <h3 style={{ margin: "0 0 16px", fontSize: 18, fontWeight: 800, color: "#166534", display: "flex", alignItems: "center", gap: 8 }}>
-            ✨ Simulador de Notas Rápidas (IA)
-          </h3>
-          <p style={{ margin: "0 0 20px", fontSize: 14, color: "#15803D", lineHeight: 1.5 }}>
-            Na prática, a professora não precisa escolher nenhum "Pilar" ou "Sentimento". Basta digitar a observação de forma livre e a Inteligência Artificial categoriza tudo nos bastidores, eliminando a fricção!
-          </p>
-          
-          <div style={{ display: "flex", gap: 12, alignItems: "flex-start", flexWrap: "wrap" }}>
-            <textarea
-              value={simulatorText}
-              onChange={(e) => setSimulatorText(e.target.value)}
-              placeholder="Ex: Hoje o Otto dividiu o lanche com o amigo que estava chorando..."
-              disabled={simulatorState !== "idle" && simulatorState !== "result"}
-              style={{
-                flex: "1 1 300px", padding: 16, borderRadius: 16, border: "1px solid #86EFAC",
-                resize: "none", height: 100, fontSize: 14, outline: "none", color: "#1E293B",
-                background: "white", boxShadow: "inset 0 2px 4px rgba(0,0,0,0.02)"
-              }}
-            />
-            {simulatorState === "idle" || simulatorState === "analyzing" ? (
-              <button
-                onClick={handleAnalyze}
-                disabled={simulatorState === "analyzing" || !simulatorText.trim()}
-                style={{
-                  padding: "16px 24px", borderRadius: 16, border: "none",
-                  background: simulatorState === "analyzing" || !simulatorText.trim() ? "#86EFAC" : "#22C55E",
-                  color: "white", fontWeight: 800, fontSize: 14, cursor: "pointer",
-                  transition: "all 0.2s", height: 100, flexShrink: 0
-                }}
-              >
-                {simulatorState === "analyzing" ? "Analisando..." : "Classificar com IA"}
-              </button>
-            ) : null}
-          </div>
 
-          {simulatorState === "result" && simulatorResult && (
-            <div style={{
-              marginTop: 20, background: "white", borderRadius: 16, padding: 20,
-              border: "1px solid #86EFAC", display: "flex", alignItems: "center", justifyContent: "space-between",
-              flexWrap: "wrap", gap: 16
-            }}>
-              <div>
-                <p style={{ margin: "0 0 6px", fontSize: 12, fontWeight: 700, color: "#166534", letterSpacing: "0.05em" }}>CLASSIFICAÇÃO AUTOMÁTICA:</p>
-                <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 10 }}>
-                  <span style={{
-                    padding: "4px 12px", borderRadius: 20, fontSize: 12, fontWeight: 700,
-                    background: "#F1F5F9", color: "#334155"
-                  }}>{PILAR_CONFIG[simulatorResult.pilarId]?.icon || "📌"} {simulatorResult.pilarLabel}</span>
-                  <span style={{
-                    padding: "4px 12px", borderRadius: 20, fontSize: 12, fontWeight: 700,
-                    background: simulatorResult.sentimento === "positivo" ? "#DCFCE7" : simulatorResult.sentimento === "atencao" ? "#FEE2E2" : "#F1F5F9",
-                    color: simulatorResult.sentimento === "positivo" ? "#166534" : simulatorResult.sentimento === "atencao" ? "#991B1B" : "#475569"
-                  }}>
-                    {simulatorResult.sentimento === "positivo" ? "✅ Positivo" : simulatorResult.sentimento === "atencao" ? "⚠️ Atenção" : "➖ Neutro"}
-                  </span>
-                </div>
-                <p style={{ margin: 0, fontSize: 13, color: "#64748B" }}>
-                  <strong>Por que?</strong> <i>"{simulatorResult.justificativa}"</i>
-                </p>
-              </div>
-              <button
-                onClick={handleSaveLog}
-                style={{
-                  padding: "12px 24px", borderRadius: 12, border: "none",
-                  background: "#166534", color: "white", fontWeight: 800, fontSize: 13, cursor: "pointer",
-                }}
-              >
-                Salvar Registro
-              </button>
-            </div>
-          )}
-          
-          {simulatorState === "saving" && (
-            <div style={{ marginTop: 20, padding: 16, textAlign: "center", color: "#166534", fontWeight: 700, fontSize: 14 }}>
-              Salvo com sucesso! Atualizando dashboard...
-            </div>
-          )}
-        </div>
 
         {/* Tabs */}
         <div style={{
@@ -493,11 +409,10 @@ export default function ShowroomPedagogico() {
           <div style={{ position: "relative", zIndex: 1 }}>
             <span style={{ fontSize: 40, display: "block", marginBottom: 16 }}>🤖</span>
             <h3 style={{ margin: "0 0 12px", fontSize: 22, fontWeight: 800 }}>
-              Relatório com Inteligência Artificial
+              Gerar Rascunho com IA
             </h3>
             <p style={{ color: "#94A3B8", margin: "0 auto 24px", maxWidth: 500, lineHeight: 1.6, fontSize: 14 }}>
-              A inteligência do Ottomatic lê todas essas observações e gera automaticamente 
-              um relatório trimestral em prosa — pronto para revisão da professora e entrega aos pais.
+              A IA vai transformar suas {logs.length} observações diárias em um relatório contínuo. Você fará a leitura inicial e depois enviará para a Coordenação revisar e aprovar.
             </p>
             <button onClick={handleGenerateReport} disabled={generatingReport} style={{
               padding: "14px 32px", borderRadius: 14, border: "none",
@@ -506,7 +421,7 @@ export default function ShowroomPedagogico() {
               transition: "all 0.2s",
               boxShadow: generatingReport ? "none" : "0 4px 12px rgba(249,115,22,0.3)"
             }}>
-              {generatingReport ? "✨ Gerando relatório (isso pode levar alguns segundos)..." : "✨ Gerar Relatório com IA"}
+              {generatingReport ? "✨ Escrevendo rascunho..." : "✨ Gerar Rascunho com IA"}
             </button>
           </div>
         </div>
@@ -520,8 +435,8 @@ export default function ShowroomPedagogico() {
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24, borderBottom: "1px solid #F1F5F9", paddingBottom: 16 }}>
               <span style={{ fontSize: 28 }}>✍️</span>
               <div>
-                <h3 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: "#1E293B" }}>Rascunho da IA (Revisão da Coordenação)</h3>
-                <p style={{ margin: 0, fontSize: 13, color: "#64748B" }}>Revise o texto gerado antes de liberar o documento final para a família.</p>
+                <h3 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: "#1E293B" }}>Rascunho Pronto</h3>
+                <p style={{ margin: 0, fontSize: 13, color: "#64748B" }}>Leia para ver se está de acordo com a realidade. Se estiver tudo certo, envie para a Coordenação.</p>
               </div>
             </div>
             <div style={{
@@ -553,7 +468,7 @@ export default function ShowroomPedagogico() {
                 background: "#0F172A", color: "white", fontWeight: 800, fontSize: 14, cursor: "pointer",
                 display: "flex", alignItems: "center", gap: 8
               }}>
-                ✅ Aprovar e Gerar Documento Oficial
+                📤 Enviar para Coordenação
               </button>
               <button onClick={handleGenerateReport} style={{
                 padding: "14px 24px", borderRadius: 12, border: "1px solid #E2E8F0",
@@ -568,124 +483,12 @@ export default function ShowroomPedagogico() {
 
         {/* Official Document View (Printable) */}
         {reportContent && reportApproved && (
-          <div style={{ marginTop: 40 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24, flexWrap: "wrap", gap: 16 }}>
-              <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: "#1E293B" }}>Documento Pronto para os Pais</h3>
-              <div style={{ display: "flex", gap: 12 }}>
-                <button onClick={() => setReportApproved(false)} style={{
-                  padding: "10px 20px", borderRadius: 10, border: "1px solid #CBD5E1",
-                  background: "white", color: "#475569", fontWeight: 700, fontSize: 13, cursor: "pointer",
-                }}>
-                  ← Voltar para Revisão
-                </button>
-                <button onClick={() => window.print()} style={{
-                  padding: "10px 20px", borderRadius: 10, border: "none",
-                  background: "#2563EB", color: "white", fontWeight: 700, fontSize: 13, cursor: "pointer",
-                  display: "flex", alignItems: "center", gap: 8
-                }}>
-                  🖨️ Imprimir / Salvar PDF
-                </button>
-              </div>
-            </div>
-
-            {/* A4 Printable Sheet */}
-            <div className="printable-a4" style={{
-              background: "white", padding: "60px 80px", borderRadius: 8,
-              boxShadow: "0 20px 40px rgba(0,0,0,0.08)",
-              minHeight: 1123, // A4 approx height
-              margin: "0 auto",
-              maxWidth: 794, // A4 approx width
-              fontFamily: "'Inter', system-ui, sans-serif"
-            }}>
-              {/* Header Escolar */}
-              <div style={{ textAlign: "center", borderBottom: "2px solid #F1F5F9", paddingBottom: 24, marginBottom: 40 }}>
-                <div style={{ fontSize: 40, marginBottom: 12 }}>🪐</div>
-                <h2 style={{ margin: 0, fontSize: 24, fontWeight: 900, color: "#0F172A", letterSpacing: "-0.02em" }}>Escola Planeta Colorido</h2>
-                <p style={{ margin: "4px 0 0", fontSize: 13, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 700 }}>
-                  Relatório de Desenvolvimento Pedagógico
-                </p>
-              </div>
-
-              {/* Info Aluno */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 40, background: "#F8FAFC", padding: 24, borderRadius: 12, border: "1px solid #F1F5F9" }}>
-                <div>
-                  <p style={{ margin: 0, fontSize: 11, color: "#64748B", fontWeight: 700, textTransform: "uppercase" }}>Aluno(a)</p>
-                  <p style={{ margin: 0, fontSize: 16, fontWeight: 800, color: "#1E293B" }}>Otto</p>
-                </div>
-                <div>
-                  <p style={{ margin: 0, fontSize: 11, color: "#64748B", fontWeight: 700, textTransform: "uppercase" }}>Turma</p>
-                  <p style={{ margin: 0, fontSize: 16, fontWeight: 800, color: "#1E293B" }}>Berçário II</p>
-                </div>
-                <div>
-                  <p style={{ margin: 0, fontSize: 11, color: "#64748B", fontWeight: 700, textTransform: "uppercase" }}>Período Avaliado</p>
-                  <p style={{ margin: 0, fontSize: 16, fontWeight: 800, color: "#1E293B" }}>1º Trimestre / 2026</p>
-                </div>
-                <div>
-                  <p style={{ margin: 0, fontSize: 11, color: "#64748B", fontWeight: 700, textTransform: "uppercase" }}>Professora / Coordenação</p>
-                  <p style={{ margin: 0, fontSize: 16, fontWeight: 800, color: "#1E293B" }}>Ana / Fabiana</p>
-                </div>
-              </div>
-
-              {/* Report Body */}
-              <div style={{
-                fontSize: 15, lineHeight: 1.8, color: "#334155",
-              }}>
-                {reportContent.split('\n').map((line, i) => {
-                  if (line.startsWith('## ')) return <h2 key={i} style={{ fontSize: 18, color: "#0F172A", marginTop: 32, borderBottom: "1px solid #F1F5F9", paddingBottom: 8 }}>{line.replace('## ', '')}</h2>;
-                  if (line.startsWith('### ')) return <h3 key={i} style={{ fontSize: 16, color: "#0F172A", marginTop: 24 }}>{line.replace('### ', '')}</h3>;
-                  
-                  const parts = line.split(/(\*\*.*?\*\*)/g);
-                  return (
-                    <p key={i} style={{ margin: "0 0 16px 0", minHeight: line.trim() === "" ? 16 : "auto", textAlign: "justify" }}>
-                      {parts.map((part, j) => {
-                        if (part.startsWith('**') && part.endsWith('**')) {
-                          return <strong key={j} style={{ color: "#0F172A" }}>{part.slice(2, -2)}</strong>;
-                        }
-                        return part;
-                      })}
-                    </p>
-                  );
-                })}
-              </div>
-              
-              {/* Assinaturas */}
-              <div style={{ display: "flex", justifyContent: "space-between", marginTop: 80, paddingTop: 40, paddingBottom: 20 }}>
-                <div style={{ textAlign: "center", width: "40%" }}>
-                  <div style={{ borderTop: "1px solid #CBD5E1", paddingTop: 8 }}>
-                    <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: "#0F172A" }}>Assinatura da Professora</p>
-                  </div>
-                </div>
-                <div style={{ textAlign: "center", width: "40%" }}>
-                  <div style={{ borderTop: "1px solid #CBD5E1", paddingTop: 8 }}>
-                    <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: "#0F172A" }}>Assinatura da Coordenação</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            {/* Print styles */}
-            <style jsx global>{`
-              @media print {
-                body {
-                  background: white;
-                }
-                body * {
-                  visibility: hidden;
-                }
-                .printable-a4, .printable-a4 * {
-                  visibility: visible;
-                }
-                .printable-a4 {
-                  position: absolute;
-                  left: 0;
-                  top: 0;
-                  box-shadow: none !important;
-                  margin: 0 !important;
-                  padding: 0 !important;
-                  width: 100% !important;
-                }
-              }
-            `}</style>
+          <div style={{ marginTop: 40, textAlign: "center", padding: "60px 20px", background: "white", borderRadius: 24, border: "1px solid #E2E8F0" }}>
+             <span style={{ fontSize: 60, display: "block", marginBottom: 16 }}>🚀</span>
+             <h3 style={{ margin: "0 0 12px", fontSize: 24, fontWeight: 800, color: "#1E293B" }}>Rascunho Enviado!</h3>
+             <p style={{ color: "#64748B", margin: "0 auto", maxWidth: 400, lineHeight: 1.5 }}>
+               A coordenação já recebeu o seu relatório e fará a revisão final. Excelente trabalho com o Otto neste trimestre!
+             </p>
           </div>
         )}
       </div>
