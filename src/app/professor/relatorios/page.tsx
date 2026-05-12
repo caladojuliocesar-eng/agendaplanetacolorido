@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { getLogsPedagogicos, saveRelatorioPedagogico, getRelatorioPedagogico } from "@/lib/firestore";
 import Link from "next/link";
 
 // Type matching the API response
@@ -33,6 +35,7 @@ const PILAR_CONFIG: Record<string, { icon: string; color: string }> = {
 };
 
 const ALUNO_ID = "aluno_otto";
+const PERIODO_ATUAL = "2026-T2";
 
 // ── Helpers ──────────────────────────────────────────
 function groupByPilar(logs: LogPedagogico[]) {
@@ -159,6 +162,7 @@ function TimelineItem({ log }: { log: LogPedagogico }) {
 
 // ── Main Page ────────────────────────────────────────
 export default function ShowroomPedagogico() {
+  const { profile } = useAuth();
   const [selectedAluno, setSelectedAluno] = useState<string | null>(null);
 
   const [logs, setLogs] = useState<LogPedagogico[]>([]);
@@ -176,11 +180,23 @@ export default function ShowroomPedagogico() {
   useEffect(() => {
     if (selectedAluno === ALUNO_ID) {
       setLoading(true);
+      // Load logs
       fetch(`/api/pedagogico?alunoId=${ALUNO_ID}`)
         .then(res => res.json())
         .then(data => setLogs(data.logs || []))
         .catch(console.error)
         .finally(() => setLoading(false));
+
+      // Check if a report already exists
+      getRelatorioPedagogico(ALUNO_ID, PERIODO_ATUAL).then(rel => {
+        if (rel) {
+          setReportContent(rel.conteudo);
+          setEditableContent(rel.conteudo);
+          if (rel.status !== "rascunho_professor") {
+            setReportApproved(true);
+          }
+        }
+      });
     } else {
       setLoading(false);
     }
@@ -241,6 +257,25 @@ export default function ShowroomPedagogico() {
     }
   }
 
+  async function handleSendToCoordination() {
+    if (!editableContent || !profile) return;
+    try {
+      await saveRelatorioPedagogico({
+        alunoId: ALUNO_ID,
+        escolaId: profile.escolaId,
+        professorId: profile.uid,
+        status: "rascunho_professor",
+        conteudo: editableContent,
+        periodo: PERIODO_ATUAL
+      });
+      setReportApproved(true);
+      setReportContent(editableContent);
+    } catch (error) {
+      console.error(error);
+      alert("Erro ao enviar para coordenação.");
+    }
+  }
+
   const grouped = useMemo(() => groupByPilar(logs), [logs]);
   const globalScore = useMemo(() => calcScore(logs), [logs]);
   const positivos = useMemo(() => logs.filter(l => l.sentimento === "positivo").length, [logs]);
@@ -290,22 +325,12 @@ export default function ShowroomPedagogico() {
                 </div>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <span style={{ background: "#FEF2F2", color: "#991B1B", padding: "6px 12px", borderRadius: 20, fontSize: 12, fontWeight: 700 }}>Pendente de Geração</span>
+                <span style={{ background: reportApproved ? "#F0FDF4" : "#FEF2F2", color: reportApproved ? "#166534" : "#991B1B", padding: "6px 12px", borderRadius: 20, fontSize: 12, fontWeight: 700 }}>
+                  {reportApproved ? "✅ Enviado" : "Pendente de Geração"}
+                </span>
                 <span style={{ color: "#94A3B8" }}>→</span>
               </div>
             </button>
-            <div style={{ background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: 16, padding: "20px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", opacity: 0.6 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-                <span style={{ fontSize: 32 }}>👧🏽</span>
-                <div style={{ textAlign: "left" }}>
-                  <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: "#1E293B" }}>Helena</h3>
-                  <p style={{ margin: "4px 0 0", fontSize: 13, color: "#64748B" }}>Berçário II</p>
-                </div>
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <span style={{ background: "#F0FDF4", color: "#166534", padding: "6px 12px", borderRadius: 20, fontSize: 12, fontWeight: 700 }}>✅ Enviado</span>
-              </div>
-            </div>
           </div>
         </div>
       </div>
@@ -346,8 +371,6 @@ export default function ShowroomPedagogico() {
           <StatCard icon="⚠️" label="Pontos de Atenção" value={atencoes} sub={`${Math.round((atencoes / logs.length) * 100)}% do total`} />
         </div>
 
-
-
         {/* Tabs */}
         <div style={{
           display: "flex", gap: 4, background: "white", borderRadius: 14, padding: 4,
@@ -377,32 +400,6 @@ export default function ShowroomPedagogico() {
                 />
               ))}
             </div>
-
-            {/* Destaques */}
-            {grouped.destaques && grouped.destaques.length > 0 && (
-              <div style={{
-                background: "linear-gradient(135deg, #FFF7ED, #FFFBEB)",
-                borderRadius: 20, padding: 28, border: "1px solid #FED7AA",
-              }}>
-                <h3 style={{ margin: "0 0 16px", fontSize: 16, fontWeight: 800, color: "#92400E", display: "flex", alignItems: "center", gap: 8 }}>
-                  ⭐ Destaques e Recomendações
-                </h3>
-                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                  {grouped.destaques.map((log) => {
-                    const s = log.sentimento;
-                    return (
-                      <div key={log.id} style={{
-                        background: "white", borderRadius: 12, padding: "14px 18px",
-                        borderLeft: `4px solid ${s === "positivo" ? "#22C55E" : s === "neutro" ? "#94A3B8" : "#EF4444"}`,
-                      }}>
-                        <p style={{ margin: 0, fontSize: 13, color: "#334155", lineHeight: 1.5 }}>{log.nota}</p>
-                        <p style={{ margin: "6px 0 0", fontSize: 11, color: "#94A3B8" }}>{formatDate(log.data)}</p>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
           </div>
         )}
 
@@ -419,36 +416,38 @@ export default function ShowroomPedagogico() {
         )}
 
         {/* CTA - Future AI Report */}
-        <div style={{
-          marginTop: 40,
-          background: "linear-gradient(135deg, #1E293B, #0F172A)",
-          borderRadius: 24, padding: "40px 32px", color: "white",
-          textAlign: "center", position: "relative", overflow: "hidden",
-        }}>
+        {!reportApproved && (
           <div style={{
-            position: "absolute", top: -30, right: -30,
-            width: 180, height: 180, borderRadius: "50%",
-            background: "rgba(249,115,22,0.15)", filter: "blur(50px)",
-          }} />
-          <div style={{ position: "relative", zIndex: 1 }}>
-            <span style={{ fontSize: 40, display: "block", marginBottom: 16 }}>🤖</span>
-            <h3 style={{ margin: "0 0 12px", fontSize: 22, fontWeight: 800 }}>
-              Gerar Rascunho com IA
-            </h3>
-            <p style={{ color: "#94A3B8", margin: "0 auto 24px", maxWidth: 500, lineHeight: 1.6, fontSize: 14 }}>
-              A IA vai transformar suas {logs.length} observações diárias em um relatório contínuo. Você fará a leitura inicial e depois enviará para a Coordenação revisar e aprovar.
-            </p>
-            <button onClick={handleGenerateReport} disabled={generatingReport} style={{
-              padding: "14px 32px", borderRadius: 14, border: "none",
-              background: generatingReport ? "rgba(249,115,22,0.5)" : "#F97316", color: "white",
-              fontWeight: 800, fontSize: 15, cursor: generatingReport ? "not-allowed" : "pointer",
-              transition: "all 0.2s",
-              boxShadow: generatingReport ? "none" : "0 4px 12px rgba(249,115,22,0.3)"
-            }}>
-              {generatingReport ? "✨ Escrevendo rascunho..." : "✨ Gerar Rascunho com IA"}
-            </button>
+            marginTop: 40,
+            background: "linear-gradient(135deg, #1E293B, #0F172A)",
+            borderRadius: 24, padding: "40px 32px", color: "white",
+            textAlign: "center", position: "relative", overflow: "hidden",
+          }}>
+            <div style={{
+              position: "absolute", top: -30, right: -30,
+              width: 180, height: 180, borderRadius: "50%",
+              background: "rgba(249,115,22,0.15)", filter: "blur(50px)",
+            }} />
+            <div style={{ position: "relative", zIndex: 1 }}>
+              <span style={{ fontSize: 40, display: "block", marginBottom: 16 }}>🤖</span>
+              <h3 style={{ margin: "0 0 12px", fontSize: 22, fontWeight: 800 }}>
+                Gerar Rascunho com IA
+              </h3>
+              <p style={{ color: "#94A3B8", margin: "0 auto 24px", maxWidth: 500, lineHeight: 1.6, fontSize: 14 }}>
+                A IA vai transformar suas {logs.length} observações diárias em um relatório contínuo. Você fará a leitura inicial e depois enviará para a Coordenação revisar e aprovar.
+              </p>
+              <button onClick={handleGenerateReport} disabled={generatingReport} style={{
+                padding: "14px 32px", borderRadius: 14, border: "none",
+                background: generatingReport ? "rgba(249,115,22,0.5)" : "#F97316", color: "white",
+                fontWeight: 800, fontSize: 15, cursor: generatingReport ? "not-allowed" : "pointer",
+                transition: "all 0.2s",
+                boxShadow: generatingReport ? "none" : "0 4px 12px rgba(249,115,22,0.3)"
+              }}>
+                {generatingReport ? "✨ Escrevendo rascunho..." : "✨ Gerar Rascunho com IA"}
+              </button>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Generated Report View - DRAFT */}
         {reportContent && !reportApproved && (
@@ -539,7 +538,7 @@ export default function ShowroomPedagogico() {
             </div>
 
             <div style={{ display: "flex", gap: 16, borderTop: "1px solid #F1F5F9", paddingTop: 24, marginTop: 24, flexWrap: "wrap" }}>
-              <button onClick={() => { setReportApproved(true); setReportContent(editableContent); }} style={{
+              <button onClick={handleSendToCoordination} style={{
                 padding: "14px 24px", borderRadius: 12, border: "none",
                 background: "#0F172A", color: "white", fontWeight: 800, fontSize: 14, cursor: "pointer",
                 display: "flex", alignItems: "center", gap: 8
@@ -557,7 +556,7 @@ export default function ShowroomPedagogico() {
           </div>
         )}
 
-        {/* Official Document View (Printable) */}
+        {/* Official Document View (After Send) */}
         {reportContent && reportApproved && (
           <div style={{ marginTop: 40, textAlign: "center", padding: "60px 20px", background: "white", borderRadius: 24, border: "1px solid #E2E8F0" }}>
              <span style={{ fontSize: 60, display: "block", marginBottom: 16 }}>🚀</span>
@@ -568,7 +567,6 @@ export default function ShowroomPedagogico() {
           </div>
         )}
       </div>
-
     </div>
   );
 }

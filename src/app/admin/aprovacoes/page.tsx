@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { getRelatorioPedagogico, saveRelatorioPedagogico } from "@/lib/firestore";
 import Link from "next/link";
 
 interface LogPedagogico {
@@ -28,6 +29,7 @@ const PILAR_CONFIG: Record<string, { icon: string; color: string }> = {
 };
 
 const ALUNO_ID = "aluno_otto";
+const PERIODO_ATUAL = "2026-T2";
 
 function calcScore(logs: LogPedagogico[]): number {
   if (!logs.length) return 0;
@@ -57,6 +59,7 @@ export default function ShowroomDiretora() {
   const [editableContent, setEditableContent] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const [reportApproved, setReportApproved] = useState(false);
+  const [reportFromProfessor, setReportFromProfessor] = useState(false);
   
   // Prompt de ajuste IA
   const [adjustPrompt, setAdjustPrompt] = useState("");
@@ -72,6 +75,18 @@ export default function ShowroomDiretora() {
         .then(data => setLogs(data.logs || []))
         .catch(console.error)
         .finally(() => setLoading(false));
+
+      // Check for report sent by professor
+      getRelatorioPedagogico(ALUNO_ID, PERIODO_ATUAL).then(rel => {
+        if (rel) {
+          setReportContent(rel.conteudo);
+          setEditableContent(rel.conteudo);
+          setReportFromProfessor(true);
+          if (rel.status === "aprovado") {
+            setReportApproved(true);
+          }
+        }
+      });
     } else {
       setLoading(false);
     }
@@ -104,6 +119,7 @@ export default function ShowroomDiretora() {
       if (data.report) {
         setReportContent(data.report);
         setEditableContent(data.report);
+        setReportFromProfessor(false);
       } else {
         alert("Erro ao gerar relatório: " + (data.error || "Desconhecido"));
       }
@@ -140,6 +156,25 @@ export default function ShowroomDiretora() {
       alert("Erro ao ajustar relatório.");
     } finally {
       setAdjusting(false);
+    }
+  }
+
+  async function handleApproveReport() {
+    if (!editableContent) return;
+    try {
+      await saveRelatorioPedagogico({
+        alunoId: ALUNO_ID,
+        escolaId: "escola_planetacolorido",
+        professorId: "coord_direcao",
+        status: "aprovado",
+        conteudo: editableContent,
+        periodo: PERIODO_ATUAL
+      });
+      setReportApproved(true);
+      setReportContent(editableContent);
+    } catch (error) {
+      console.error(error);
+      alert("Erro ao aprovar relatório.");
     }
   }
 
@@ -198,22 +233,12 @@ export default function ShowroomDiretora() {
                 </div>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <span style={{ background: "#F97316", color: "white", padding: "6px 12px", borderRadius: 20, fontSize: 12, fontWeight: 700 }}>Aguardando Revisão</span>
+                <span style={{ background: "#F97316", color: "white", padding: "6px 12px", borderRadius: 20, fontSize: 12, fontWeight: 700 }}>
+                  {reportApproved ? "✅ Aprovado" : "Aguardando Revisão"}
+                </span>
                 <span style={{ color: "#F97316" }}>→</span>
               </div>
             </button>
-            <div style={{ background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: 16, padding: "20px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", opacity: 0.6 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-                <span style={{ fontSize: 32 }}>👧🏾</span>
-                <div style={{ textAlign: "left" }}>
-                  <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: "#1E293B" }}>Alice</h3>
-                  <p style={{ margin: "4px 0 0", fontSize: 13, color: "#64748B" }}>Maternal I • Prof. Clara</p>
-                </div>
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <span style={{ background: "#F1F5F9", color: "#64748B", padding: "6px 12px", borderRadius: 20, fontSize: 12, fontWeight: 700 }}>Já Aprovado</span>
-              </div>
-            </div>
           </div>
         </div>
       </div>
@@ -229,11 +254,6 @@ export default function ShowroomDiretora() {
         color: "white", position: "relative", overflow: "hidden",
         borderRadius: 24, marginBottom: 32
       }}>
-        <div style={{
-          position: "absolute", top: -60, right: -40,
-          width: 250, height: 250, borderRadius: "50%",
-          background: "rgba(249,115,22,0.15)", filter: "blur(60px)",
-        }} />
         <div style={{ maxWidth: 900, position: "relative", zIndex: 1 }}>
           <button onClick={() => setSelectedAluno(null)} style={{
             color: "#94A3B8", fontSize: 13, fontWeight: 600,
@@ -244,10 +264,10 @@ export default function ShowroomDiretora() {
           </button>
 
           <h1 style={{ fontSize: 32, fontWeight: 800, margin: "0 0 8px", letterSpacing: "-0.02em" }}>
-            Módulo Pedagógico
+            Revisão de Relatório
           </h1>
           <p style={{ color: "#94A3B8", margin: 0, fontSize: 15 }}>
-            {logs.length} observações coletadas • Aluno: Otto
+            Aluno: Otto • {logs.length} observações analisadas
           </p>
         </div>
       </header>
@@ -280,65 +300,6 @@ export default function ShowroomDiretora() {
           </div>
         </div>
 
-        {/* Pilar Overview */}
-        <div style={{
-          background: "white", borderRadius: 20, padding: 28, marginBottom: 32,
-          border: "1px solid #F1F5F9", boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
-        }}>
-          <h3 style={{ margin: "0 0 20px", fontSize: 17, fontWeight: 800, color: "#1E293B" }}>
-            📊 Desempenho por Pilar
-          </h3>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 12 }}>
-            {pilarEntries.map(([pilar, pilarLogs]) => {
-              const cfg = PILAR_CONFIG[pilar] || { icon: "📌", color: "#64748B" };
-              const score = calcScore(pilarLogs);
-              return (
-                <div key={pilar} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", borderRadius: 12, background: "#FAFBFC" }}>
-                  <span style={{ fontSize: 20 }}>{cfg.icon}</span>
-                  <div style={{ flex: 1 }}>
-                    <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: "#334155" }}>{pilarLogs[0]?.pilarLabel}</p>
-                    <div style={{ height: 6, borderRadius: 6, background: "#F1F5F9", marginTop: 4, overflow: "hidden" }}>
-                      <div style={{ height: "100%", borderRadius: 6, width: `${score}%`, background: cfg.color, transition: "width 1s" }} />
-                    </div>
-                  </div>
-                  <span style={{ fontSize: 14, fontWeight: 800, color: score >= 80 ? "#22C55E" : score >= 60 ? "#F59E0B" : "#EF4444" }}>{score}%</span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Report Generation CTA */}
-        <div style={{
-          background: "linear-gradient(135deg, #1E293B, #0F172A)",
-          borderRadius: 24, padding: "40px 32px", color: "white",
-          textAlign: "center", position: "relative", overflow: "hidden", marginBottom: 32,
-        }}>
-          <div style={{
-            position: "absolute", top: -30, right: -30,
-            width: 180, height: 180, borderRadius: "50%",
-            background: "rgba(249,115,22,0.15)", filter: "blur(50px)",
-          }} />
-          <div style={{ position: "relative", zIndex: 1 }}>
-            <span style={{ fontSize: 40, display: "block", marginBottom: 16 }}>🤖</span>
-            <h3 style={{ margin: "0 0 12px", fontSize: 22, fontWeight: 800 }}>
-              Gerar Relatório Trimestral com IA
-            </h3>
-            <p style={{ color: "#94A3B8", margin: "0 auto 24px", maxWidth: 500, lineHeight: 1.6, fontSize: 14 }}>
-              A IA analisa todas as {logs.length} observações da professora e gera um relatório pedagógico humanizado. Você pode revisar, editar e ajustar antes de aprovar.
-            </p>
-            <button onClick={handleGenerateReport} disabled={generatingReport} style={{
-              padding: "14px 32px", borderRadius: 14, border: "none",
-              background: generatingReport ? "rgba(249,115,22,0.5)" : "#F97316", color: "white",
-              fontWeight: 800, fontSize: 15, cursor: generatingReport ? "not-allowed" : "pointer",
-              transition: "all 0.2s",
-              boxShadow: generatingReport ? "none" : "0 4px 12px rgba(249,115,22,0.3)"
-            }}>
-              {generatingReport ? "✨ Gerando relatório (pode levar alguns segundos)..." : "✨ Gerar Relatório com IA"}
-            </button>
-          </div>
-        </div>
-
         {/* Report Editor */}
         {reportContent && !reportApproved && (
           <div style={{
@@ -350,10 +311,10 @@ export default function ShowroomDiretora() {
               <span style={{ fontSize: 28 }}>✍️</span>
               <div style={{ flex: 1 }}>
                 <h3 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: "#1E293B" }}>
-                  {isEditing ? "Editando Relatório" : "Rascunho da IA"}
+                  {reportFromProfessor ? "Rascunho da Professora" : "Rascunho Gerado por IA"}
                 </h3>
                 <p style={{ margin: 0, fontSize: 13, color: "#64748B" }}>
-                  {isEditing ? "Edite livremente o texto abaixo." : "Revise o texto gerado. Você pode editar manualmente ou pedir ajustes à IA."}
+                  {isEditing ? "Edite livremente o texto abaixo." : "Revise o texto. Você pode editar manualmente ou pedir ajustes à IA."}
                 </p>
               </div>
               <button
@@ -409,17 +370,30 @@ export default function ShowroomDiretora() {
             </div>
 
             <div style={{ display: "flex", gap: 12, borderTop: "1px solid #F1F5F9", paddingTop: 24, marginTop: 24, flexWrap: "wrap" }}>
-              <button onClick={() => { setReportApproved(true); setReportContent(editableContent); }} style={{ padding: "14px 24px", borderRadius: 12, border: "none", background: "#0F172A", color: "white", fontWeight: 800, fontSize: 14, cursor: "pointer" }}>
-                ✅ Aprovar Documento
+              <button onClick={handleApproveReport} style={{ padding: "14px 24px", borderRadius: 12, border: "none", background: "#0F172A", color: "white", fontWeight: 800, fontSize: 14, cursor: "pointer" }}>
+                ✅ Aprovar e Finalizar
               </button>
             </div>
           </div>
         )}
 
+        {/* If no report exists yet */}
+        {!reportContent && (
+           <div style={{ textAlign: "center", padding: "40px 0" }}>
+              <p style={{ color: "#64748B" }}>Nenhum rascunho enviado pela professora ainda.</p>
+              <button onClick={handleGenerateReport} disabled={generatingReport} style={{
+                padding: "14px 32px", borderRadius: 14, border: "none",
+                background: "#F97316", color: "white", fontWeight: 800, fontSize: 15, cursor: "pointer"
+              }}>
+                {generatingReport ? "Gerando..." : "✨ Gerar Rascunho Próprio"}
+              </button>
+           </div>
+        )}
+
         {reportContent && reportApproved && (
           <div style={{ marginTop: 8 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24, flexWrap: "wrap", gap: 16 }}>
-              <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: "#1E293B" }}>📄 Documento Pronto</h3>
+              <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: "#1E293B" }}>📄 Documento Aprovado</h3>
               <div style={{ display: "flex", gap: 12 }}>
                 <button onClick={() => setReportApproved(false)} style={{ padding: "10px 20px", borderRadius: 10, border: "1px solid #CBD5E1", background: "white", color: "#475569", fontWeight: 700, fontSize: 13, cursor: "pointer" }}>
                   ← Voltar
@@ -438,30 +412,16 @@ export default function ShowroomDiretora() {
               <div style={{ textAlign: "center", borderBottom: "2px solid #F1F5F9", paddingBottom: 24, marginBottom: 40 }}>
                 <h2 style={{ margin: 0, fontSize: 24, fontWeight: 900, color: "#0F172A" }}>Escola Planeta Colorido</h2>
                 <p style={{ margin: "4px 0 0", fontSize: 13, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 700 }}>
-                  Relatório Pedagógico
+                  Relatório Pedagógico Trimestral
                 </p>
               </div>
               <div style={{ fontSize: 15, lineHeight: 1.8, color: "#334155" }}>
                 {renderMarkdown(editableContent)}
               </div>
             </div>
-
-            <style jsx global>{`
-              @media print {
-                body { background: white; }
-                body * { visibility: hidden; }
-                .printable-a4, .printable-a4 * { visibility: visible; }
-                .printable-a4 {
-                  position: absolute; left: 0; top: 0;
-                  box-shadow: none !important; margin: 0 !important;
-                  padding: 40px !important; width: 100% !important;
-                }
-              }
-            `}</style>
           </div>
         )}
       </div>
-
     </div>
   );
 }

@@ -520,7 +520,7 @@ export async function markCobrancaAsViewed(id: string): Promise<void> {
 }
 
 // ============================================
-// Pedagógico (Logs de Observação)
+// Pedagógico (Logs e Relatórios)
 // ============================================
 
 export interface LogPedagogico {
@@ -537,6 +537,18 @@ export interface LogPedagogico {
   criadoEm: string;
 }
 
+export interface RelatorioPedagogico {
+  id?: string;
+  alunoId: string;
+  escolaId: string;
+  professorId: string;
+  status: "rascunho_professor" | "aprovado" | "ajuste_solicitado";
+  conteudo: string;
+  periodo: string; // ex: "2026-T1"
+  criadoEm: string;
+  atualizadoEm: string;
+}
+
 export async function getLogsPedagogicos(alunoId: string): Promise<LogPedagogico[]> {
   const q = query(
     collection(db(), "logs_pedagogicos"),
@@ -546,4 +558,32 @@ export async function getLogsPedagogicos(alunoId: string): Promise<LogPedagogico
   return snap.docs
     .map((d) => ({ id: d.id, ...d.data() } as LogPedagogico))
     .sort((a, b) => a.data.localeCompare(b.data));
+}
+
+export async function saveRelatorioPedagogico(relatorio: Omit<RelatorioPedagogico, "criadoEm" | "atualizadoEm">): Promise<void> {
+  const now = new Date().toISOString();
+  // Usamos um ID determinístico para facilitar a busca (aluno + periodo)
+  const id = `${relatorio.alunoId}_${relatorio.periodo}`;
+  const ref = doc(db(), "relatorios_pedagogicos", id);
+  const snap = await getDoc(ref);
+
+  if (snap.exists()) {
+    await updateDoc(ref, {
+      ...relatorio,
+      atualizadoEm: now
+    });
+  } else {
+    await setDoc(ref, {
+      ...relatorio,
+      criadoEm: now,
+      atualizadoEm: now
+    });
+  }
+}
+
+export async function getRelatorioPedagogico(alunoId: string, periodo: string): Promise<RelatorioPedagogico | null> {
+  const id = `${alunoId}_${periodo}`;
+  const snap = await getDoc(doc(db(), "relatorios_pedagogicos", id));
+  if (!snap.exists()) return null;
+  return { id: snap.id, ...snap.data() } as RelatorioPedagogico;
 }
