@@ -75,7 +75,7 @@ export async function POST(request: Request) {
       }, { status: 500 });
     }
 
-    const { alunoId = "aluno_otto" } = await request.json();
+    const { alunoId = "aluno_otto", adjustPrompt } = await request.json();
 
     const snap = await db
       .collection("logs_pedagogicos")
@@ -93,7 +93,7 @@ export async function POST(request: Request) {
 
     const logsText = logs.map((l: any) => `[${l.data}] ${l.pilarLabel} (${l.sentimento}): ${l.nota}`).join("\n");
 
-    const prompt = `Você é um coordenador pedagógico de uma escola de educação infantil, especialista em neurodesenvolvimento.
+    const basePrompt = `Você é um coordenador pedagógico de uma escola de educação infantil, especialista em neurodesenvolvimento.
 Abaixo estão as observações diárias feitas pela professora ao longo do trimestre sobre o aluno (foco no desenvolvimento e rotina).
 A partir desses logs diários, escreva um relatório pedagógico trimestral narrativo e humanizado destinado aos pais.
 
@@ -108,6 +108,8 @@ A partir desses logs diários, escreva um relatório pedagógico trimestral narr
 ${logsText}
 
 Escreva o relatório trimestral completo em formato Markdown abaixo:`;
+
+    const prompt = adjustPrompt ? adjustPrompt : basePrompt;
 
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
     const result = await model.generateContent(prompt);
