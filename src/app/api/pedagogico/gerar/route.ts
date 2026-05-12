@@ -77,6 +77,11 @@ export async function POST(request: Request) {
 
     const { alunoId = "aluno_otto", adjustPrompt } = await request.json();
 
+    // Fetch student info for personalization
+    const studentSnap = await db.collection("alunos").doc(alunoId).get();
+    const studentData = studentSnap.exists ? studentSnap.data() : null;
+    const studentName = studentData?.nome || "o aluno";
+
     const snap = await db
       .collection("logs_pedagogicos")
       .where("alunoId", "==", alunoId)
@@ -94,17 +99,18 @@ export async function POST(request: Request) {
     const logsText = logs.map((l: any) => `[${l.data}] ${l.pilarLabel} (${l.sentimento}): ${l.nota}`).join("\n");
 
     const basePrompt = `Você é um coordenador pedagógico de uma escola de educação infantil, especialista em neurodesenvolvimento.
-Abaixo estão as observações diárias feitas pela professora ao longo do trimestre sobre o aluno (foco no desenvolvimento e rotina).
+Abaixo estão as observações diárias feitas pela professora ao longo do trimestre sobre o(a) aluno(a) ${studentName} (foco no desenvolvimento e rotina).
 A partir desses logs diários, escreva um relatório pedagógico trimestral narrativo e humanizado destinado aos pais.
 
 **Diretrizes:**
-- O relatório deve contemplar o desenvolvimento do aluno com base nos seguintes pilares avaliados: Desenvolvimento Socioemocional, Autonomia e Rotina, Linguagem e Comunicação, Coordenação Motora, Raciocínio Lógico, Interesse e Curiosidade, Leitura e Escrita, Comportamento, Alimentação e Sono.
+- O relatório deve contemplar o desenvolvimento de ${studentName} com base nos seguintes pilares avaliados: Desenvolvimento Socioemocional, Autonomia e Rotina, Linguagem e Comunicação, Coordenação Motora, Raciocínio Lógico, Interesse e Curiosidade, Leitura e Escrita, Comportamento, Alimentação e Sono.
+- Refira-se ao aluno pelo nome (${studentName}) ao longo do texto para torná-lo pessoal.
 - Agrupe as ideias em um texto fluido em prosa. Não faça apenas uma lista de tópicos soltos. Formate com subtítulos discretos se necessário para organizar o texto, utilizando Markdown.
 - O tom de voz deve ser acolhedor, profissional, encorajador e claro. Fale diretamente com a família.
 - Destaque as conquistas e trate os pontos de atenção com delicadeza, propondo parceria com a família.
-- Finalize com Destaques e Recomendações/Próximos Passos.
+- Finalize com Destaques e Recomendações/Próximos Pasos.
 
-**Logs Diários do Trimestre:**
+**Logs Diários do Trimestre (${studentName}):**
 ${logsText}
 
 Escreva o relatório trimestral completo em formato Markdown abaixo:`;
