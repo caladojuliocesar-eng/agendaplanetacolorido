@@ -179,13 +179,13 @@ export default function RegistroIndividual() {
         escolaId: profile.escolaId,
         turma: student?.turma || profile.turma || "",
         professorId: profile.uid,
-        pilar: iaResult.pilar,
+        pilar: iaResult.pilarId || iaResult.pilar,
         pilarLabel: iaResult.pilarLabel,
-        nota: iaResult.notaRefinada,
+        nota: iaResult.justificativa || iaResult.notaRefinada || iaText,
         sentimento: iaResult.sentimento
       };
 
-      const res = await fetch("/api/pedagogico/salvar", {
+      const res = await fetch("/api/pedagogico", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -748,7 +748,7 @@ export default function RegistroIndividual() {
                     </span>
                   </div>
                   <p style={{ margin: 0, fontSize: 14, color: "#334155", lineHeight: 1.5 }}>
-                    "{iaResult.notaRefinada}"
+                    "{iaResult.justificativa || iaResult.notaRefinada || iaText}"
                   </p>
                 </div>
                 <div style={{ display: "flex", gap: 12 }}>

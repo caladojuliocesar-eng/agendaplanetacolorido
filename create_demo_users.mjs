@@ -88,25 +88,21 @@ async function createDemoUsers() {
             // Isso garante que resolveUserProfile() encontre pelo UID diretamente
             const realUid = authUser.uid;
 
-            // Verifica se já existe um doc com o UID real
-            const realDoc = await db.collection("usuarios").doc(realUid).get();
-            if (!realDoc.exists) {
-                // Escreve o perfil com o UID real
-                await db.collection("usuarios").doc(realUid).set({
-                    ...user.profileData,
-                    uid: realUid,
-                    criadoEm: new Date().toISOString(),
-                });
-                console.log(`   📄 Documento Firestore criado com UID real: ${realUid}`);
+            // Força a reescrita do documento para garantir que todos os campos estão corretos
+            await db.collection("usuarios").doc(realUid).set({
+                ...user.profileData,
+                uid: realUid,
+                criadoEm: new Date().toISOString(),
+            });
+            console.log(`   📄 Documento Firestore atualizado (UID: ${realUid}) — turma: ${user.profileData.turma || "n/a"}`);
 
-                // Remove o documento antigo com UID fake (demo_diretora, etc), se existir
+            // Remove documento com UID fake se for diferente do real
+            if (user.firestoreUid !== realUid) {
                 const fakeDoc = await db.collection("usuarios").doc(user.firestoreUid).get();
                 if (fakeDoc.exists) {
                     await db.collection("usuarios").doc(user.firestoreUid).delete();
                     console.log(`   🗑️  Documento antigo removido: ${user.firestoreUid}`);
                 }
-            } else {
-                console.log(`   📄 Documento Firestore já existe com UID real — mantido.`);
             }
 
             console.log("");
