@@ -166,7 +166,12 @@ export default function ShowroomPedagogico() {
   const [tab, setTab] = useState<"visao" | "timeline">("visao");
   const [generatingReport, setGeneratingReport] = useState(false);
   const [reportContent, setReportContent] = useState<string | null>(null);
+  const [editableContent, setEditableContent] = useState("");
+  const [isEditing, setIsEditing] = useState(false);
   const [reportApproved, setReportApproved] = useState(false);
+  
+  const [adjustPrompt, setAdjustPrompt] = useState("");
+  const [adjusting, setAdjusting] = useState(false);
 
   useEffect(() => {
     if (selectedAluno === ALUNO_ID) {
@@ -186,6 +191,7 @@ export default function ShowroomPedagogico() {
     setGeneratingReport(true);
     setReportContent(null);
     setReportApproved(false);
+    setIsEditing(false);
     try {
       const res = await fetch("/api/pedagogico/gerar", {
         method: "POST",
@@ -195,6 +201,7 @@ export default function ShowroomPedagogico() {
       const data = await res.json();
       if (data.report) {
         setReportContent(data.report);
+        setEditableContent(data.report);
       } else {
         alert("Erro ao gerar relatório: " + (data.error || "Desconhecido"));
       }
@@ -203,6 +210,34 @@ export default function ShowroomPedagogico() {
       alert("Erro ao gerar relatório.");
     } finally {
       setGeneratingReport(false);
+    }
+  }
+
+  async function handleAdjustWithAI() {
+    if (!adjustPrompt.trim() || adjusting) return;
+    setAdjusting(true);
+    try {
+      const res = await fetch("/api/pedagogico/gerar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          alunoId: ALUNO_ID,
+          adjustPrompt: `Abaixo está o relatório atual. Ajuste-o conforme esta instrução da professora: "${adjustPrompt}"\n\nRelatório atual:\n${editableContent}`,
+        }),
+      });
+      const data = await res.json();
+      if (data.report) {
+        setEditableContent(data.report);
+        setReportContent(data.report);
+        setAdjustPrompt("");
+      } else {
+        alert("Erro ao ajustar: " + (data.error || "Desconhecido"));
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Erro ao ajustar relatório.");
+    } finally {
+      setAdjusting(false);
     }
   }
 
@@ -423,36 +458,88 @@ export default function ShowroomPedagogico() {
           }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24, borderBottom: "1px solid #F1F5F9", paddingBottom: 16 }}>
               <span style={{ fontSize: 28 }}>✍️</span>
-              <div>
-                <h3 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: "#1E293B" }}>Rascunho Pronto</h3>
-                <p style={{ margin: 0, fontSize: 13, color: "#64748B" }}>Leia para ver se está de acordo com a realidade. Se estiver tudo certo, envie para a Coordenação.</p>
+              <div style={{ flex: 1 }}>
+                <h3 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: "#1E293B" }}>
+                  {isEditing ? "Editando Rascunho" : "Rascunho Pronto"}
+                </h3>
+                <p style={{ margin: 0, fontSize: 13, color: "#64748B" }}>
+                  {isEditing ? "Edite livremente o texto abaixo." : "Leia para ver se está de acordo. Se precisar de ajustes, use o campo abaixo ou edite manualmente."}
+                </p>
               </div>
-            </div>
-            <div style={{
-              fontSize: 15, lineHeight: 1.8, color: "#334155",
-              fontFamily: "system-ui, sans-serif",
-              marginBottom: 32
-            }}>
-              {reportContent.split('\n').map((line, i) => {
-                if (line.startsWith('## ')) return <h2 key={i} style={{ fontSize: 20, color: "#1E293B", marginTop: 24 }}>{line.replace('## ', '')}</h2>;
-                if (line.startsWith('### ')) return <h3 key={i} style={{ fontSize: 18, color: "#1E293B", marginTop: 20 }}>{line.replace('### ', '')}</h3>;
-                
-                const parts = line.split(/(\*\*.*?\*\*)/g);
-                return (
-                  <p key={i} style={{ margin: "0 0 12px 0", minHeight: line.trim() === "" ? 12 : "auto" }}>
-                    {parts.map((part, j) => {
-                      if (part.startsWith('**') && part.endsWith('**')) {
-                        return <strong key={j}>{part.slice(2, -2)}</strong>;
-                      }
-                      return part;
-                    })}
-                  </p>
-                );
-              })}
+              <button
+                onClick={() => setIsEditing(!isEditing)}
+                style={{
+                  padding: "8px 16px", borderRadius: 10, border: "1px solid #E2E8F0",
+                  background: isEditing ? "#FEF2F2" : "#F8FAFC", color: isEditing ? "#991B1B" : "#475569",
+                  fontWeight: 700, fontSize: 13, cursor: "pointer",
+                }}
+              >
+                {isEditing ? "👁️ Visualizar" : "✏️ Editar Texto"}
+              </button>
             </div>
 
-            <div style={{ display: "flex", gap: 16, borderTop: "1px solid #F1F5F9", paddingTop: 24, flexWrap: "wrap" }}>
-              <button onClick={() => setReportApproved(true)} style={{
+            {isEditing ? (
+              <textarea
+                value={editableContent}
+                onChange={(e) => setEditableContent(e.target.value)}
+                style={{
+                  width: "100%", minHeight: 400, padding: 24, borderRadius: 16,
+                  border: "2px solid #E2E8F0", fontSize: 15, lineHeight: 1.8,
+                  color: "#334155", fontFamily: "system-ui, sans-serif",
+                  outline: "none", resize: "vertical", boxSizing: "border-box",
+                  background: "#FAFBFC",
+                }}
+              />
+            ) : (
+              <div style={{
+                fontSize: 15, lineHeight: 1.8, color: "#334155",
+                fontFamily: "system-ui, sans-serif",
+                marginBottom: 32
+              }}>
+                {editableContent.split('\n').map((line, i) => {
+                  if (line.startsWith('## ')) return <h2 key={i} style={{ fontSize: 20, color: "#1E293B", marginTop: 24 }}>{line.replace('## ', '')}</h2>;
+                  if (line.startsWith('### ')) return <h3 key={i} style={{ fontSize: 18, color: "#1E293B", marginTop: 20 }}>{line.replace('### ', '')}</h3>;
+                  
+                  const parts = line.split(/(\*\*.*?\*\*)/g);
+                  return (
+                    <p key={i} style={{ margin: "0 0 12px 0", minHeight: line.trim() === "" ? 12 : "auto" }}>
+                      {parts.map((part, j) => {
+                        if (part.startsWith('**') && part.endsWith('**')) {
+                          return <strong key={j}>{part.slice(2, -2)}</strong>;
+                        }
+                        return part;
+                      })}
+                    </p>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* AI Adjust Tool */}
+            <div style={{ marginTop: 24, background: "#F8FAFC", borderRadius: 16, padding: 20, border: "1px solid #E2E8F0" }}>
+              <p style={{ margin: "0 0 12px", fontSize: 13, fontWeight: 800, color: "#475569", display: "flex", alignItems: "center", gap: 8 }}>
+                🤖 Refinar Rascunho com IA
+              </p>
+              <div style={{ display: "flex", gap: 12, alignItems: "flex-end" }}>
+                <input
+                  value={adjustPrompt}
+                  onChange={(e) => setAdjustPrompt(e.target.value)}
+                  placeholder='Ex: "Dê mais ênfase na autonomia"'
+                  onKeyDown={(e) => { if (e.key === "Enter") handleAdjustWithAI(); }}
+                  style={{ flex: 1, padding: "14px 18px", borderRadius: 12, border: "1px solid #CBD5E1", fontSize: 14, outline: "none" }}
+                />
+                <button
+                  onClick={handleAdjustWithAI}
+                  disabled={adjusting || !adjustPrompt.trim()}
+                  style={{ padding: "14px 20px", borderRadius: 12, border: "none", background: adjusting || !adjustPrompt.trim() ? "#CBD5E1" : "#6366F1", color: "white", fontWeight: 800, fontSize: 13, cursor: "pointer" }}
+                >
+                  {adjusting ? "Ajustando..." : "Aplicar"}
+                </button>
+              </div>
+            </div>
+
+            <div style={{ display: "flex", gap: 16, borderTop: "1px solid #F1F5F9", paddingTop: 24, marginTop: 24, flexWrap: "wrap" }}>
+              <button onClick={() => { setReportApproved(true); setReportContent(editableContent); }} style={{
                 padding: "14px 24px", borderRadius: 12, border: "none",
                 background: "#0F172A", color: "white", fontWeight: 800, fontSize: 14, cursor: "pointer",
                 display: "flex", alignItems: "center", gap: 8
@@ -464,7 +551,7 @@ export default function ShowroomPedagogico() {
                 background: "white", color: "#64748B", fontWeight: 700, fontSize: 14, cursor: "pointer",
                 display: "flex", alignItems: "center", gap: 8
               }}>
-                🔄 Refazer com IA
+                🔄 Gerar Novamente (Do Zero)
               </button>
             </div>
           </div>
