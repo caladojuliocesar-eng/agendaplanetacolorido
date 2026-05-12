@@ -216,8 +216,6 @@ export default function ShowroomDiretora() {
             </div>
           </div>
         </div>
-
-        </div>
       </div>
     );
   }

@@ -273,8 +273,6 @@ export default function ShowroomPedagogico() {
             </div>
           </div>
         </div>
-
-        </div>
       </div>
     );
   }
