@@ -17,42 +17,54 @@ const db = admin.firestore();
 const authAdmin = admin.auth();
 
 // Senha padrão para todos os usuários demo
-const DEMO_PASSWORD = "ottomatic2025";
+const DEMO_PASSWORD = "planeta123";
 
 const DEMO_USERS = [
     {
-        email: "diretora@demo.com",
+        email: "diretora@planeta.com",
         displayName: "Helena (Diretora)",
         firestoreUid: "demo_diretora",
         profileData: {
             nome: "Helena (Diretora)",
-            email: "diretora@demo.com",
+            email: "diretora@planeta.com",
             role: "admin",
             escolaId: "planeta-colorido",
         }
     },
     {
-        email: "profe@demo.com",
+        email: "profe@planeta.com",
         displayName: "Ana Cláudia (Profe)",
         firestoreUid: "demo_professora",
         profileData: {
             nome: "Ana Cláudia (Profe)",
-            email: "profe@demo.com",
+            email: "profe@planeta.com",
             role: "professor",
             escolaId: "planeta-colorido",
             turma: "Berçário II",
         }
     },
     {
-        email: "pai@demo.com",
+        email: "paiotto@planeta.com",
         displayName: "Ricardo (Pai do Otto)",
         firestoreUid: "demo_pai",
         profileData: {
             nome: "Ricardo (Pai do Otto)",
-            email: "pai@demo.com",
+            email: "paiotto@planeta.com",
             role: "pai",
             escolaId: "planeta-colorido",
             filhos: ["aluno_otto"],
+        }
+    },
+    {
+        email: "pailuna@planeta.com",
+        displayName: "Responsável da Luna",
+        firestoreUid: "demo_pai_luna",
+        profileData: {
+            nome: "Responsável da Luna",
+            email: "pailuna@planeta.com",
+            role: "pai",
+            escolaId: "planeta-colorido",
+            filhos: ["aluno_luna"],
         }
     }
 ];
@@ -95,6 +107,16 @@ async function createDemoUsers() {
                 criadoEm: new Date().toISOString(),
             });
             console.log(`   📄 Documento Firestore atualizado (UID: ${realUid}) — turma: ${user.profileData.turma || "n/a"}`);
+
+            // Vincula o pai de volta ao aluno no Firestore (campo paiIds)
+            if (user.profileData.role === "pai" && user.profileData.filhos) {
+                for (const filhoId of user.profileData.filhos) {
+                    await db.collection("alunos").doc(filhoId).update({
+                        paiIds: admin.firestore.FieldValue.arrayUnion(realUid)
+                    });
+                    console.log(`   🔗 Vinculado paiIds [${realUid}] no aluno [${filhoId}]`);
+                }
+            }
 
             // Remove documento com UID fake se for diferente do real
             if (user.firestoreUid !== realUid) {

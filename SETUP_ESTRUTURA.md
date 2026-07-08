@@ -18,23 +18,20 @@ Preencha os dados abaixo com as informações **oficiais e definitivas** que voc
 ### 2.1. Equipe Administrativa (Diretoria / Coordenação)
 | Nome | E-mail de Login | Função |
 | :--- | :--- | :--- |
-| Ex: Julio Calado | diretoria@ottomatic.com.br | Admin |
-| Ex: Helena Demo | diretora@demo.com | Admin |
+| Helena (Diretora) | diretora@planeta.com | Admin |
 | | | |
 
 ### 2.2. Corpo Docente (Professores)
 | Nome | E-mail de Login | Turma Vinculada |
 | :--- | :--- | :--- |
-| Ex: Ana Cláudia | profe@demo.com | Berçário II |
-| Ex: Professor Júlio | julio.calado@hotmail.com | Infantil II |
+| Ana Cláudia (Profe) | profe@planeta.com | Berçário II |
 | | | |
 
 ### 2.3. Pais / Responsáveis
 | Nome do Responsável | E-mail de Login | Nome do Filho (Alvo) |
 | :--- | :--- | :--- |
-| Ex: Ricardo | pai@demo.com | Otto |
-| Ex: Gracielly | gracielly.lourenco@gmail.com | Helena |
-| | | |
+| Ricardo (Pai do Otto) | paiotto@planeta.com | Otto |
+| Responsável da Luna | pailuna@planeta.com | Luna |
 
 ---
 

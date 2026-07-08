@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { getRelatorioPedagogico, saveRelatorioPedagogico } from "@/lib/firestore";
+import { getRelatorioPedagogico, saveRelatorioPedagogico, getAllStudents } from "@/lib/firestore";
+import { Student } from "@/types";
+import { useAuth } from "@/contexts/AuthContext";
 import Link from "next/link";
 
 interface LogPedagogico {
@@ -52,6 +54,9 @@ function groupByPilar(logs: LogPedagogico[]) {
 }
 
 export default function ShowroomDiretora() {
+  const { profile } = useAuth();
+  const [students, setStudents] = useState<Student[]>([]);
+  const [reportsStatus, setReportsStatus] = useState<Record<string, string>>({});
   const [logs, setLogs] = useState<LogPedagogico[]>([]);
   const [loading, setLoading] = useState(true);
   const [generatingReport, setGeneratingReport] = useState(false);
@@ -67,24 +72,50 @@ export default function ShowroomDiretora() {
 
   const [selectedAluno, setSelectedAluno] = useState<string | null>(null);
 
+  // Load students in this school
   useEffect(() => {
-    if (selectedAluno === ALUNO_ID) {
+    if (profile?.escolaId) {
+      getAllStudents(profile.escolaId)
+        .then(async (list) => {
+          setStudents(list);
+          const statusMap: Record<string, string> = {};
+          for (const s of list) {
+            const rel = await getRelatorioPedagogico(s.id, PERIODO_ATUAL);
+            if (rel) {
+              statusMap[s.id] = rel.status;
+            }
+          }
+          setReportsStatus(statusMap);
+        })
+        .catch(console.error);
+    }
+  }, [profile]);
+
+  useEffect(() => {
+    if (selectedAluno) {
       setLoading(true);
-      fetch(`/api/pedagogico?alunoId=${ALUNO_ID}`)
+      fetch(`/api/pedagogico?alunoId=${selectedAluno}`)
         .then(res => res.json())
         .then(data => setLogs(data.logs || []))
         .catch(console.error)
         .finally(() => setLoading(false));
 
       // Check for report sent by professor
-      getRelatorioPedagogico(ALUNO_ID, PERIODO_ATUAL).then(rel => {
+      getRelatorioPedagogico(selectedAluno, PERIODO_ATUAL).then(rel => {
         if (rel) {
           setReportContent(rel.conteudo);
           setEditableContent(rel.conteudo);
           setReportFromProfessor(true);
           if (rel.status === "aprovado") {
             setReportApproved(true);
+          } else {
+            setReportApproved(false);
           }
+        } else {
+          setReportContent(null);
+          setEditableContent("");
+          setReportFromProfessor(false);
+          setReportApproved(false);
         }
       });
     } else {
@@ -104,7 +135,7 @@ export default function ShowroomDiretora() {
   }, [grouped]);
 
   async function handleGenerateReport() {
-    if (generatingReport) return;
+    if (generatingReport || !selectedAluno) return;
     setGeneratingReport(true);
     setReportContent(null);
     setReportApproved(false);
@@ -113,7 +144,7 @@ export default function ShowroomDiretora() {
       const res = await fetch("/api/pedagogico/gerar", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ alunoId: ALUNO_ID }),
+        body: JSON.stringify({ alunoId: selectedAluno }),
       });
       const data = await res.json();
       if (data.report) {
@@ -132,14 +163,14 @@ export default function ShowroomDiretora() {
   }
 
   async function handleAdjustWithAI() {
-    if (!adjustPrompt.trim() || adjusting) return;
+    if (!adjustPrompt.trim() || adjusting || !selectedAluno) return;
     setAdjusting(true);
     try {
       const res = await fetch("/api/pedagogico/gerar", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
-          alunoId: ALUNO_ID,
+          alunoId: selectedAluno,
           adjustPrompt: `Abaixo está o relatório atual. Ajuste-o conforme esta instrução da coordenação: "${adjustPrompt}"\n\nRelatório atual:\n${editableContent}`,
         }),
       });
@@ -160,11 +191,11 @@ export default function ShowroomDiretora() {
   }
 
   async function handleApproveReport() {
-    if (!editableContent) return;
+    if (!editableContent || !selectedAluno) return;
     try {
       await saveRelatorioPedagogico({
-        alunoId: ALUNO_ID,
-        escolaId: "escola_planetacolorido",
+        alunoId: selectedAluno,
+        escolaId: profile?.escolaId || "planeta-colorido",
         professorId: "coord_direcao",
         status: "aprovado",
         conteudo: editableContent,
@@ -172,6 +203,7 @@ export default function ShowroomDiretora() {
       });
       setReportApproved(true);
       setReportContent(editableContent);
+      setReportsStatus(prev => ({ ...prev, [selectedAluno]: "aprovado" }));
     } catch (error) {
       console.error(error);
       alert("Erro ao aprovar relatório.");
@@ -206,6 +238,8 @@ export default function ShowroomDiretora() {
     );
   }
 
+  const selectedStudentObj = useMemo(() => students.find(s => s.id === selectedAluno), [students, selectedAluno]);
+
   if (!selectedAluno) {
     return (
       <div style={{ minHeight: "100vh", background: "#FAFBFC" }}>
@@ -224,21 +258,41 @@ export default function ShowroomDiretora() {
 
         <div style={{ maxWidth: 900, margin: "-48px auto 0", padding: "0 24px 64px", position: "relative", zIndex: 2 }}>
           <div style={{ background: "white", borderRadius: 20, padding: 24, border: "1px solid #F1F5F9", boxShadow: "0 4px 20px rgba(0,0,0,0.05)", display: "flex", flexDirection: "column", gap: 12 }}>
-            <button onClick={() => setSelectedAluno(ALUNO_ID)} style={{ background: "#FFF7ED", border: "1px solid #FED7AA", borderRadius: 16, padding: "20px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer", transition: "all 0.2s" }} className="hover:border-orange-400">
-              <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-                <span style={{ fontSize: 32 }}>👦🏼</span>
-                <div style={{ textAlign: "left" }}>
-                  <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: "#92400E" }}>Otto</h3>
-                  <p style={{ margin: "4px 0 0", fontSize: 13, color: "#B45309" }}>Berçário II • Prof. Ana</p>
-                </div>
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <span style={{ background: "#F97316", color: "white", padding: "6px 12px", borderRadius: 20, fontSize: 12, fontWeight: 700 }}>
-                  {reportApproved ? "✅ Aprovado" : "Aguardando Revisão"}
-                </span>
-                <span style={{ color: "#F97316" }}>→</span>
-              </div>
-            </button>
+            {students.map(student => {
+              const status = reportsStatus[student.id];
+              const isApproved = status === "aprovado";
+              const isPending = !status;
+              
+              return (
+                <button 
+                  key={student.id} 
+                  onClick={() => setSelectedAluno(student.id)} 
+                  style={{ background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: 16, padding: "20px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer", transition: "all 0.2s" }} 
+                  className="hover:border-orange-400 hover:bg-orange-50"
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                    <span style={{ fontSize: 32 }}>{student.nome === "Luna" ? "👧🏻" : student.nome === "Otto" ? "👦🏼" : "👶"}</span>
+                    <div style={{ textAlign: "left" }}>
+                      <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: "#1E293B" }}>{student.nome}</h3>
+                      <p style={{ margin: "4px 0 0", fontSize: 13, color: "#64748B" }}>{student.turma}</p>
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <span style={{ 
+                      background: isApproved ? "#F0FDF4" : isPending ? "#F1F5F9" : "#FFF7ED", 
+                      color: isApproved ? "#166534" : isPending ? "#64748B" : "#F97316", 
+                      padding: "6px 12px", 
+                      borderRadius: 20, 
+                      fontSize: 12, 
+                      fontWeight: 700 
+                    }}>
+                      {isApproved ? "✅ Aprovado" : isPending ? "Pendente de Geração" : "Aguardando Revisão"}
+                    </span>
+                    <span style={{ color: "#F97316" }}>→</span>
+                  </div>
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -267,7 +321,7 @@ export default function ShowroomDiretora() {
             Revisão de Relatório
           </h1>
           <p style={{ color: "#94A3B8", margin: 0, fontSize: 15 }}>
-            Aluno: Otto • {logs.length} observações analisadas
+            Aluno: {selectedStudentObj?.nome || ""} • {logs.length} observações analisadas
           </p>
         </div>
       </header>

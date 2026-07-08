@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { getLogsPedagogicos, saveRelatorioPedagogico, getRelatorioPedagogico } from "@/lib/firestore";
+import { getLogsPedagogicos, saveRelatorioPedagogico, getRelatorioPedagogico, getStudentsByTurma } from "@/lib/firestore";
+import { Student } from "@/types";
 import Link from "next/link";
 
 // Type matching the API response
@@ -165,6 +166,8 @@ export default function ShowroomPedagogico() {
   const { profile } = useAuth();
   const [selectedAluno, setSelectedAluno] = useState<string | null>(null);
 
+  const [students, setStudents] = useState<Student[]>([]);
+  const [reportsStatus, setReportsStatus] = useState<Record<string, string>>({});
   const [logs, setLogs] = useState<LogPedagogico[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<"visao" | "timeline">("visao");
@@ -177,24 +180,49 @@ export default function ShowroomPedagogico() {
   const [adjustPrompt, setAdjustPrompt] = useState("");
   const [adjusting, setAdjusting] = useState(false);
 
+  // Load students in this class
   useEffect(() => {
-    if (selectedAluno === ALUNO_ID) {
+    if (profile?.escolaId && profile?.turma) {
+      getStudentsByTurma(profile.escolaId, profile.turma)
+        .then(async (list) => {
+          setStudents(list);
+          const statusMap: Record<string, string> = {};
+          for (const s of list) {
+            const rel = await getRelatorioPedagogico(s.id, PERIODO_ATUAL);
+            if (rel) {
+              statusMap[s.id] = rel.status;
+            }
+          }
+          setReportsStatus(statusMap);
+        })
+        .catch(console.error);
+    }
+  }, [profile]);
+
+  useEffect(() => {
+    if (selectedAluno) {
       setLoading(true);
       // Load logs
-      fetch(`/api/pedagogico?alunoId=${ALUNO_ID}`)
+      fetch(`/api/pedagogico?alunoId=${selectedAluno}`)
         .then(res => res.json())
         .then(data => setLogs(data.logs || []))
         .catch(console.error)
         .finally(() => setLoading(false));
 
       // Check if a report already exists
-      getRelatorioPedagogico(ALUNO_ID, PERIODO_ATUAL).then(rel => {
+      getRelatorioPedagogico(selectedAluno, PERIODO_ATUAL).then(rel => {
         if (rel) {
           setReportContent(rel.conteudo);
           setEditableContent(rel.conteudo);
           if (rel.status !== "rascunho_professor") {
             setReportApproved(true);
+          } else {
+            setReportApproved(false);
           }
+        } else {
+          setReportContent(null);
+          setEditableContent("");
+          setReportApproved(false);
         }
       });
     } else {
@@ -203,7 +231,7 @@ export default function ShowroomPedagogico() {
   }, [selectedAluno]);
 
   async function handleGenerateReport() {
-    if (generatingReport) return;
+    if (generatingReport || !selectedAluno) return;
     setGeneratingReport(true);
     setReportContent(null);
     setReportApproved(false);
@@ -212,7 +240,7 @@ export default function ShowroomPedagogico() {
       const res = await fetch("/api/pedagogico/gerar", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ alunoId: ALUNO_ID }),
+        body: JSON.stringify({ alunoId: selectedAluno }),
       });
       const data = await res.json();
       if (data.report) {
@@ -230,14 +258,14 @@ export default function ShowroomPedagogico() {
   }
 
   async function handleAdjustWithAI() {
-    if (!adjustPrompt.trim() || adjusting) return;
+    if (!adjustPrompt.trim() || adjusting || !selectedAluno) return;
     setAdjusting(true);
     try {
       const res = await fetch("/api/pedagogico/gerar", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
-          alunoId: ALUNO_ID,
+          alunoId: selectedAluno,
           adjustPrompt: `Abaixo está o relatório atual. Ajuste-o conforme esta instrução da professora: "${adjustPrompt}"\n\nRelatório atual:\n${editableContent}`,
         }),
       });
@@ -258,10 +286,10 @@ export default function ShowroomPedagogico() {
   }
 
   async function handleSendToCoordination() {
-    if (!editableContent || !profile) return;
+    if (!editableContent || !profile || !selectedAluno) return;
     try {
       await saveRelatorioPedagogico({
-        alunoId: ALUNO_ID,
+        alunoId: selectedAluno,
         escolaId: profile.escolaId,
         professorId: profile.uid,
         status: "rascunho_professor",
@@ -270,6 +298,7 @@ export default function ShowroomPedagogico() {
       });
       setReportApproved(true);
       setReportContent(editableContent);
+      setReportsStatus(prev => ({ ...prev, [selectedAluno]: "rascunho_professor" }));
     } catch (error) {
       console.error(error);
       alert("Erro ao enviar para coordenação.");
@@ -300,6 +329,8 @@ export default function ShowroomPedagogico() {
     );
   }
 
+  const selectedStudentObj = useMemo(() => students.find(s => s.id === selectedAluno), [students, selectedAluno]);
+
   if (!selectedAluno) {
     return (
       <div style={{ minHeight: "100vh", background: "#FAFBFC" }}>
@@ -316,21 +347,39 @@ export default function ShowroomPedagogico() {
 
         <div style={{ maxWidth: 900, margin: "-48px auto 0", padding: "0 24px 64px", position: "relative", zIndex: 2 }}>
           <div style={{ background: "white", borderRadius: 20, padding: 24, border: "1px solid #F1F5F9", boxShadow: "0 4px 20px rgba(0,0,0,0.05)", display: "flex", flexDirection: "column", gap: 12 }}>
-            <button onClick={() => setSelectedAluno(ALUNO_ID)} style={{ background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: 16, padding: "20px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer", transition: "all 0.2s" }} className="hover:border-indigo-400 hover:bg-indigo-50">
-              <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-                <span style={{ fontSize: 32 }}>👦🏼</span>
-                <div style={{ textAlign: "left" }}>
-                  <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: "#1E293B" }}>Otto</h3>
-                  <p style={{ margin: "4px 0 0", fontSize: 13, color: "#64748B" }}>Berçário II</p>
-                </div>
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <span style={{ background: reportApproved ? "#F0FDF4" : "#FEF2F2", color: reportApproved ? "#166534" : "#991B1B", padding: "6px 12px", borderRadius: 20, fontSize: 12, fontWeight: 700 }}>
-                  {reportApproved ? "✅ Enviado" : "Pendente de Geração"}
-                </span>
-                <span style={{ color: "#94A3B8" }}>→</span>
-              </div>
-            </button>
+            {students.map(student => {
+              const status = reportsStatus[student.id];
+              const isSent = status === "rascunho_professor" || status === "aprovado";
+              return (
+                <button 
+                  key={student.id} 
+                  onClick={() => setSelectedAluno(student.id)} 
+                  style={{ background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: 16, padding: "20px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer", transition: "all 0.2s" }} 
+                  className="hover:border-indigo-400 hover:bg-indigo-50"
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                    <span style={{ fontSize: 32 }}>{student.nome === "Luna" ? "👧🏻" : student.nome === "Otto" ? "👦🏼" : "👶"}</span>
+                    <div style={{ textAlign: "left" }}>
+                      <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: "#1E293B" }}>{student.nome}</h3>
+                      <p style={{ margin: "4px 0 0", fontSize: 13, color: "#64748B" }}>{student.turma}</p>
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <span style={{ 
+                      background: isSent ? "#F0FDF4" : "#FEF2F2", 
+                      color: isSent ? "#166534" : "#991B1B", 
+                      padding: "6px 12px", 
+                      borderRadius: 20, 
+                      fontSize: 12, 
+                      fontWeight: 700 
+                    }}>
+                      {status === "aprovado" ? "✅ Aprovado" : status === "rascunho_professor" ? "✅ Enviado" : "Pendente de Geração"}
+                    </span>
+                    <span style={{ color: "#94A3B8" }}>→</span>
+                  </div>
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -353,7 +402,7 @@ export default function ShowroomPedagogico() {
           </button>
           
           <h1 style={{ fontSize: 24, fontWeight: 800, margin: "0 0 8px", letterSpacing: "-0.02em" }}>
-            Fechamento Trimestral — Otto
+            Fechamento Trimestral — {selectedStudentObj?.nome || ""}
           </h1>
           <p style={{ color: "#64748B", margin: 0, fontSize: 14 }}>
             Evolução baseada em {logs.length} observações coletadas no dia a dia • {periodoStr}

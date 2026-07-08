@@ -9,22 +9,22 @@
 - **Divisão**: 50% Escola / 50% Desenvolvedor (R$ 40,00 para cada por aluno/ano).
 - **Valor para a Escola**: Software de gestão gratuito + lucro direto sobre a taxa.
 
-## 📅 Cronograma de Implantação 2026/2027
+## 📅 Cronograma de Implantação 2026/2027 (Nova Estratégia de Adoção)
 
-### Fase 1: Gestão Interna (Maio/Junho 2026)
-- **Foco**: Admin (Dona da Escola).
-- **Uso**: Implementar o módulo Financeiro e o Mural de Avisos.
-- **Objetivo**: Resolver a dor de cabeça das cobranças e centralizar avisos gerais.
+### Fase 1: Conexão e Encantamento (Agosto 2026 - Pós Férias)
+- **Foco**: Professoras e Pais (Adoção inicial).
+- **Uso**: Agenda Digital (Rotina diária) + Mural de Avisos.
+- **Objetivo**: Eliminar a agenda física de papel, engajar 100% dos pais no uso diário do aplicativo e consolidar a confiança na ferramenta sem barreiras transacionais.
 
-### Fase 2: Projeto Piloto (Agosto 2026 - Pós Férias)
-- **Foco**: Uma turma pioneira.
-- **Uso**: Substituir a agenda de papel apenas para essa turma.
-- **Objetivo**: Gerar prova social e validar a usabilidade com pais e professoras.
+### Fase 2: Inteligência Pedagógica (Outubro/Novembro 2026 - Fim de Período)
+- **Foco**: Professoras e Coordenação.
+- **Uso**: Relatório Trimestral Inteligente com IA (Gemini).
+- **Objetivo**: Economizar semanas de trabalho da equipe gerando relatórios de desenvolvimento individuais a partir dos registros diários da agenda. Demonstração explícita de valor e tempo poupado.
 
-### Fase 3: Virada Oficial (Novembro 2026 - Matrículas)
-- **Foco**: Toda a escola.
-- **Uso**: Lançamento oficial como item obrigatório para 2027.
-- **Objetivo**: Substituição total do papel e início do faturamento recorrente.
+### Fase 3: Conveniência e Gestão Administrativa (Matrículas / Início de 2027)
+- **Foco**: Diretoria/Administração (Dona da Escola) e Pais.
+- **Uso**: Módulo Financeiro Lite (Cobranças/Mensalidades, envio de PIX/Boleto, controle de comprovantes).
+- **Objetivo**: Centralizar cobranças e conciliação de comprovantes no canal de comunicação oficial da escola, quando a base de dados já está madura e o app já faz parte do dia a dia da comunidade.
 
 ## 💡 Próximas Deliberações Técnicas
 - **Share Target**: Permitir que o pai compartilhe o comprovante direto do app do banco para a Agenda.

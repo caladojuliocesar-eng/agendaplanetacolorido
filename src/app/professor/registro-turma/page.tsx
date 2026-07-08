@@ -21,6 +21,7 @@ function RegistroTurmaContent() {
   const ids = searchParams.get("ids")?.split(",") || [];
   const [students, setStudents] = useState<Student[]>([]);
   const [activities, setActivities] = useState<Activities>({ ...DEFAULT_ACTIVITIES });
+  const [atividadeTexto, setAtividadeTexto] = useState("");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -69,7 +70,10 @@ function RegistroTurmaContent() {
       await saveBatchRecords(
         ids,
         today,
-        { atividades: activities },
+        { 
+          atividades: activities,
+          atividadeTexto: atividadeTexto
+        },
         profile.uid,
         profile.escolaId,
         profile.turma || ""
@@ -152,7 +156,7 @@ function RegistroTurmaContent() {
       {/* Activities */}
       <div className="card" style={{ padding: 20, marginBottom: 24 }}>
         <p className="section-title">🎯 Atividades (para todos)</p>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 20 }}>
           {ACTIVITY_ITEMS.map((item) => (
             <button
               key={item.key}
@@ -164,6 +168,22 @@ function RegistroTurmaContent() {
               <span>{item.label}</span>
             </button>
           ))}
+        </div>
+
+        <div style={{ marginTop: 20 }}>
+          <p style={{ fontSize: 13, color: "var(--text-muted)", margin: "0 0 8px" }}>
+            Detalhes das atividades de hoje:
+          </p>
+          <textarea
+            className="text-input"
+            rows={2}
+            placeholder="Ex: Apostila pg 54 - Prof Bel"
+            value={atividadeTexto}
+            onChange={(e) => {
+              setAtividadeTexto(e.target.value);
+              setSaved(false);
+            }}
+          />
         </div>
       </div>
 

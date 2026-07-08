@@ -57,14 +57,17 @@ export async function resolveUserProfile(
       const cleanEmail = user.email?.toLowerCase().trim();
       
       // Fallback - Usuários Demo (Agora no DB Oficial Limpo)
-      if (cleanEmail === 'diretora@demo.com') {
-        return { uid: 'demo_diretora', email: user.email, role: 'admin', escolaId: 'planeta-colorido', nome: 'Helena (Demo)' } as UserProfile;
+      if (cleanEmail === 'diretora@planeta.com') {
+        return { uid: 'demo_diretora', email: user.email, role: 'admin', escolaId: 'planeta-colorido', nome: 'Helena (Diretora)' } as UserProfile;
       }
-      if (cleanEmail === 'profe@demo.com') {
-        return { uid: 'demo_professora', email: user.email, role: 'professor', escolaId: 'planeta-colorido', nome: 'Ana Cláudia (Demo)', turma: 'Berçário II' } as UserProfile;
+      if (cleanEmail === 'profe@planeta.com') {
+        return { uid: 'demo_professora', email: user.email, role: 'professor', escolaId: 'planeta-colorido', nome: 'Ana Cláudia (Profe)', turma: 'Berçário II' } as UserProfile;
       }
-      if (cleanEmail === 'pai@demo.com') {
-        return { uid: 'demo_pai', email: user.email, role: 'pai', escolaId: 'planeta-colorido', nome: 'Ricardo (Demo)', filhos: ['aluno_otto'] } as UserProfile;
+      if (cleanEmail === 'paiotto@planeta.com') {
+        return { uid: 'demo_pai', email: user.email, role: 'pai', escolaId: 'planeta-colorido', nome: 'Ricardo (Pai do Otto)', filhos: ['aluno_otto'] } as UserProfile;
+      }
+      if (cleanEmail === 'pailuna@planeta.com') {
+        return { uid: 'demo_pai_luna', email: user.email, role: 'pai', escolaId: 'planeta-colorido', nome: 'Responsável da Luna', filhos: ['aluno_luna'] } as UserProfile;
       }
 
       throw new Error(`Permissão negada pelo Firebase. Regras bloqueando ID: ${user.uid}`);
