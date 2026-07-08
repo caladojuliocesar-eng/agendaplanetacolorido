@@ -134,6 +134,8 @@ export default function ShowroomDiretora() {
       .sort((a, b) => b[1].length - a[1].length);
   }, [grouped]);
 
+  const selectedStudentObj = useMemo(() => students.find(s => s.id === selectedAluno), [students, selectedAluno]);
+
   async function handleGenerateReport() {
     if (generatingReport || !selectedAluno) return;
     setGeneratingReport(true);
@@ -237,8 +239,6 @@ export default function ShowroomDiretora() {
       </div>
     );
   }
-
-  const selectedStudentObj = useMemo(() => students.find(s => s.id === selectedAluno), [students, selectedAluno]);
 
   if (!selectedAluno) {
     return (

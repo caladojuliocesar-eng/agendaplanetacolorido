@@ -321,6 +321,8 @@ export default function ShowroomPedagogico() {
       .sort((a, b) => (PILAR_CONFIG[a[0]]?.icon || "").localeCompare(PILAR_CONFIG[b[0]]?.icon || ""));
   }, [grouped]);
 
+  const selectedStudentObj = useMemo(() => students.find(s => s.id === selectedAluno), [students, selectedAluno]);
+
   if (loading) {
     return (
       <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#FAFBFC" }}>
@@ -328,8 +330,6 @@ export default function ShowroomPedagogico() {
       </div>
     );
   }
-
-  const selectedStudentObj = useMemo(() => students.find(s => s.id === selectedAluno), [students, selectedAluno]);
 
   if (!selectedAluno) {
     return (
