@@ -33,6 +33,7 @@ export default function AdminLayout({
     { href: "/admin/monitor", label: "Monitor", icon: "🖥️" },
     { href: "/admin/diario-classe", label: "Diário de Classe", icon: "📖" },
     { href: "/admin/atendimento", label: "Atendimento", icon: "💬" },
+    { href: "/admin/matriculas", label: "Matrículas", icon: "📝" },
     { href: "/admin/aprovacoes", label: "Aprovações", icon: "✅" },
     { href: "/admin/mural", label: "Mural", icon: "📌" },
     { href: "/admin/eventos", label: "Eventos", icon: "📅" },

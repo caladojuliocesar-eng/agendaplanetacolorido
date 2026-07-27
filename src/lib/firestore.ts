@@ -689,3 +689,135 @@ export async function getTurmaRecordsForMonth(escolaId: string, turma: string, y
   const all = snap.docs.map(d => ({ id: d.id, ...d.data() } as DailyRecord));
   return all.filter(r => r.data >= start && r.data <= end);
 }
+
+// ============================================
+// Solicitações de Matrícula Externa
+// ============================================
+
+export async function createMatriculaSolicitude(data: any): Promise<void> {
+  const ref = doc(collection(db(), "solicitacoes_matricula"));
+  await setDoc(ref, {
+    ...data,
+    id: ref.id,
+    status: "pendente",
+    criadoEm: new Date().toISOString()
+  });
+}
+
+export async function getMatriculaSolicitudes(escolaId: string): Promise<any[]> {
+  const q = query(
+    collection(db(), "solicitacoes_matricula"),
+    where("escolaId", "==", escolaId)
+  );
+  const snap = await getDocs(q);
+  return snap.docs.map(d => d.data());
+}
+
+export async function approveMatriculaSolicitude(solicitudeId: string, escolaId: string): Promise<void> {
+  const solicRef = doc(db(), "solicitacoes_matricula", solicitudeId);
+  const solicSnap = await getDoc(solicRef);
+  if (!solicSnap.exists()) throw new Error("Solicitação não encontrada.");
+  
+  const data = solicSnap.data();
+  
+  // 1. Create parent profiles if CPF is provided
+  const parentIds: string[] = [];
+  const now = new Date().toISOString();
+  
+  const createParent = async (parentData: any, parentesco: string) => {
+    if (!parentData?.nome || !parentData?.cpf) return null;
+    const cleanCpfVal = parentData.cpf.replace(/\D/g, "");
+    if (!cleanCpfVal) return null;
+    
+    // Check if user already exists in usuarios
+    const q = query(collection(db(), "usuarios"), where("cpf", "==", cleanCpfVal));
+    const snap = await getDocs(q);
+    if (!snap.empty) {
+      const existingId = snap.docs[0].id;
+      parentIds.push(existingId);
+      return existingId;
+    }
+    
+    const userRef = doc(collection(db(), "usuarios"));
+    const userId = userRef.id;
+    await setDoc(userRef, {
+      nome: parentData.nome,
+      email: parentData.email || "",
+      cpf: cleanCpfVal,
+      role: "pai",
+      escolaId,
+      filhos: [],
+      criadoEm: now
+    });
+    parentIds.push(userId);
+    return userId;
+  };
+  
+  const maeId = await createParent(data.mae, "Mãe");
+  const paiId = await createParent(data.pai, "Pai");
+  
+  // 2. Create student profile
+  const studentRef = doc(collection(db(), "alunos"));
+  const studentId = studentRef.id;
+  
+  await setDoc(studentRef, {
+    id: studentId,
+    nome: data.aluno.nome,
+    turma: data.aluno.turma,
+    escolaId,
+    fotoUrl: null,
+    paiIds: parentIds,
+    
+    // Informações Pessoais
+    dataNascimento: data.aluno.dataNascimento || "",
+    genero: data.aluno.genero || "",
+    endereco: `${data.endereco?.rua || ""}, CEP: ${data.endereco?.cep || ""}`,
+    
+    // Ficha Médica
+    alergias: data.saude?.alergias || "",
+    medicamentosContinuos: data.saude?.medicamentoFebre ? `${data.saude.medicamentoFebre} (Dosagem: ${data.saude.dosagemFebre || ""})` : "",
+    tipoSanguineo: "",
+    
+    // Contatos e Autorizações
+    contatosEmergencia: data.contatosEmergencia || [],
+    autorizadosRetirada: data.autorizados || [],
+    
+    criadoEm: now,
+    atualizadoEm: now
+  });
+  
+  // 3. Link parent profiles to student
+  for (const parentId of parentIds) {
+    const userRef = doc(db(), "usuarios", parentId);
+    const userSnap = await getDoc(userRef);
+    if (userSnap.exists()) {
+      const profile = userSnap.data();
+      const currentFilhos = profile.filhos || [];
+      const updatedFilhos = Array.from(new Set([...currentFilhos, studentId]));
+      
+      const vinculo = profile.vinculoFilhos || {};
+      vinculo[studentId] = {
+        parentesco: parentId === maeId ? "Mãe" : "Pai",
+        flags: parentId === maeId ? ["Financeiro", "Acadêmico"] : ["Acadêmico"]
+      };
+      
+      await updateDoc(userRef, {
+        filhos: updatedFilhos,
+        vinculoFilhos: vinculo
+      });
+    }
+  }
+  
+  // 4. Update solicitude status to approved
+  await updateDoc(solicRef, {
+    status: "aprovada",
+    alunoCriadoId: studentId
+  });
+}
+
+export async function rejectMatriculaSolicitude(solicitudeId: string): Promise<void> {
+  const solicRef = doc(db(), "solicitacoes_matricula", solicitudeId);
+  await updateDoc(solicRef, {
+    status: "recusada"
+  });
+}
