@@ -683,10 +683,9 @@ export async function getTurmaRecordsForMonth(escolaId: string, turma: string, y
   const q = query(
     collection(db(), "registros_diarios"),
     where("escolaId", "==", escolaId),
-    where("turma", "==", turma),
-    where("data", ">=", start),
-    where("data", "<=", end)
+    where("turma", "==", turma)
   );
   const snap = await getDocs(q);
-  return snap.docs.map(d => ({ id: d.id, ...d.data() } as DailyRecord));
+  const all = snap.docs.map(d => ({ id: d.id, ...d.data() } as DailyRecord));
+  return all.filter(r => r.data >= start && r.data <= end);
 }
