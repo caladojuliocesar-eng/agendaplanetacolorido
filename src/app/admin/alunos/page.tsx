@@ -2,7 +2,7 @@
 
 import { useAuth } from "@/contexts/AuthContext";
 import { useState, useEffect } from "react";
-import { getAllStudents, addStudent, updateStudent, getAllUsers, addUser, linkParentToStudent, unlinkParentFromStudent } from "@/lib/firestore";
+import { getAllStudents, addStudent, updateStudent, getAllUsers, addUser, linkParentToStudent, unlinkParentFromStudent, updateUser } from "@/lib/firestore";
 import { Student, UserProfile } from "@/types";
 
 const TURMAS_SUGERIDAS = [
@@ -197,6 +197,34 @@ export default function AlunosAdminPage() {
     }
   };
 
+  const handleUpdateParentFlags = async (parentUid: string, parentesco: string, flags: string[]) => {
+    setSaving(true);
+    try {
+      const parent = users.find(u => u.uid === parentUid);
+      if (!parent || !editingStudent) return;
+
+      const currentVinculos = parent.vinculoFilhos || {};
+      const updatedVinculos = {
+        ...currentVinculos,
+        [editingStudent.id]: {
+          parentesco,
+          flags
+        }
+      };
+
+      await updateUser(parentUid, {
+        vinculoFilhos: updatedVinculos
+      });
+
+      await loadData();
+    } catch (err) {
+      console.error("Erro ao atualizar responsabilidades:", err);
+      alert("Erro ao atualizar responsabilidades.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const isEmailExisting = parentSearchEmail.trim().length > 3 && users.some(u => u.email === parentSearchEmail.toLowerCase().trim() && u.role === "pai");
   const linkedParents = editingStudent ? getParentsForStudent(editingStudent.id) : [];
 
@@ -260,7 +288,65 @@ export default function AlunosAdminPage() {
                       <td style={{ padding: "16px 24px" }}>
                         <span style={{ padding: "4px 10px", background: "#E0F2FE", color: "#0369A1", borderRadius: 6, fontSize: 13, fontWeight: 600 }}>{student.turma}</span>
                       </td>
-                      <td style={{ padding: "16px 24px", color: "#64748B", fontSize: 14 }}>{parents.length} vinculado(s)</td>
+                      <td style={{ padding: "16px 24px", color: "#64748B", fontSize: 14 }}>
+                        {parents.length === 0 ? (
+                          <span style={{ color: "#94A3B8" }}>Sem responsáveis</span>
+                        ) : (
+                          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                            {parents.map(p => {
+                              const vinculo = p.vinculoFilhos?.[student.id];
+                              const parentesco = vinculo?.parentesco || "Responsável";
+                              const flags = vinculo?.flags || [];
+                              return (
+                                <div key={p.uid} style={{ fontSize: 13 }}>
+                                  <span style={{ fontWeight: 600, color: "#334155" }}>
+                                    {p.nome} ({parentesco})
+                                  </span>
+                                  {flags.length > 0 && (
+                                    <div style={{ display: "flex", gap: 4, marginTop: 2, flexWrap: "wrap" }}>
+                                      {flags.map(f => {
+                                        let label = f;
+                                        let bg = "#F1F5F9";
+                                        let text = "#475569";
+                                        if (f === "financeiro") {
+                                          label = "Financeiro";
+                                          bg = "#DCFCE7";
+                                          text = "#15803D";
+                                        } else if (f === "academico") {
+                                          label = "Acadêmico";
+                                          bg = "#DBEAFE";
+                                          text = "#1D4ED8";
+                                        } else if (f === "guarda_compartilhada") {
+                                          label = "Guarda Comp.";
+                                          bg = "#FFEDD5";
+                                          text = "#C2410C";
+                                        } else if (f === "emergencia") {
+                                          label = "Emergência";
+                                          bg = "#FEE2E2";
+                                          text = "#B91C1C";
+                                        }
+                                        return (
+                                          <span key={f} style={{
+                                            fontSize: 9,
+                                            fontWeight: 700,
+                                            padding: "1px 4px",
+                                            borderRadius: 4,
+                                            background: bg,
+                                            color: text,
+                                            textTransform: "uppercase"
+                                          }}>
+                                            {label}
+                                          </span>
+                                        );
+                                      })}
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </td>
                       <td style={{ padding: "16px 24px", color: "#64748B", fontSize: 14 }}>{student.criadoEm ? new Date(student.criadoEm).toLocaleDateString("pt-BR") : "---"}</td>
                       <td style={{ padding: "16px 24px", textAlign: "right" }}>
                         <button onClick={() => handleOpenModal(student)} style={{ background: "none", border: "none", color: "#F97316", fontWeight: 700, cursor: "pointer", fontSize: 14 }}>Ver Perfil / Editar</button>
@@ -372,13 +458,105 @@ export default function AlunosAdminPage() {
                 <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
                   <div>
                     <h3 style={{ margin: "0 0 12px 0", fontSize: 15, fontWeight: 800, color: "#1E293B" }}>Responsáveis Vinculados</h3>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                      {linkedParents.length === 0 ? <p style={{ margin: 0, fontSize: 13, color: "#94A3B8" }}>Nenhum responsável vinculado.</p> : linkedParents.map(parent => (
-                        <div key={parent.uid} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "#F0FDF4", padding: "10px 16px", borderRadius: 10, border: "1px solid #BBF7D0" }}>
-                          <div style={{ fontSize: 13 }}><span style={{ fontWeight: 700, color: "#166534", display: "block" }}>{parent.nome}</span><span style={{ color: "#15803D" }}>{parent.email}</span></div>
-                          <button onClick={() => handleUnlinkParent(parent.uid)} disabled={saving} style={{ background: "none", color: "#DC2626", border: "none", fontSize: 12, fontWeight: 700, cursor: "pointer", textDecoration: "underline" }}>Remover</button>
-                        </div>
-                      ))}
+                    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                      {linkedParents.length === 0 ? (
+                        <p style={{ margin: 0, fontSize: 13, color: "#94A3B8" }}>Nenhum responsável vinculado.</p>
+                      ) : (
+                        linkedParents.map(parent => {
+                          const vinculo = parent.vinculoFilhos?.[editingStudent.id] || { parentesco: "Pai", flags: [] };
+                          const currentParentesco = vinculo.parentesco || "Pai";
+                          const currentFlags = vinculo.flags || [];
+
+                          const toggleFlag = (flag: string) => {
+                            let newFlags = [...currentFlags];
+                            if (newFlags.includes(flag)) {
+                              newFlags = newFlags.filter(f => f !== flag);
+                            } else {
+                              newFlags.push(flag);
+                            }
+                            handleUpdateParentFlags(parent.uid, currentParentesco, newFlags);
+                          };
+
+                          return (
+                            <div key={parent.uid} style={{ 
+                              background: "#F8FAFC", 
+                              padding: "16px", 
+                              borderRadius: 12, 
+                              border: "1px solid #E2E8F0",
+                              display: "flex",
+                              flexDirection: "column",
+                              gap: 12
+                            }}>
+                              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                                <div>
+                                  <span style={{ fontWeight: 700, color: "#1E293B", display: "block", fontSize: 14 }}>{parent.nome}</span>
+                                  <span style={{ color: "#64748B", fontSize: 12 }}>{parent.email || `CPF: ${parent.cpf}`}</span>
+                                </div>
+                                <button 
+                                  onClick={() => handleUnlinkParent(parent.uid)} 
+                                  disabled={saving} 
+                                  style={{ 
+                                    background: "none", 
+                                    color: "#DC2626", 
+                                    border: "none", 
+                                    fontSize: 12, 
+                                    fontWeight: 700, 
+                                    cursor: "pointer", 
+                                    textDecoration: "underline" 
+                                  }}
+                                >
+                                  Remover Vínculo
+                                </button>
+                              </div>
+
+                              <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: 12, borderTop: "1px solid #E2E8F0", paddingTop: 12 }}>
+                                <div>
+                                  <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#64748B", marginBottom: 4 }}>PARENTESCO</label>
+                                  <select 
+                                    className="text-input" 
+                                    value={currentParentesco} 
+                                    onChange={e => handleUpdateParentFlags(parent.uid, e.target.value, currentFlags)}
+                                    style={{ fontSize: 12, padding: "6px 10px", height: "auto", background: "white" }}
+                                  >
+                                    <option value="Mãe">Mãe</option>
+                                    <option value="Pai">Pai</option>
+                                    <option value="Avó">Avó</option>
+                                    <option value="Avô">Avô</option>
+                                    <option value="Tio">Tio</option>
+                                    <option value="Tia">Tia</option>
+                                    <option value="Responsável Legal">Responsável Legal</option>
+                                    <option value="Outro">Outro</option>
+                                  </select>
+                                </div>
+                                <div>
+                                  <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#64748B", marginBottom: 6 }}>RESPONSABILIDADES</label>
+                                  <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+                                    {[
+                                      { key: "financeiro", label: "Financeiro" },
+                                      { key: "academico", label: "Pedagógico/Acadêmico" },
+                                      { key: "guarda_compartilhada", label: "Guarda Comp." },
+                                      { key: "emergencia", label: "Cont. Emergência" }
+                                    ].map(item => {
+                                      const isChecked = currentFlags.includes(item.key);
+                                      return (
+                                        <label key={item.key} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, cursor: "pointer", fontWeight: 600, color: isChecked ? "var(--primary-dark)" : "#475569" }}>
+                                          <input 
+                                            type="checkbox" 
+                                            checked={isChecked} 
+                                            onChange={() => toggleFlag(item.key)} 
+                                            style={{ accentColor: "var(--primary)" }}
+                                          />
+                                          {item.label}
+                                        </label>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })
+                      )}
                     </div>
                   </div>
                   <div style={{ background: "#F8FAFC", padding: 20, borderRadius: 12, border: "1px solid #E2E8F0" }}>

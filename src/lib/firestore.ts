@@ -587,3 +587,106 @@ export async function getRelatorioPedagogico(alunoId: string, periodo: string): 
   if (!snap.exists()) return null;
   return { id: snap.id, ...snap.data() } as RelatorioPedagogico;
 }
+
+// ============================================
+// Conversas com a Coordenação (Chat Direto)
+// ============================================
+
+export async function getCoordinationChat(alunoId: string): Promise<any | null> {
+  const ref = doc(db(), "conversas_coordenacao", alunoId);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) return null;
+  return { id: snap.id, ...snap.data() };
+}
+
+export async function saveCoordinationMessage(
+  alunoId: string,
+  texto: string,
+  role: 'pai' | 'coordenacao',
+  escolaId: string,
+  nomeAluno: string
+): Promise<void> {
+  const ref = doc(db(), "conversas_coordenacao", alunoId);
+  const snap = await getDoc(ref);
+  const now = new Date().toISOString();
+  const timeStr = new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  
+  const newMessage = {
+    id: Math.random().toString(36).substring(2, 9),
+    texto,
+    horario: `${now.split('T')[0]} ${timeStr}`,
+    role,
+    lida: false
+  };
+
+  if (snap.exists()) {
+    await updateDoc(ref, {
+      mensagens: arrayUnion(newMessage),
+      ultimaMensagemEm: now,
+      lidaCoordenacao: role === 'pai' ? false : true,
+      lidaPai: role === 'coordenacao' ? false : true
+    });
+  } else {
+    await setDoc(ref, {
+      alunoId,
+      escolaId,
+      nomeAluno,
+      mensagens: [newMessage],
+      ultimaMensagemEm: now,
+      lidaCoordenacao: role === 'pai' ? false : true,
+      lidaPai: role === 'coordenacao' ? false : true
+    });
+  }
+}
+
+export async function markCoordinationChatRead(alunoId: string, role: 'pai' | 'coordenacao'): Promise<void> {
+  const ref = doc(db(), "conversas_coordenacao", alunoId);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) return;
+  
+  const data = snap.data();
+  const messages = data.mensagens || [];
+  
+  // Mark messages of the opposite role as read
+  const updatedMessages = messages.map((m: any) => {
+    if (m.role !== role && !m.lida) {
+      return { ...m, lida: true };
+    }
+    return m;
+  });
+
+  if (role === 'coordenacao') {
+    await updateDoc(ref, {
+      mensagens: updatedMessages,
+      lidaCoordenacao: true
+    });
+  } else {
+    await updateDoc(ref, {
+      mensagens: updatedMessages,
+      lidaPai: true
+    });
+  }
+}
+
+export async function getCoordinationChatsByEscola(escolaId: string): Promise<any[]> {
+  const q = query(
+    collection(db(), "conversas_coordenacao"),
+    where("escolaId", "==", escolaId)
+  );
+  const snap = await getDocs(q);
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+
+export async function getTurmaRecordsForMonth(escolaId: string, turma: string, yearMonth: string): Promise<DailyRecord[]> {
+  const start = `${yearMonth}-01`;
+  const end = `${yearMonth}-31`;
+  const q = query(
+    collection(db(), "registros_diarios"),
+    where("escolaId", "==", escolaId),
+    where("turma", "==", turma),
+    where("data", ">=", start),
+    where("data", "<=", end)
+  );
+  const snap = await getDocs(q);
+  return snap.docs.map(d => ({ id: d.id, ...d.data() } as DailyRecord));
+}

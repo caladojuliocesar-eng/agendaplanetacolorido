@@ -160,7 +160,7 @@ export default function RegistroIndividual() {
   };
 
   const handleMarkAsRead = async () => {
-    if (!recordId) return;
+    if (!recordId || profile?.role === 'admin') return;
     try {
       await markParentMessageRead(recordId);
       setRecadoLidoProfessor(true);
@@ -204,8 +204,8 @@ export default function RegistroIndividual() {
 
       await saveTeacherMessage(currentRecordId, newTeacherMessage.trim());
       
-      // Auto-mark parent messages as read when replying
-      if (!recadoLidoProfessor) {
+      // Auto-mark parent messages as read when replying (only if not admin)
+      if (!recadoLidoProfessor && profile?.role !== 'admin') {
         await markParentMessageRead(currentRecordId);
         setRecadoLidoProfessor(true);
         setMensagensPais(prev => prev.map(m => ({ ...m, lida: true })));
@@ -403,7 +403,7 @@ export default function RegistroIndividual() {
             >
               Recados dos Pais
             </p>
-            {!recadoLidoProfessor && (
+            {!recadoLidoProfessor && profile?.role !== 'admin' && (
               <button
                 type="button"
                 onClick={handleMarkAsRead}

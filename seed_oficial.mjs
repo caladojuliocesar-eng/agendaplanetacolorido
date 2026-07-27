@@ -57,10 +57,10 @@ async function seed() {
 
   // 2. USUÁRIOS (Apenas Demos para homologação limpa)
   const users = [
-    { uid: "demo_diretora", nome: "Helena (Diretora)", email: "diretora@demo.com", role: "admin", escolaId: ESCOLA_ID },
+    { uid: "demo_diretora", nome: "Helena (Diretora)", email: "diretora@demo.com", cpf: "00000000001", role: "admin", escolaId: ESCOLA_ID },
     // A professora pode alternar depois para "Infantil II" nos testes de migração
-    { uid: "demo_professora", nome: "Ana Cláudia (Profe)", email: "profe@demo.com", role: "professor", escolaId: ESCOLA_ID, turma: "Berçário II" },
-    { uid: "demo_pai", nome: "Ricardo (Pai do Otto)", email: "pai@demo.com", role: "pai", escolaId: ESCOLA_ID, filhos: ["aluno_otto"] }
+    { uid: "demo_professora", nome: "Ana Cláudia (Profe)", email: "profe@demo.com", cpf: "00000000002", role: "professor", escolaId: ESCOLA_ID, turma: "Berçário II" },
+    { uid: "demo_pai", nome: "Ricardo (Pai do Otto)", email: "pai@demo.com", cpf: "00000000003", role: "pai", escolaId: ESCOLA_ID, filhos: ["aluno_otto"] }
   ];
 
   for (const u of users) {

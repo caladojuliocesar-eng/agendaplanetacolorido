@@ -21,47 +21,51 @@ const DEMO_PASSWORD = "planeta123";
 
 const DEMO_USERS = [
     {
-        email: "diretora@planeta.com",
+        email: "00000000001@planeta.com",
         displayName: "Helena (Diretora)",
         firestoreUid: "demo_diretora",
         profileData: {
             nome: "Helena (Diretora)",
             email: "diretora@planeta.com",
+            cpf: "00000000001",
             role: "admin",
             escolaId: "planeta-colorido",
         }
     },
     {
-        email: "profe@planeta.com",
+        email: "00000000002@planeta.com",
         displayName: "Ana Cláudia (Profe)",
         firestoreUid: "demo_professora",
         profileData: {
             nome: "Ana Cláudia (Profe)",
             email: "profe@planeta.com",
+            cpf: "00000000002",
             role: "professor",
             escolaId: "planeta-colorido",
             turma: "Berçário II",
         }
     },
     {
-        email: "paiotto@planeta.com",
+        email: "00000000003@planeta.com",
         displayName: "Ricardo (Pai do Otto)",
         firestoreUid: "demo_pai",
         profileData: {
             nome: "Ricardo (Pai do Otto)",
             email: "paiotto@planeta.com",
+            cpf: "00000000003",
             role: "pai",
             escolaId: "planeta-colorido",
             filhos: ["aluno_otto"],
         }
     },
     {
-        email: "pailuna@planeta.com",
+        email: "00000000004@planeta.com",
         displayName: "Responsável da Luna",
         firestoreUid: "demo_pai_luna",
         profileData: {
             nome: "Responsável da Luna",
             email: "pailuna@planeta.com",
+            cpf: "00000000004",
             role: "pai",
             escolaId: "planeta-colorido",
             filhos: ["aluno_luna"],

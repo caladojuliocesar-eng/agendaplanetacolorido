@@ -4,7 +4,8 @@ import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   signInWithGoogle,
-  signInWithEmail,
+  signInWithCPF,
+  getVirtualEmailForCPF,
   resolveUserProfile,
 } from "@/lib/auth";
 import { useAuth } from "@/contexts/AuthContext";
@@ -12,12 +13,12 @@ import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 
 function LoginContent() {
-  const [email, setEmail] = useState("");
+  const [cpf, setCpf] = useState("");
   const [password, setPassword] = useState("");
   const [isRegistering, setIsRegistering] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showEmailForm, setShowEmailForm] = useState(false);
+  const [showCpfForm, setShowCpfForm] = useState(false);
 
   const router = useRouter();
   const { user } = useAuth();
@@ -26,7 +27,7 @@ function LoginContent() {
 
   useEffect(() => {
     if (searchParams?.get("error") === "no_profile") {
-      setError("Seu email não foi encontrado ou o Firebase bloqueou a busca. O login falhou.");
+      setError("Seu CPF não foi pré-cadastrado ou o Firebase bloqueou a busca. O login falhou.");
     }
   }, [searchParams]);
 
@@ -42,7 +43,7 @@ function LoginContent() {
     try {
       const profile = await signInWithGoogle();
       if (!profile) {
-        setError("Email não pré-cadastrado. Entre em contato com a escola.");
+        setError("Email do Google não pré-cadastrado na escola. Entre em contato com a administração.");
       } else {
         router.push("/");
       }
@@ -54,28 +55,45 @@ function LoginContent() {
     }
   };
 
-  const handleEmailAction = async (e: React.FormEvent) => {
+  const formatCPF = (value: string) => {
+    const clean = value.replace(/\D/g, "");
+    if (clean.length <= 3) return clean;
+    if (clean.length <= 6) return `${clean.slice(0, 3)}.${clean.slice(3)}`;
+    if (clean.length <= 9) return `${clean.slice(0, 3)}.${clean.slice(3, 6)}.${clean.slice(6)}`;
+    return `${clean.slice(0, 3)}.${clean.slice(3, 6)}.${clean.slice(6, 9)}-${clean.slice(9, 11)}`;
+  };
+
+  const handleCpfAction = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
+    const clean = cpf.replace(/\D/g, "");
+    if (clean.length !== 11) {
+      setError("Por favor, digite um CPF válido com 11 dígitos.");
+      setLoading(false);
+      return;
+    }
+
+    const virtualEmail = getVirtualEmailForCPF(clean);
+
     try {
       if (isRegistering) {
         // 1. Create account (Firebase will error if exists)
-        const userCredential = await createUserWithEmailAndPassword(auth(), email, password);
-        // 2. Resolve profile (this links UID if email matches a pre-registered one)
+        const userCredential = await createUserWithEmailAndPassword(auth(), virtualEmail, password);
+        // 2. Resolve profile (this links UID if CPF matches a pre-registered one)
         const profile = await resolveUserProfile(userCredential.user);
         
         if (!profile) {
-          setError("Sua conta foi criada, mas seu email não está na lista de alunos/professores da escola.");
+          setError("Sua conta foi criada, mas seu CPF não foi encontrado no pré-cadastro da escola.");
         } else {
           router.push("/");
         }
       } else {
         // Login
-        const profile = await signInWithEmail(email, password);
+        const profile = await signInWithCPF(clean, password);
         if (!profile) {
-          setError("Usuário não encontrado ou senha incorreta.");
+          setError("CPF não cadastrado ou senha incorreta.");
         } else {
           router.push("/");
         }
@@ -84,19 +102,21 @@ function LoginContent() {
       if (err.code === "auth/email-already-in-use") {
         // Se a pessoa tentar criar conta mas já existir, tentamos fazer o login automaticamente
         try {
-          const profile = await signInWithEmail(email, password);
+          const profile = await signInWithCPF(clean, password);
           if (!profile) {
-            setError("O usuário existe, mas a senha que você digitou está incorreta.");
+            setError("Este CPF já possui cadastro, mas a senha digitada está incorreta.");
           } else {
             router.push("/");
           }
         } catch (loginErr: any) {
-          setError("O e-mail já existe, mas a senha está incorreta. Verifique sua senha.");
+          setError("Este CPF já possui cadastro, mas a senha está incorreta. Verifique sua senha.");
         }
       } else if (err.code === "auth/weak-password") {
         setError("A senha deve ter pelo menos 6 caracteres.");
       } else if (err.code === "auth/invalid-credential" || err.code === "auth/wrong-password") {
         setError("Senha incorreta. Verifique se digitou certinho.");
+      } else if (err.code === "auth/user-not-found") {
+        setError("CPF não cadastrado. Solicite o cadastro à diretoria da escola.");
       } else {
         setError(`Erro do Firebase: ${err.message || "Erro desconhecido"}`);
       }
@@ -130,7 +150,7 @@ function LoginContent() {
           </div>
         )}
 
-        {!showEmailForm ? (
+        {!showCpfForm ? (
           <div className="space-y-4">
             <button
               onClick={handleGoogleLogin}
@@ -151,23 +171,24 @@ function LoginContent() {
             </div>
 
             <button
-              onClick={() => setShowEmailForm(true)}
+              onClick={() => setShowCpfForm(true)}
               className="w-full bg-[#FFF7ED] text-[#F97316] font-semibold py-4 px-6 rounded-2xl hover:bg-[#FED7AA] transition-all border border-[#FED7AA]"
             >
-              Entrar com Email (Hotmail, etc)
+              Entrar com CPF e Senha
             </button>
           </div>
         ) : (
-          <form onSubmit={handleEmailAction} className="space-y-4">
+          <form onSubmit={handleCpfAction} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-[#431407] mb-1">Email</label>
+              <label className="block text-sm font-medium text-[#431407] mb-1">CPF</label>
               <input
-                type="email"
+                type="text"
                 required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                maxLength={14}
+                value={cpf}
+                onChange={(e) => setCpf(formatCPF(e.target.value))}
                 className="w-full p-4 rounded-2xl border-2 border-[#FED7AA] focus:border-[#F97316] focus:outline-none bg-[#FFF7ED]/30"
-                placeholder="seu@email.com"
+                placeholder="000.000.000-00"
               />
             </div>
             <div>
@@ -200,7 +221,7 @@ function LoginContent() {
               </button>
               <button
                 type="button"
-                onClick={() => setShowEmailForm(false)}
+                onClick={() => setShowCpfForm(false)}
                 className="text-sm text-[#9A3412] hover:underline"
               >
                 Voltar

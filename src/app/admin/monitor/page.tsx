@@ -13,6 +13,10 @@ export default function AdminMonitorPage() {
   const [loading, setLoading] = useState(true);
   const [selectedTurma, setSelectedTurma] = useState<string>("");
   
+  // State for silent monitoring chat
+  const [selectedChatRecord, setSelectedChatRecord] = useState<DailyRecord | null>(null);
+  const [selectedStudentName, setSelectedStudentName] = useState<string>("");
+  
   const today = getTodayDateString();
 
   useEffect(() => {
@@ -98,25 +102,25 @@ export default function AdminMonitorPage() {
       </header>
 
       {selectedTurma && (
-        <div className="card" style={{ overflow: "hidden" }}>
+        <div className="card" style={{ padding: 0, overflow: "hidden" }}>
           <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 800 }}>
-              <thead>
-                <tr style={{ background: "#F8FAFC", borderBottom: "1px solid #E2E8F0" }}>
-                  <th style={{ padding: "16px", textAlign: "left", fontSize: 13, color: "#475569" }}>Aluno</th>
-                  <th style={{ padding: "16px", textAlign: "center", fontSize: 13, color: "#475569" }}>Lanche M.</th>
-                  <th style={{ padding: "16px", textAlign: "center", fontSize: 13, color: "#475569" }}>Almoço</th>
-                  <th style={{ padding: "16px", textAlign: "center", fontSize: 13, color: "#475569" }}>Lanche T.</th>
-                  <th style={{ padding: "16px", textAlign: "center", fontSize: 13, color: "#475569" }}>Jantar</th>
-                  <th style={{ padding: "16px", textAlign: "center", fontSize: 13, color: "#475569" }}>Rotina (💤💧💩)</th>
-                  <th style={{ padding: "16px", textAlign: "center", fontSize: 13, color: "#475569" }}>Recados</th>
-                  <th style={{ padding: "16px", textAlign: "center", fontSize: 13, color: "#475569" }}>Ação</th>
+            <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
+              <thead style={{ background: "#F8FAFC", borderBottom: "1px solid #F1F5F9" }}>
+                <tr>
+                  <th style={{ padding: "16px", fontSize: 12, fontWeight: 700, color: "#64748B", textTransform: "uppercase" }}>Aluno</th>
+                  <th style={{ padding: "16px", fontSize: 12, fontWeight: 700, color: "#64748B", textTransform: "uppercase", textAlign: "center" }}>Frutas</th>
+                  <th style={{ padding: "16px", fontSize: 12, fontWeight: 700, color: "#64748B", textTransform: "uppercase", textAlign: "center" }}>Almoço</th>
+                  <th style={{ padding: "16px", fontSize: 12, fontWeight: 700, color: "#64748B", textTransform: "uppercase", textAlign: "center" }}>Lanche</th>
+                  <th style={{ padding: "16px", fontSize: 12, fontWeight: 700, color: "#64748B", textTransform: "uppercase", textAlign: "center" }}>Jantar</th>
+                  <th style={{ padding: "16px", fontSize: 12, fontWeight: 700, color: "#64748B", textTransform: "uppercase", textAlign: "center" }}>Sono/Xixi/Cocô</th>
+                  <th style={{ padding: "16px", fontSize: 12, fontWeight: 700, color: "#64748B", textTransform: "uppercase", textAlign: "center" }}>Mensagens</th>
+                  <th style={{ padding: "16px" }}></th>
                 </tr>
               </thead>
               <tbody>
                 {alunosNaTurma.length === 0 ? (
                   <tr>
-                    <td colSpan={8} style={{ padding: 32, textAlign: "center", color: "#64748B" }}>
+                    <td colSpan={8} style={{ padding: "32px", textAlign: "center", color: "#64748B" }}>
                       Nenhum aluno nesta turma.
                     </td>
                   </tr>
@@ -159,17 +163,39 @@ export default function AdminMonitorPage() {
                         </td>
                         <td style={{ padding: "16px", textAlign: "center" }}>
                           {hasUnreadMessage ? (
-                            <span style={{ 
-                              background: "#FEE2E2", color: "#EF4444", 
-                              padding: "4px 8px", borderRadius: 12, fontSize: 11, fontWeight: 700 
-                            }}>
+                            <span 
+                              onClick={() => {
+                                if (record) {
+                                  setSelectedChatRecord(record);
+                                  setSelectedStudentName(aluno.nome);
+                                }
+                              }}
+                              style={{ 
+                                background: "#FEE2E2", color: "#EF4444", 
+                                padding: "4px 8px", borderRadius: 12, fontSize: 11, fontWeight: 700,
+                                cursor: "pointer",
+                                display: "inline-block"
+                              }}
+                              title="Clique para ver mensagens silenciosamente"
+                            >
                               PENDENTE
                             </span>
                           ) : (record?.mensagensPais && record.mensagensPais.length > 0) ? (
-                            <span style={{ 
-                              background: "#D1FAE5", color: "#10B981", 
-                              padding: "4px 8px", borderRadius: 12, fontSize: 11, fontWeight: 700 
-                            }}>
+                            <span 
+                              onClick={() => {
+                                if (record) {
+                                  setSelectedChatRecord(record);
+                                  setSelectedStudentName(aluno.nome);
+                                }
+                              }}
+                              style={{ 
+                                background: "#D1FAE5", color: "#10B981", 
+                                padding: "4px 8px", borderRadius: 12, fontSize: 11, fontWeight: 700,
+                                cursor: "pointer",
+                                display: "inline-block"
+                              }}
+                              title="Clique para ver mensagens silenciosamente"
+                            >
                               LIDO
                             </span>
                           ) : (
@@ -199,6 +225,158 @@ export default function AdminMonitorPage() {
                 )}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* Silent Chat Monitor Modal */}
+      {selectedChatRecord && (
+        <div style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: "rgba(15, 23, 42, 0.6)",
+          backdropFilter: "blur(4px)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 1000,
+          padding: 16
+        }}>
+          <div style={{
+            width: "100%",
+            maxWidth: 500,
+            padding: 0,
+            background: "white",
+            borderRadius: 24,
+            boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.15)",
+            overflow: "hidden",
+            display: "flex",
+            flexDirection: "column",
+            maxHeight: "85vh"
+          }}>
+            {/* Modal Header */}
+            <div style={{
+              background: "#F8FAFC",
+              borderBottom: "1px solid #E2E8F0",
+              padding: "20px 24px",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center"
+            }}>
+              <div>
+                <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: "#1E293B" }}>
+                  Conversa de {selectedStudentName}
+                </h3>
+                <span style={{ fontSize: 11, color: "#10B981", fontWeight: 700, display: "flex", alignItems: "center", gap: 4, marginTop: 2 }}>
+                  <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#10B981" }} />
+                  Modo Monitoramento Silencioso
+                </span>
+              </div>
+              <button 
+                onClick={() => { setSelectedChatRecord(null); setSelectedStudentName(""); }} 
+                style={{
+                  background: "none",
+                  border: "none",
+                  fontSize: 22,
+                  color: "#94A3B8",
+                  cursor: "pointer",
+                  padding: 4,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center"
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Chat Thread */}
+            <div style={{
+              padding: 24,
+              overflowY: "auto",
+              flex: 1,
+              background: "#FFFBF7",
+              display: "flex",
+              flexDirection: "column",
+              gap: 16,
+              minHeight: 250
+            }}>
+              {(() => {
+                const combined = [
+                  ...(selectedChatRecord.mensagensPais || []).map(m => ({ ...m, role: 'pai' })),
+                  ...(selectedChatRecord.mensagensProfessor || []).map(m => ({ ...m, role: 'professor' }))
+                ].sort((a, b) => a.horario.localeCompare(b.horario));
+
+                if (combined.length === 0 && selectedChatRecord.recadoPais) {
+                  combined.push({
+                    id: "legacy",
+                    texto: selectedChatRecord.recadoPais,
+                    horario: "",
+                    lida: true,
+                    role: 'pai'
+                  });
+                }
+
+                if (combined.length === 0) {
+                  return (
+                    <div style={{ textAlign: "center", padding: "40px 0", color: "#94A3B8", fontSize: 14 }}>
+                      Nenhuma mensagem trocada hoje.
+                    </div>
+                  );
+                }
+
+                return combined.map((msg, idx) => {
+                  const isPai = msg.role === 'pai';
+                  return (
+                    <div 
+                      key={msg.id || idx}
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: isPai ? "flex-start" : "flex-end",
+                        maxWidth: "85%",
+                        alignSelf: isPai ? "flex-start" : "flex-end"
+                      }}
+                    >
+                      <span style={{ fontSize: 10, fontWeight: 700, color: "#94A3B8", marginBottom: 4, paddingLeft: 4, paddingRight: 4 }}>
+                        {isPai ? "RESPONSÁVEL" : "PROFESSOR(A)"}
+                      </span>
+                      <div style={{
+                        padding: "12px 16px",
+                        borderRadius: isPai ? "16px 16px 16px 4px" : "16px 16px 4px 16px",
+                        background: isPai ? "white" : "var(--primary-light)",
+                        color: isPai ? "#334155" : "var(--primary-dark)",
+                        border: isPai ? "1px solid #E2E8F0" : "1px solid var(--primary)",
+                        boxShadow: "0 1px 2px rgba(0,0,0,0.02)",
+                        fontSize: 14,
+                        lineHeight: 1.5,
+                        wordBreak: "break-word"
+                      }}>
+                        {msg.texto}
+                      </div>
+                      <span style={{ fontSize: 9, color: "#94A3B8", marginTop: 4, paddingLeft: 4, paddingRight: 4 }}>
+                        {msg.horario} {msg.role === 'pai' && (msg.lida ? "✓ Lida" : "✓ Recebida")}
+                      </span>
+                    </div>
+                  );
+                });
+              })()}
+            </div>
+
+            {/* Warning Footer */}
+            <div style={{
+              background: "#F8FAFC",
+              borderTop: "1px solid #E2E8F0",
+              padding: "16px 24px",
+              textAlign: "center"
+            }}>
+              <p style={{ margin: 0, fontSize: 11, color: "#64748B", lineHeight: 1.4 }}>
+                ⚠️ <strong>Aviso da Coordenação:</strong> A visualização neste painel é apenas para acompanhamento. Para responder aos pais, acesse a agenda do aluno ou fale com o professor da turma.
+              </p>
+            </div>
           </div>
         </div>
       )}

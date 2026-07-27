@@ -15,6 +15,7 @@ export default function UsuariosAdminPage() {
   const [formData, setFormData] = useState({
     nome: "",
     email: "",
+    cpf: "",
     role: "professor" as UserRole,
     turma: ""
   });
@@ -37,17 +38,34 @@ export default function UsuariosAdminPage() {
     }
   }
 
+  const formatCPF = (value: string) => {
+    const clean = value.replace(/\D/g, "");
+    if (clean.length <= 3) return clean;
+    if (clean.length <= 6) return `${clean.slice(0, 3)}.${clean.slice(3)}`;
+    if (clean.length <= 9) return `${clean.slice(0, 3)}.${clean.slice(3, 6)}.${clean.slice(6)}`;
+    return `${clean.slice(0, 3)}.${clean.slice(3, 6)}.${clean.slice(6, 9)}-${clean.slice(9, 11)}`;
+  };
+
   const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
     try {
+      const cleanCpf = formData.cpf.replace(/\D/g, "");
+      if (cleanCpf.length !== 11) {
+        alert("Por favor, preencha um CPF válido com 11 dígitos.");
+        setSaving(false);
+        return;
+      }
       await addUser({
-        ...formData,
+        nome: formData.nome,
+        email: formData.email,
+        cpf: cleanCpf,
+        role: formData.role,
+        turma: formData.turma,
         escolaId: profile!.escolaId!,
-        criadoEm: new Date().toISOString()
-      });
+      } as any);
       setIsModalOpen(false);
-      setFormData({ nome: "", email: "", role: "professor", turma: "" });
+      setFormData({ nome: "", email: "", cpf: "", role: "professor", turma: "" });
       await loadUsers();
     } catch (error) {
       alert("Erro ao adicionar usuário.");
@@ -73,6 +91,7 @@ export default function UsuariosAdminPage() {
           <thead style={{ background: "#F8FAFC" }}>
             <tr>
               <th style={{ padding: 16, textAlign: "left" }}>Nome</th>
+              <th style={{ padding: 16, textAlign: "left" }}>CPF (Login)</th>
               <th style={{ padding: 16, textAlign: "left" }}>E-mail</th>
               <th style={{ padding: 16, textAlign: "left" }}>Cargo</th>
               <th style={{ padding: 16, textAlign: "left" }}>Turma</th>
@@ -82,7 +101,8 @@ export default function UsuariosAdminPage() {
             {users.map(u => (
               <tr key={u.uid} style={{ borderTop: "1px solid #F1F5F9" }}>
                 <td style={{ padding: 16, fontWeight: 600 }}>{u.nome}</td>
-                <td style={{ padding: 16 }}>{u.email}</td>
+                <td style={{ padding: 16 }}>{u.cpf ? formatCPF(u.cpf) : "---"}</td>
+                <td style={{ padding: 16 }}>{u.email || "---"}</td>
                 <td style={{ padding: 16 }}>
                   {(() => {
                     let label = u.role.toUpperCase();
@@ -126,7 +146,7 @@ export default function UsuariosAdminPage() {
 
       {isModalOpen && (
         <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100 }}>
-          <div className="card" style={{ width: "100%", maxWidth: 400, padding: 32 }}>
+          <div className="card" style={{ width: "100%", maxWidth: 400, padding: 32, margin: "auto" }}>
             <h2 style={{ marginBottom: 24 }}>Novo Integrante</h2>
             <form onSubmit={handleAddUser} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
               <div>
@@ -134,8 +154,12 @@ export default function UsuariosAdminPage() {
                 <input required className="text-input" value={formData.nome} onChange={e => setFormData({...formData, nome: e.target.value})} placeholder="Ex: Ana Silva" />
               </div>
               <div>
+                <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#64748B", marginBottom: 4 }}>CPF (LOGIN) *</label>
+                <input required className="text-input" maxLength={14} value={formData.cpf} onChange={e => setFormData({...formData, cpf: formatCPF(e.target.value)})} placeholder="000.000.000-00" />
+              </div>
+              <div>
                 <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#64748B", marginBottom: 4 }}>E-MAIL</label>
-                <input required type="email" className="text-input" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} placeholder="email@escola.com" />
+                <input type="email" className="text-input" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} placeholder="email@escola.com" />
               </div>
               <div>
                 <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#64748B", marginBottom: 4 }}>CARGO</label>
@@ -151,7 +175,7 @@ export default function UsuariosAdminPage() {
                 </div>
               )}
               <div style={{ display: "flex", gap: 12, marginTop: 16 }}>
-                <button type="button" onClick={() => setIsModalOpen(false)} style={{ flex: 1, padding: 10, borderRadius: 8, border: "none" }}>Cancelar</button>
+                <button type="button" onClick={() => setIsModalOpen(false)} style={{ flex: 1, padding: 10, borderRadius: 8, border: "none", cursor: "pointer" }}>Cancelar</button>
                 <button type="submit" disabled={saving} className="btn btn--primary" style={{ flex: 1 }}>{saving ? "Salvando..." : "Cadastrar"}</button>
               </div>
             </form>

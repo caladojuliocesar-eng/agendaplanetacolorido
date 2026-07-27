@@ -79,10 +79,17 @@ export interface UserProfile {
   uid: string;
   nome: string;
   email: string;
+  cpf?: string;          // login por CPF
   role: UserRole;
   escolaId: string;
   turma?: string;        // professor: turma que leciona
   filhos?: string[];     // pai: IDs dos alunos
+  vinculoFilhos?: {      // relacionamento com cada filho (parentesco, financeiro, acadêmico, etc.)
+    [alunoId: string]: {
+      parentesco: string;
+      flags: string[];
+    };
+  };
   criadoEm: string;
 }
 
