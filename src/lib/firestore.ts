@@ -798,7 +798,7 @@ export async function approveMatriculaSolicitude(solicitudeId: string, escolaId:
       const vinculo = profile.vinculoFilhos || {};
       vinculo[studentId] = {
         parentesco: parentId === maeId ? "Mãe" : "Pai",
-        flags: parentId === maeId ? ["Financeiro", "Acadêmico"] : ["Acadêmico"]
+        flags: []
       };
       
       await updateDoc(userRef, {
@@ -820,4 +820,9 @@ export async function rejectMatriculaSolicitude(solicitudeId: string): Promise<v
   await updateDoc(solicRef, {
     status: "recusada"
   });
+}
+
+export async function updateMatriculaSolicitude(solicitudeId: string, data: any): Promise<void> {
+  const ref = doc(db(), "solicitacoes_matricula", solicitudeId);
+  await updateDoc(ref, data);
 }
