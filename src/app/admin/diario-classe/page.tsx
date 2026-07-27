@@ -201,42 +201,46 @@ export default function AdminDiarioClassePage() {
             borderBottom: "2px solid #1E293B", 
             paddingBottom: 16, 
             marginBottom: 24,
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-start",
-            flexWrap: "wrap",
+            display: "grid",
+            gridTemplateColumns: "2fr 1fr",
             gap: 16
           }}>
             <div>
-              <h2 style={{ margin: "0 0 4px", fontSize: 20, fontWeight: 800, color: "#0F172A" }}>Escola Planeta Colorido</h2>
-              <span style={{ fontSize: 14, color: "#475569", fontWeight: 700, textTransform: "uppercase" }}>
-                Diário de Classe — Frequência e Conteúdo Programático
-              </span>
+              <h2 style={{ margin: "0 0 6px", fontSize: 18, fontWeight: 800, color: "#0F172A" }}>DIÁRIO DE CLASSE — EDUCAÇÃO INFANTIL</h2>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, fontSize: 12, color: "#334155" }}>
+                <p style={{ margin: 0 }}><strong>Entidade:</strong> Associação Planeta Colorido</p>
+                <p style={{ margin: 0 }}><strong>CEI/Creche:</strong> Planeta Colorido</p>
+                <p style={{ margin: 0 }}><strong>Conveniada com a Prefeitura de:</strong> São Paulo</p>
+                <p style={{ margin: 0 }}><strong>Ano Letivo:</strong> {selectedYear}</p>
+              </div>
             </div>
-            <div style={{ textAlign: "right", fontSize: 13, color: "#334155" }}>
-              <p style={{ margin: 0 }}><strong>Turma:</strong> {selectedTurma}</p>
-              <p style={{ margin: 0 }}><strong>Período:</strong> {MESES.find(m => m.value === selectedMonth)?.label} / {selectedYear}</p>
+            <div style={{ textAlign: "right", fontSize: 12, color: "#334155" }}>
+              <p style={{ margin: "0 0 4px" }}><strong>Grupo/Estágio:</strong> {selectedTurma}</p>
+              <p style={{ margin: "0 0 4px" }}><strong>Turma:</strong> A</p>
+              <p style={{ margin: "0 0 4px" }}><strong>Mês de Referência:</strong> {MESES.find(m => m.value === selectedMonth)?.label}</p>
+              <p style={{ margin: 0 }}><strong>Professor(a):</strong> Ana Cláudia</p>
             </div>
           </div>
 
           {/* Action button on view screen */}
-          <div className="no-print" style={{ display: "flex", justifyContent: "flex-end", marginBottom: 20 }}>
+          <div className="no-print" style={{ display: "flex", justifyContent: "flex-end", margin: "20px 0" }}>
             <button onClick={() => window.print()} className="btn btn--secondary" style={{ background: "#2563EB", color: "white", border: "none" }}>
               🖨️ Imprimir Diário Oficial
             </button>
           </div>
 
           {/* SECTION 1: FREQUENCY GRID */}
-          <div className="landscape-container" style={{ marginBottom: 40 }}>
-            <h3 style={{ fontSize: 15, fontWeight: 800, color: "#1E293B", marginBottom: 12, textTransform: "uppercase", borderBottom: "1px solid #E2E8F0", paddingBottom: 6 }}>
-              I. Registro de Frequência (Presenças / Faltas)
+          <div className="landscape-container" style={{ marginBottom: 24 }}>
+            <h3 style={{ fontSize: 14, fontWeight: 800, color: "#1E293B", marginBottom: 12, textTransform: "uppercase", borderBottom: "1px solid #E2E8F0", paddingBottom: 6 }}>
+              I. Registro de Frequência das Crianças
             </h3>
             
             <div style={{ overflowX: "auto" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "center", border: "1px solid #94A3B8" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "center", border: "1px solid #000" }}>
                 <thead>
                   <tr style={{ background: "#F8FAFC" }}>
-                    <th style={{ border: "1px solid #CBD5E1", padding: "8px", textAlign: "left", minWidth: 150 }}>Aluno</th>
+                    <th style={{ border: "1px solid #000", padding: "6px", textAlign: "left", fontSize: 11, fontWeight: "bold", minWidth: 150 }}>Nome do Aluno</th>
+                    <th style={{ border: "1px solid #000", padding: "6px", fontSize: 10, fontWeight: "bold", width: 90 }}>Nascimento</th>
                     {Array.from({ length: reportData.daysCount }).map((_, i) => {
                       const day = i + 1;
                       const weekend = isWeekend(day);
@@ -244,80 +248,142 @@ export default function AdminDiarioClassePage() {
                         <th 
                           key={day} 
                           style={{ 
-                            border: "1px solid #CBD5E1", 
+                            border: "1px solid #000", 
                             padding: "4px", 
-                            fontSize: 10,
+                            fontSize: 9,
+                            fontWeight: "bold",
                             background: weekend ? "#E2E8F0" : "#F8FAFC",
-                            width: 25
+                            width: 22
                           }}
                         >
-                          {day}
+                          {day.toString().padStart(2, "0")}
                         </th>
                       );
                     })}
+                    <th style={{ border: "1px solid #000", padding: "4px", fontSize: 9, fontWeight: "bold", width: 35, background: "#F1F5F9" }}>Comp.</th>
+                    <th style={{ border: "1px solid #000", padding: "4px", fontSize: 9, fontWeight: "bold", width: 35, background: "#F1F5F9" }}>Faltas</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {reportData.students.map(student => (
-                    <tr key={student.id}>
-                      <td style={{ border: "1px solid #CBD5E1", padding: "8px", textAlign: "left", fontWeight: 600, fontSize: 13, color: "#1E293B" }}>
-                        {student.nome}
-                      </td>
-                      {Array.from({ length: reportData.daysCount }).map((_, i) => {
-                        const day = i + 1;
-                        const dateStr = `${selectedYear}-${selectedMonth}-${day.toString().padStart(2, "0")}`;
-                        const record = reportData.records.find(r => r.alunoId === student.id && r.data === dateStr);
-                        const weekend = isWeekend(day);
-
-                        let content = "—";
-                        let color = "#CBD5E1";
-
-                        if (record) {
-                          if (record.ausente) {
-                            content = "F";
-                            color = "#EF4444"; // red
-                          } else {
-                            content = "P";
-                            color = "#10B981"; // green
-                          }
+                  {reportData.students.map(student => {
+                    // Compute monthly attendance totals
+                    let totalPresents = 0;
+                    let totalAbsences = 0;
+                    for (let day = 1; day <= reportData.daysCount; day++) {
+                      if (isWeekend(day)) continue;
+                      const dateStr = `${selectedYear}-${selectedMonth}-${day.toString().padStart(2, "0")}`;
+                      const record = reportData.records.find(r => r.alunoId === student.id && r.data === dateStr);
+                      if (record) {
+                        if (record.ausente) {
+                          totalAbsences++;
+                        } else {
+                          totalPresents++;
                         }
+                      }
+                    }
 
-                        return (
-                          <td 
-                            key={day} 
-                            style={{ 
-                              border: "1px solid #CBD5E1", 
-                              padding: "4px", 
-                              fontWeight: "bold",
-                              fontSize: 11,
-                              background: weekend ? "#F1F5F9" : "white",
-                              color: color
-                            }}
-                          >
-                            {weekend ? "" : content}
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  ))}
+                    return (
+                      <tr key={student.id}>
+                        <td style={{ border: "1px solid #000", padding: "6px", textAlign: "left", fontWeight: 600, fontSize: 11, color: "#1E293B" }}>
+                          {student.nome}
+                        </td>
+                        <td style={{ border: "1px solid #000", padding: "6px", fontSize: 10, color: "#475569" }}>
+                          {student.dataNascimento ? new Date(student.dataNascimento + "T12:00:00").toLocaleDateString("pt-BR") : "—"}
+                        </td>
+                        {Array.from({ length: reportData.daysCount }).map((_, i) => {
+                          const day = i + 1;
+                          const dateStr = `${selectedYear}-${selectedMonth}-${day.toString().padStart(2, "0")}`;
+                          const record = reportData.records.find(r => r.alunoId === student.id && r.data === dateStr);
+                          const weekend = isWeekend(day);
+
+                          let content = "—";
+                          let color = "#94A3B8";
+
+                          if (record) {
+                            if (record.ausente) {
+                              content = "F";
+                              color = "#EF4444"; // red
+                            } else {
+                              content = "P";
+                              color = "#10B981"; // green
+                            }
+                          }
+
+                          return (
+                            <td 
+                              key={day} 
+                              style={{ 
+                                border: "1px solid #000", 
+                                padding: "4px", 
+                                fontWeight: "bold",
+                                fontSize: 10,
+                                background: weekend ? "#F1F5F9" : "white",
+                                color: color
+                              }}
+                            >
+                              {weekend ? "" : content}
+                            </td>
+                          );
+                        })}
+                        <td style={{ border: "1px solid #000", padding: "4px", fontWeight: "bold", fontSize: 10, color: "#10B981" }}>
+                          {totalPresents}
+                        </td>
+                        <td style={{ border: "1px solid #000", padding: "4px", fontWeight: "bold", fontSize: 10, color: "#EF4444" }}>
+                          {totalAbsences}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
-            <div style={{ marginTop: 8, fontSize: 11, color: "#64748B" }}>
-              * Legenda: <strong>P</strong> = Presente | <strong style={{ color: "#EF4444" }}>F</strong> = Falta Justificada/Sem Justificativa | <strong>—</strong> = Sem registro lançado. Sábados e domingos são omitidos automaticamente da contagem de frequência.
-            </div>
+
+            {/* Resumo Mensal / Movimentação de Matrículas */}
+            {(() => {
+              const matriculadosNoMes = reportData.students.filter(s => s.criadoEm?.startsWith(`${selectedYear}-${selectedMonth}`)).length;
+              const vieramDoMesAnterior = reportData.students.length - matriculadosNoMes;
+              const passaramMesSeguinte = reportData.students.length;
+
+              return (
+                <div style={{ 
+                  marginTop: 16, 
+                  display: "grid", 
+                  gridTemplateColumns: "1fr 1.5fr",
+                  alignItems: "flex-start",
+                  gap: 24 
+                }}>
+                  <div style={{ fontSize: 10, color: "#64748B", lineHeight: 1.4 }}>
+                    * Legenda: <strong>P</strong> = Presente | <strong style={{ color: "#EF4444" }}>F</strong> = Falta | <strong>—</strong> = Sem registro. Sábados e domingos são omitidos da contagem.
+                  </div>
+                  
+                  <div style={{ 
+                    display: "flex", 
+                    justifyContent: "space-between", 
+                    padding: 10, 
+                    border: "1px solid #000", 
+                    borderRadius: 4, 
+                    background: "#F8FAFC",
+                    fontSize: 11
+                  }}>
+                    <span><strong>Vieram do Mês Anterior:</strong> {vieramDoMesAnterior}</span>
+                    <span style={{ borderLeft: "1px solid #CBD5E1", paddingLeft: 12 }}><strong>Matriculados no Mês:</strong> {matriculadosNoMes}</span>
+                    <span style={{ borderLeft: "1px solid #CBD5E1", paddingLeft: 12 }}><strong>Passaram para o Mês Seguinte:</strong> {passaramMesSeguinte}</span>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
 
           {/* PAGE BREAK ON PRINT */}
           <div className="page-break" />
 
           {/* SECTION 2: PROGRAMMATIC CONTENT */}
-          <div>
-            <h3 style={{ fontSize: 15, fontWeight: 800, color: "#1E293B", marginBottom: 16, textTransform: "uppercase", borderBottom: "1px solid #E2E8F0", paddingBottom: 6 }}>
+          <div style={{ marginBottom: 40 }}>
+            <h3 style={{ fontSize: 14, fontWeight: 800, color: "#1E293B", marginBottom: 16, textTransform: "uppercase", borderBottom: "1px solid #E2E8F0", paddingBottom: 6 }}>
               II. Conteúdo Programático e Atividades Trabalhadas
             </h3>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               {(() => {
                 // Group records by day
                 const recordsByDay: Record<string, DailyRecord[]> = {};
@@ -340,7 +406,6 @@ export default function AdminDiarioClassePage() {
 
                 return sortedDays.map(dateStr => {
                   const dayRecords = recordsByDay[dateStr];
-                  // Use activities and descriptions from any of the non-absent student records on that day
                   const validRec = dayRecords.find(r => !r.ausente && (r.atividadeTexto || r.atividades));
                   if (!validRec) return null;
 
@@ -374,29 +439,29 @@ export default function AdminDiarioClassePage() {
                       key={dateStr} 
                       style={{ 
                         border: "1px solid #E2E8F0", 
-                        borderRadius: 12, 
+                        borderRadius: 8, 
                         background: "white", 
-                        padding: 16,
+                        padding: 12,
                         boxShadow: "0 1px 2px rgba(0,0,0,0.02)"
                       }}
                     >
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #F1F5F9", paddingBottom: 8, marginBottom: 12 }}>
-                        <span style={{ fontWeight: 800, color: "var(--primary-dark)", textTransform: "capitalize", fontSize: 14 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #F1F5F9", paddingBottom: 6, marginBottom: 8 }}>
+                        <span style={{ fontWeight: 800, color: "var(--primary-dark)", textTransform: "capitalize", fontSize: 13 }}>
                           📅 {dateFormatted}
                         </span>
                       </div>
                       
                       {activeActivities.length > 0 && (
-                        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }}>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 8 }}>
                           {activeActivities.map(act => (
                             <span 
                               key={act} 
                               style={{ 
-                                fontSize: 11, 
+                                fontSize: 10, 
                                 background: "#FFF7ED", 
                                 color: "#C2410C", 
-                                padding: "2px 8px", 
-                                borderRadius: 6,
+                                padding: "1px 6px", 
+                                borderRadius: 4,
                                 fontWeight: 700
                               }}
                             >
@@ -406,13 +471,37 @@ export default function AdminDiarioClassePage() {
                         </div>
                       )}
 
-                      <p style={{ margin: 0, fontSize: 13, lineHeight: 1.5, color: "#334155", whiteSpace: "pre-wrap" }}>
-                        {validRec.atividadeTexto || <em style={{ color: "#94A3B8" }}>Sem descrição textual das atividades nesta data.</em>}
+                      <p style={{ margin: 0, fontSize: 12, lineHeight: 1.4, color: "#334155", whiteSpace: "pre-wrap" }}>
+                        {validRec.atividadeTexto || <em style={{ color: "#94A3B8" }}>Sem descrição das atividades nesta data.</em>}
                       </p>
                     </div>
                   );
                 });
               })()}
+            </div>
+          </div>
+
+          {/* SECTION 3: SIGNATURES rodapé oficial */}
+          <div style={{ 
+            marginTop: 48, 
+            display: "grid", 
+            gridTemplateColumns: "1fr 1fr 1fr", 
+            gap: 40, 
+            fontSize: 11, 
+            color: "#1E293B",
+            textAlign: "center"
+          }}>
+            <div style={{ borderTop: "1px solid #000", paddingTop: 8 }}>
+              <p style={{ margin: 0, fontWeight: "bold" }}>ASSINATURA DO PROFESSOR(A)</p>
+              <span style={{ fontSize: 9, color: "#64748B" }}>Ana Cláudia</span>
+            </div>
+            <div style={{ borderTop: "1px solid #000", paddingTop: 8 }}>
+              <p style={{ margin: 0, fontWeight: "bold" }}>COORDENAÇÃO PEDAGÓGICA</p>
+              <span style={{ fontSize: 9, color: "#64748B" }}>Rubrica do C.P.</span>
+            </div>
+            <div style={{ borderTop: "1px solid #000", paddingTop: 8 }}>
+              <p style={{ margin: 0, fontWeight: "bold" }}>DIRETORIA DE ENSINO</p>
+              <span style={{ fontSize: 9, color: "#64748B" }}>Assinatura do Diretor</span>
             </div>
           </div>
         </div>
