@@ -2,7 +2,7 @@
 
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter, usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import Link from "next/link";
 
 export default function AdminLayout({
@@ -28,19 +28,44 @@ export default function AdminLayout({
     );
   }
 
-  const menuItems = [
-    { href: "/admin", label: "Dashboard", icon: "📊" },
-    { href: "/admin/monitor", label: "Monitor", icon: "🖥️" },
-    { href: "/admin/diario-classe", label: "Diário de Classe", icon: "📖" },
-    { href: "/admin/atendimento", label: "Atendimento", icon: "💬" },
-    { href: "/admin/matriculas", label: "Matrículas", icon: "📝" },
-    { href: "/admin/aprovacoes", label: "Aprovações", icon: "✅" },
-    { href: "/admin/mural", label: "Mural", icon: "📌" },
-    { href: "/admin/eventos", label: "Eventos", icon: "📅" },
-    { href: "/admin/financeiro", label: "Financeiro", icon: "💰" },
-    { href: "/admin/alunos", label: "Alunos", icon: "👶" },
-    { href: "/admin/usuarios", label: "Usuários", icon: "👥" },
-    { href: "/admin/turmas", label: "Turmas", icon: "🏫" },
+  const menuSections = [
+    {
+      title: "Painel Diário",
+      items: [
+        { href: "/admin", label: "Dashboard", icon: "📊" },
+        { href: "/admin/monitor", label: "Monitor", icon: "🖥️" },
+        { href: "/admin/atendimento", label: "Atendimento", icon: "💬" },
+      ]
+    },
+    {
+      title: "Secretaria",
+      items: [
+        { href: "/admin/matriculas", label: "Matrículas", icon: "📝" },
+        { href: "/admin/alunos", label: "Alunos", icon: "👶" },
+        { href: "/admin/turmas", label: "Turmas", icon: "🏫" },
+      ]
+    },
+    {
+      title: "Comunicação",
+      items: [
+        { href: "/admin/mural", label: "Mural", icon: "📌" },
+        { href: "/admin/eventos", label: "Eventos", icon: "📅" },
+      ]
+    },
+    {
+      title: "Pedagógico & Financeiro",
+      items: [
+        { href: "/admin/aprovacoes", label: "Aprovações", icon: "✅" },
+        { href: "/admin/diario-classe", label: "Diário de Classe", icon: "📖" },
+        { href: "/admin/financeiro", label: "Financeiro", icon: "💰" },
+      ]
+    },
+    {
+      title: "Configurações",
+      items: [
+        { href: "/admin/usuarios", label: "Usuários", icon: "👥" },
+      ]
+    }
   ];
 
   return (
@@ -63,34 +88,55 @@ export default function AdminLayout({
           </div>
         </div>
 
-        <nav style={{ flex: 1, padding: "16px" }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-            {menuItems.map((item) => {
-              const isActive = pathname === item.href;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 12,
-                    padding: "12px 16px",
-                    textDecoration: "none",
-                    borderRadius: 12,
-                    fontSize: 14,
-                    fontWeight: 600,
-                    color: isActive ? "var(--primary)" : "#64748B",
-                    background: isActive ? "var(--primary-light)" : "transparent",
-                    transition: "all 0.2s"
-                  }}
-                >
-                  <span>{item.icon}</span>
-                  {item.label}
-                </Link>
-              );
-            })}
-          </div>
+        {/* Scrollable menu nav to fit sections */}
+        <nav style={{ 
+          flex: 1, 
+          padding: "20px 16px", 
+          overflowY: "auto",
+          maxHeight: "calc(100vh - 180px)"
+        }}>
+          {menuSections.map((section) => (
+            <div key={section.title} style={{ marginBottom: 20 }}>
+              <h3 style={{ 
+                fontSize: 10, 
+                fontWeight: 800, 
+                color: "#94A3B8", 
+                textTransform: "uppercase", 
+                letterSpacing: "0.05em",
+                padding: "0 16px", 
+                marginBottom: 8 
+              }}>
+                {section.title}
+              </h3>
+              <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                {section.items.map((item) => {
+                  const isActive = pathname === item.href;
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 12,
+                        padding: "10px 16px",
+                        textDecoration: "none",
+                        borderRadius: 12,
+                        fontSize: 13,
+                        fontWeight: 600,
+                        color: isActive ? "var(--primary)" : "#64748B",
+                        background: isActive ? "var(--primary-light)" : "transparent",
+                        transition: "all 0.2s"
+                      }}
+                    >
+                      <span style={{ fontSize: 14 }}>{item.icon}</span>
+                      {item.label}
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </nav>
 
         <div style={{ padding: "16px", borderTop: "1px solid #F1F5F9" }}>
