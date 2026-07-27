@@ -24,6 +24,7 @@ import {
   UserProfile,
   Cobranca,
   CobrancaStatus,
+  UniformItem,
 } from "@/types";
 
 // ============================================
@@ -825,4 +826,71 @@ export async function rejectMatriculaSolicitude(solicitudeId: string): Promise<v
 export async function updateMatriculaSolicitude(solicitudeId: string, data: any): Promise<void> {
   const ref = doc(db(), "solicitacoes_matricula", solicitudeId);
   await updateDoc(ref, data);
+}
+
+// ============================================
+// Controle de Estoque de Uniformes
+// ============================================
+
+export async function getUniformItems(escolaId: string): Promise<UniformItem[]> {
+  const q = query(
+    collection(db(), "estoque_uniformes"),
+    where("escolaId", "==", escolaId)
+  );
+  const snap = await getDocs(q);
+  return snap.docs.map(d => ({ id: d.id, ...d.data() } as UniformItem));
+}
+
+export async function saveUniformItem(item: Omit<UniformItem, "atualizadoEm">): Promise<void> {
+  const ref = doc(db(), "estoque_uniformes", item.id);
+  const now = new Date().toISOString();
+  await setDoc(ref, {
+    ...item,
+    atualizadoEm: now
+  });
+}
+
+export async function sellUniformItem(
+  alunoId: string,
+  alunoNome: string,
+  alunoTurma: string,
+  itemId: string,
+  quantidade: number,
+  escolaId: string
+): Promise<void> {
+  const ref = doc(db(), "estoque_uniformes", itemId);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) throw new Error("Item de uniforme não encontrado.");
+  
+  const item = snap.data() as UniformItem;
+  const novaQuantidade = Math.max(0, item.quantidade - quantidade);
+  
+  // 1. Update stock quantity
+  await updateDoc(ref, {
+    quantidade: novaQuantidade,
+    atualizadoEm: new Date().toISOString()
+  });
+  
+  // 2. Generate a pending Cobranca automatically
+  const total = item.precoUnitario * quantidade;
+  const vencimento = new Date();
+  vencimento.setDate(vencimento.getDate() + 10); // 10 days default vencimento
+  const vencimentoStr = vencimento.toISOString().split("T")[0];
+  
+  await createCobranca({
+    alunoId,
+    alunoNome,
+    alunoTurma,
+    escolaId,
+    titulo: `Uniforme: ${item.nome} (${item.tamanho})`,
+    valor: total,
+    dataVencimento: vencimentoStr,
+    status: "pendente",
+    itens: [
+      {
+        descricao: `${item.nome} - Tam: ${item.tamanho} (x${quantidade})`,
+        valor: total
+      }
+    ]
+  });
 }

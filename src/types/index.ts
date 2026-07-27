@@ -223,6 +223,11 @@ export interface Evento {
 
 export type CobrancaStatus = 'pendente' | 'pago' | 'atrasado' | 'cancelado';
 
+export interface CobrancaItem {
+  descricao: string;
+  valor: number;
+}
+
 export interface Cobranca {
   id: string;
   alunoId: string;
@@ -240,5 +245,17 @@ export interface Cobranca {
   visualizado: boolean;
   dataVisualizacao?: string;
   criadoEm: string;
+  atualizadoEm: string;
+  itens?: CobrancaItem[];   // Itens detalhados do demonstrativo
+}
+
+export interface UniformItem {
+  id: string;
+  nome: string;
+  tamanho: string;
+  quantidade: number;
+  estoqueMinimo: number;
+  precoUnitario: number;
+  escolaId: string;
   atualizadoEm: string;
 }

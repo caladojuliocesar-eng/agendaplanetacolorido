@@ -3,7 +3,7 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { getAllStudents, createCobranca } from "@/lib/firestore";
 import { storage } from "@/lib/firebase";
-import { Student } from "@/types";
+import { Student, CobrancaItem } from "@/types";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
@@ -18,10 +18,16 @@ export default function NewChargePage() {
   const [formData, setFormData] = useState({
     alunoId: "",
     titulo: "",
-    valor: "",
+    valor: "0,00",
     dataVencimento: "",
     linkBoleto: "",
   });
+
+  // Dynamic Item List for Breakdown
+  const [cobrancaItens, setCobrancaItens] = useState<{ descricao: string; valor: string }[]>([
+    { descricao: "Mensalidade Escolar", valor: "0,00" }
+  ]);
+
   const [file, setFile] = useState<File | null>(null);
 
   useEffect(() => {
@@ -41,40 +47,99 @@ export default function NewChargePage() {
     }
   }
 
+  // Handle item adjustments and recalculate total
+  const handleItemChange = (index: number, field: "descricao" | "valor", val: string) => {
+    const updated = [...cobrancaItens];
+    updated[index][field] = val;
+    setCobrancaItens(updated);
+
+    // Calculate sum of item values
+    let total = 0;
+    updated.forEach(item => {
+      const cleanVal = item.valor.replace(/\./g, "").replace(",", ".");
+      const parsed = parseFloat(cleanVal);
+      if (!isNaN(parsed)) {
+        total += parsed;
+      }
+    });
+
+    setFormData(prev => ({
+      ...prev,
+      valor: total.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    }));
+  };
+
+  const handleAddItem = () => {
+    setCobrancaItens(prev => [...prev, { descricao: "", valor: "0,00" }]);
+  };
+
+  const handleRemoveItem = (index: number) => {
+    if (cobrancaItens.length === 1) return;
+    const updated = cobrancaItens.filter((_, i) => i !== index);
+    setCobrancaItens(updated);
+
+    let total = 0;
+    updated.forEach(item => {
+      const cleanVal = item.valor.replace(/\./g, "").replace(",", ".");
+      const parsed = parseFloat(cleanVal);
+      if (!isNaN(parsed)) {
+        total += parsed;
+      }
+    });
+
+    setFormData(prev => ({
+      ...prev,
+      valor: total.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    }));
+  };
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!formData.alunoId || !formData.titulo || !formData.valor || !formData.dataVencimento) {
+    if (!formData.alunoId || !formData.titulo || !formData.dataVencimento) {
       alert("Por favor, preencha os campos obrigatórios.");
       return;
     }
 
     setSaving(true);
-    console.log("Iniciando processo de salvamento...");
     
     try {
       let urlDemonstrativo = "";
       
       // 1. Upload image if exists
       if (file) {
-        console.log("Fazendo upload da imagem:", file.name);
         try {
           const fileRef = ref(storage(), `financeiro/${profile!.escolaId}/${formData.alunoId}/${Date.now()}_${file.name}`);
           await uploadBytes(fileRef, file);
           urlDemonstrativo = await getDownloadURL(fileRef);
-          console.log("Upload concluído. URL:", urlDemonstrativo);
         } catch (uploadError: any) {
           console.error("Erro no upload:", uploadError);
-          throw new Error(`Falha no Storage: ${uploadError.message}. Verifique se o Storage está ativado e as regras permitem o envio.`);
+          throw new Error(`Falha no Storage: ${uploadError.message}.`);
         }
       }
 
-      // 2. Create charge in Firestore
-      console.log("Gravando dados no Firestore...");
-      const valorLimpo = formData.valor.replace(/\./g, '').replace(',', '.');
-      const valorNum = parseFloat(valorLimpo);
+      // 2. Format final items list
+      const formattedItens: CobrancaItem[] = [];
+      let totalSum = 0;
 
-      if (isNaN(valorNum)) {
-        throw new Error("Valor inválido. Use o formato 0000,00");
+      cobrancaItens.forEach(item => {
+        if (item.descricao.trim()) {
+          const cleanVal = item.valor.replace(/\./g, "").replace(",", ".");
+          const valueNum = parseFloat(cleanVal);
+          if (!isNaN(valueNum) && valueNum > 0) {
+            formattedItens.push({
+              descricao: item.descricao,
+              valor: valueNum
+            });
+            totalSum += valueNum;
+          }
+        }
+      });
+
+      // If no items were entered correctly, use the main amount
+      const finalValor = totalSum > 0 ? totalSum : parseFloat(formData.valor.replace(/\./g, "").replace(",", "."));
+
+      if (isNaN(finalValor) || finalValor <= 0) {
+        throw new Error("O valor da cobrança deve ser maior que zero.");
       }
 
       const selectedStudent = students.find(s => s.id === formData.alunoId);
@@ -85,18 +150,18 @@ export default function NewChargePage() {
         alunoTurma: selectedStudent?.turma || "",
         escolaId: profile!.escolaId,
         titulo: formData.titulo,
-        valor: valorNum,
+        valor: finalValor,
         dataVencimento: formData.dataVencimento,
-        status: 'pendente',
+        status: "pendente",
         linkBoleto: formData.linkBoleto.trim() || "",
         urlDemonstrativo: urlDemonstrativo || "",
+        itens: formattedItens.length > 0 ? formattedItens : undefined
       });
 
-      console.log("Cobrança criada com sucesso!");
       router.push("/admin/financeiro");
     } catch (error: any) {
-      console.error("Erro completo:", error);
-      alert(error.message || "Erro ao salvar cobrança. Verifique as regras de segurança do Firebase.");
+      console.error(error);
+      alert(error.message || "Erro ao salvar cobrança.");
     } finally {
       setSaving(false);
     }
@@ -105,54 +170,103 @@ export default function NewChargePage() {
   if (loading) return <div className="spinner" style={{ margin: "40px auto" }} />;
 
   return (
-    <div style={{ maxWidth: 600 }}>
+    <div style={{ maxWidth: 700 }}>
       <div style={{ marginBottom: 32 }}>
         <h2 style={{ fontSize: 24, fontWeight: 800, color: "#1E293B", margin: 0 }}>Nova Cobrança</h2>
-        <p style={{ color: "#64748B", margin: "4px 0 0 0" }}>Envie uma nova mensalidade ou aviso de pagamento</p>
+        <p style={{ color: "#64748B", margin: "4px 0 0 0" }}>Crie cobranças detalhadas por item de despesa.</p>
       </div>
 
       <form onSubmit={handleSubmit} style={{ background: "white", padding: 32, borderRadius: 16, border: "1px solid #E2E8F0", display: "flex", flexDirection: "column", gap: 20 }}>
-        <div>
-          <label style={{ display: "block", fontSize: 14, fontWeight: 700, color: "#334155", marginBottom: 8 }}>Selecionar Aluno *</label>
-          <select 
-            required
-            value={formData.alunoId}
-            onChange={(e) => setFormData({...formData, alunoId: e.target.value})}
-            style={{ width: "100%", padding: "12px", borderRadius: 10, border: "1px solid #E2E8F0", fontSize: 14, background: "#F8FAFC" }}
-          >
-            <option value="">Selecione um aluno...</option>
-            {students.map(s => (
-              <option key={s.id} value={s.id}>{s.nome} ({s.turma})</option>
-            ))}
-          </select>
+        
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+          <div>
+            <label style={{ display: "block", fontSize: 13, fontWeight: 700, color: "#334155", marginBottom: 8 }}>Selecionar Aluno *</label>
+            <select 
+              required
+              value={formData.alunoId}
+              onChange={(e) => setFormData({...formData, alunoId: e.target.value})}
+              style={{ width: "100%", padding: "12px", borderRadius: 10, border: "1px solid #E2E8F0", fontSize: 14, background: "#F8FAFC" }}
+            >
+              <option value="">Selecione um aluno...</option>
+              {students.map(s => (
+                <option key={s.id} value={s.id}>{s.nome} ({s.turma})</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label style={{ display: "block", fontSize: 13, fontWeight: 700, color: "#334155", marginBottom: 8 }}>Título Geral *</label>
+            <input 
+              required
+              type="text"
+              placeholder="Ex: Mensalidade de Maio"
+              value={formData.titulo}
+              onChange={(e) => setFormData({...formData, titulo: e.target.value})}
+              style={{ width: "100%", padding: "12px", borderRadius: 10, border: "1px solid #E2E8F0", fontSize: 14 }}
+            />
+          </div>
         </div>
 
-        <div>
-          <label style={{ display: "block", fontSize: 14, fontWeight: 700, color: "#334155", marginBottom: 8 }}>Título da Cobrança *</label>
-          <input 
-            required
-            type="text"
-            placeholder="Ex: Mensalidade Abril"
-            value={formData.titulo}
-            onChange={(e) => setFormData({...formData, titulo: e.target.value})}
-            style={{ width: "100%", padding: "12px", borderRadius: 10, border: "1px solid #E2E8F0", fontSize: 14 }}
-          />
+        {/* Itemized breakdown section */}
+        <div style={{ border: "1px solid #E2E8F0", borderRadius: 12, padding: 18, background: "#F8FAFC" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+            <h4 style={{ margin: 0, fontSize: 13, fontWeight: 800, color: "#475569" }}>DEMONSTRATIVO DE ITENS</h4>
+            <button 
+              type="button" 
+              onClick={handleAddItem}
+              className="btn btn--secondary" 
+              style={{ padding: "4px 10px", fontSize: 12 }}
+            >
+              + Adicionar Item
+            </button>
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {cobrancaItens.map((item, index) => (
+              <div key={index} style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                <input 
+                  type="text" 
+                  className="text-input" 
+                  placeholder="Descrição da despesa (ex: Jantar Extra)" 
+                  value={item.descricao} 
+                  required
+                  onChange={e => handleItemChange(index, "descricao", e.target.value)}
+                  style={{ flex: 3, background: "white" }}
+                />
+                <input 
+                  type="text" 
+                  className="text-input" 
+                  placeholder="Valor" 
+                  value={item.valor} 
+                  required
+                  onChange={e => handleItemChange(index, "valor", e.target.value)}
+                  style={{ flex: 1, textAlign: "right", background: "white" }}
+                />
+                {cobrancaItens.length > 1 && (
+                  <button 
+                    type="button" 
+                    onClick={() => handleRemoveItem(index)}
+                    style={{ background: "none", border: "none", color: "#EF4444", fontSize: 18, cursor: "pointer", padding: "0 4px" }}
+                  >
+                    🗑️
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
           <div>
-            <label style={{ display: "block", fontSize: 14, fontWeight: 700, color: "#334155", marginBottom: 8 }}>Valor (R$) *</label>
+            <label style={{ display: "block", fontSize: 13, fontWeight: 700, color: "#334155", marginBottom: 8 }}>Valor Total Calculado (R$)</label>
             <input 
-              required
+              disabled
               type="text"
-              placeholder="0,00"
               value={formData.valor}
-              onChange={(e) => setFormData({...formData, valor: e.target.value})}
-              style={{ width: "100%", padding: "12px", borderRadius: 10, border: "1px solid #E2E8F0", fontSize: 14 }}
+              style={{ width: "100%", padding: "12px", borderRadius: 10, border: "1px solid #CBD5E1", fontSize: 14, background: "#F1F5F9", fontWeight: 700, color: "#1E293B" }}
             />
           </div>
           <div>
-            <label style={{ display: "block", fontSize: 14, fontWeight: 700, color: "#334155", marginBottom: 8 }}>Vencimento *</label>
+            <label style={{ display: "block", fontSize: 13, fontWeight: 700, color: "#334155", marginBottom: 8 }}>Vencimento *</label>
             <input 
               required
               type="date"
@@ -164,7 +278,7 @@ export default function NewChargePage() {
         </div>
 
         <div style={{ borderTop: "1px solid #F1F5F9", paddingTop: 20 }}>
-          <label style={{ display: "block", fontSize: 14, fontWeight: 700, color: "#334155", marginBottom: 8 }}>Link do Boleto / PIX (Opcional)</label>
+          <label style={{ display: "block", fontSize: 13, fontWeight: 700, color: "#334155", marginBottom: 8 }}>Link do Boleto / PIX (Opcional)</label>
           <input 
             type="url"
             placeholder="https://nubank.com.br/cobranca/..."
@@ -172,12 +286,10 @@ export default function NewChargePage() {
             onChange={(e) => setFormData({...formData, linkBoleto: e.target.value})}
             style={{ width: "100%", padding: "12px", borderRadius: 10, border: "1px solid #E2E8F0", fontSize: 14 }}
           />
-          <p style={{ fontSize: 12, color: "#94A3B8", marginTop: 4 }}>Cole aqui o link gerado pelo seu banco</p>
         </div>
 
         <div>
-          <label style={{ display: "block", fontSize: 14, fontWeight: 700, color: "#334155", marginBottom: 8 }}>Foto do Demonstrativo (Opcional)</label>
-          
+          <label style={{ display: "block", fontSize: 13, fontWeight: 700, color: "#334155", marginBottom: 8 }}>Foto do Demonstrativo (Opcional)</label>
           <div style={{ position: "relative" }}>
             <input 
               type="file"
@@ -208,7 +320,6 @@ export default function NewChargePage() {
               {file ? `✅ ${file.name}` : "📁 Clique para anexar o print/foto"}
             </label>
           </div>
-          <p style={{ fontSize: 12, color: "#94A3B8", marginTop: 8 }}>Anexe um print ou foto do detalhamento das despesas</p>
         </div>
 
         <div style={{ display: "flex", gap: 12, marginTop: 12 }}>

@@ -160,6 +160,24 @@ export default function ParentFinanceiroPage() {
                       </div>
                     </div>
 
+                    {c.itens && c.itens.length > 0 && (
+                      <div style={{ marginTop: 12, padding: 12, background: "#F8FAFC", borderRadius: 12, fontSize: 12, border: "1px solid #F1F5F9" }}>
+                        <div style={{ fontWeight: 800, color: "#64748B", marginBottom: 6, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                          Demonstrativo de Lançamentos
+                        </div>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                          {c.itens.map((item, idx) => (
+                            <div key={idx} style={{ display: "flex", justifyContent: "space-between", color: "#475569" }}>
+                              <span>• {item.descricao}</span>
+                              <span style={{ fontWeight: 700, color: "#1E293B" }}>
+                                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.valor)}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
                     <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
                       {c.linkBoleto && !isPaid && (
                         <a 
