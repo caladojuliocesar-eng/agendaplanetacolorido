@@ -40,7 +40,6 @@ export default function AdminLayout({
     {
       title: "Secretaria",
       items: [
-        { href: "/admin/matriculas", label: "Matrículas", icon: "📝" },
         { href: "/admin/alunos", label: "Alunos", icon: "👶" },
         { href: "/admin/turmas", label: "Turmas", icon: "🏫" },
         { href: "/admin/estoque", label: "Estoque", icon: "👕" },

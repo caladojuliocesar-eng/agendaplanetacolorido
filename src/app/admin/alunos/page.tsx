@@ -2,7 +2,20 @@
 
 import { useAuth } from "@/contexts/AuthContext";
 import { useState, useEffect } from "react";
-import { getAllStudents, addStudent, updateStudent, getAllUsers, addUser, linkParentToStudent, unlinkParentFromStudent, updateUser } from "@/lib/firestore";
+import { 
+  getAllStudents, 
+  addStudent, 
+  updateStudent, 
+  getAllUsers, 
+  addUser, 
+  linkParentToStudent, 
+  unlinkParentFromStudent, 
+  updateUser,
+  getMatriculaSolicitudes,
+  approveMatriculaSolicitude,
+  rejectMatriculaSolicitude,
+  updateMatriculaSolicitude
+} from "@/lib/firestore";
 import { Student, UserProfile } from "@/types";
 
 const TURMAS_SUGERIDAS = [
@@ -13,7 +26,7 @@ const TURMAS_SUGERIDAS = [
 export default function AlunosAdminPage() {
   const { profile } = useAuth();
   const [students, setStudents] = useState<Student[]>([]);
-  const [users, setUsers] = useState<UserProfile[]>([]);
+  const [users, setUserProfile] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -40,6 +53,11 @@ export default function AlunosAdminPage() {
   const [parentSearchEmail, setParentSearchEmail] = useState("");
   const [parentNewName, setParentNewName] = useState("");
 
+  // Fichas de Matrícula Externa (Simplificação Ponto 3)
+  const [pendingSolicitudes, setPendingSolicitudes] = useState<any[]>([]);
+  const [selectedSolicitude, setSelectedSolicitude] = useState<any | null>(null);
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+
   useEffect(() => {
     if (!profile?.escolaId) {
       setLoading(false);
@@ -51,18 +69,72 @@ export default function AlunosAdminPage() {
   async function loadData() {
     setLoading(true);
     try {
-      const [studentsData, usersData] = await Promise.all([
+      const [studentsData, usersData, solicitudesData] = await Promise.all([
         getAllStudents(profile!.escolaId!),
-        getAllUsers(profile!.escolaId!)
+        getAllUsers(profile!.escolaId!),
+        getMatriculaSolicitudes(profile!.escolaId!)
       ]);
       setStudents(studentsData);
-      setUsers(usersData);
+      setUserProfile(usersData);
+      setPendingSolicitudes(solicitudesData.filter(s => s.status === "pendente"));
     } catch (error) {
       console.error("Error loading data:", error);
     } finally {
       setLoading(false);
     }
   }
+
+  const handleEditSolicitudeField = (section: string, field: string, value: any) => {
+    setSelectedSolicitude((prev: any) => ({
+      ...prev,
+      [section]: {
+        ...prev[section],
+        [field]: value
+      }
+    }));
+  };
+
+  const handleApproveSolicitude = async () => {
+    if (!selectedSolicitude) return;
+    if (!selectedSolicitude.aluno?.nome?.trim()) {
+      alert("Por favor, preencha o nome do aluno.");
+      return;
+    }
+    setSaving(true);
+    try {
+      await updateMatriculaSolicitude(selectedSolicitude.id, selectedSolicitude);
+      await approveMatriculaSolicitude(selectedSolicitude.id, profile!.escolaId!);
+      alert(`Matrícula de ${selectedSolicitude.aluno.nome} aprovada com sucesso! Aluno cadastrado.`);
+      setIsReviewModalOpen(false);
+      setSelectedSolicitude(null);
+      await loadData();
+    } catch (err) {
+      console.error(err);
+      alert("Erro ao aprovar matrícula.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleRejectSolicitude = async () => {
+    if (!selectedSolicitude) return;
+    const confirm = window.confirm(`Deseja recusar a matrícula de ${selectedSolicitude.aluno.nome}?`);
+    if (!confirm) return;
+
+    setSaving(true);
+    try {
+      await rejectMatriculaSolicitude(selectedSolicitude.id);
+      alert("Ficha recusada.");
+      setIsReviewModalOpen(false);
+      setSelectedSolicitude(null);
+      await loadData();
+    } catch (err) {
+      console.error(err);
+      alert("Erro ao recusar matrícula.");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const filteredStudents = students.filter(s => 
     s.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -241,6 +313,42 @@ export default function AlunosAdminPage() {
           + Novo Aluno
         </button>
       </header>
+
+      {pendingSolicitudes.length > 0 && (
+        <div style={{
+          background: "var(--primary-light)",
+          border: "1px dashed var(--primary)",
+          borderRadius: 16,
+          padding: "16px 24px",
+          marginBottom: 24,
+          display: "flex",
+          flexDirection: "column",
+          gap: 12
+        }}>
+          <h3 style={{ margin: 0, fontSize: 14, fontWeight: 800, color: "var(--primary-dark)" }}>
+            📝 {pendingSolicitudes.length} ficha(s) de matrícula externa pendente(s)
+          </h3>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {pendingSolicitudes.map(solic => (
+              <div key={solic.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "white", padding: "12px 16px", borderRadius: 10, border: "1px solid #E2E8F0" }}>
+                <div>
+                  <strong style={{ fontSize: 13, color: "#1E293B" }}>{solic.aluno?.nome}</strong>
+                  <span style={{ fontSize: 11, color: "#64748B", marginLeft: 8 }}>
+                    Turma Recomendada: {solic.aluno?.turma} | Preenchido em: {new Date(solic.criadoEm).toLocaleDateString("pt-BR")}
+                  </span>
+                </div>
+                <button 
+                  onClick={() => { setSelectedSolicitude(solic); setIsReviewModalOpen(true); }}
+                  className="btn btn--primary" 
+                  style={{ fontSize: 11, padding: "6px 12px" }}
+                >
+                  🔍 Revisar & Efetivar
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="card" style={{ padding: 0, overflow: "hidden" }}>
         <div style={{ padding: "20px 24px", borderBottom: "1px solid #F1F5F9", background: "white" }}>
@@ -573,6 +681,136 @@ export default function AlunosAdminPage() {
                 </div>
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal 2: Revisão de Matrícula Externa */}
+      {isReviewModalOpen && selectedSolicitude && (
+        <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "flex-start", justifyContent: "center", zIndex: 100, padding: 16, overflowY: "auto" }}>
+          <div className="card" style={{ width: "100%", maxWidth: 650, padding: 0, margin: "auto", marginTop: 40, marginBottom: 40, overflow: "hidden", background: "white" }}>
+            <div style={{ background: "#F8FAFC", borderBottom: "1px solid #E2E8F0", padding: "20px 32px 20px 32px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                <div>
+                  <h2 style={{ margin: 0, fontSize: 20, color: "#1E293B" }}>Revisar Ficha Cadastral</h2>
+                  <span style={{ fontSize: 11, color: "var(--primary-dark)", fontWeight: 700 }}>
+                    Preenchida externamente pelos pais em {new Date(selectedSolicitude.criadoEm).toLocaleDateString("pt-BR")}
+                  </span>
+                </div>
+                <button onClick={() => { setIsReviewModalOpen(false); setSelectedSolicitude(null); }} style={{ background: "none", border: "none", fontSize: 24, color: "#94A3B8", cursor: "pointer" }}>✕</button>
+              </div>
+            </div>
+
+            <div style={{ padding: 32, display: "flex", flexDirection: "column", gap: 20, maxHeight: "calc(100vh - 200px)", overflowY: "auto" }}>
+              
+              {/* Seção 1: Aluno */}
+              <div>
+                <h4 style={{ margin: "0 0 12px 0", fontSize: 13, fontWeight: 800, color: "var(--primary-dark)", borderBottom: "1px solid #E2E8F0", paddingBottom: 6 }}>1. DADOS DO ALUNO</h4>
+                <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 12, marginBottom: 12 }}>
+                  <div>
+                    <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#64748B", marginBottom: 4 }}>NOME COMPLETO</label>
+                    <input type="text" className="text-input" value={selectedSolicitude.aluno?.nome || ""} onChange={e => handleEditSolicitudeField('aluno', 'nome', e.target.value)} />
+                  </div>
+                  <div>
+                    <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#64748B", marginBottom: 4 }}>TURMA RECOMENDADA</label>
+                    <select className="text-input" value={selectedSolicitude.aluno?.turma || ""} onChange={e => handleEditSolicitudeField('aluno', 'turma', e.target.value)}>
+                      {TURMAS_SUGERIDAS.map(t => <option key={t} value={t}>{t}</option>)}
+                    </select>
+                  </div>
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                  <div>
+                    <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#64748B", marginBottom: 4 }}>NASCIMENTO</label>
+                    <input type="date" className="text-input" value={selectedSolicitude.aluno?.dataNascimento || ""} onChange={e => handleEditSolicitudeField('aluno', 'dataNascimento', e.target.value)} />
+                  </div>
+                  <div>
+                    <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#64748B", marginBottom: 4 }}>GÊNERO</label>
+                    <select className="text-input" value={selectedSolicitude.aluno?.genero || ""} onChange={e => handleEditSolicitudeField('aluno', 'genero', e.target.value)}>
+                      <option value="M">Masculino</option>
+                      <option value="F">Feminino</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Seção 2: Pais */}
+              <div>
+                <h4 style={{ margin: "0 0 12px 0", fontSize: 13, fontWeight: 800, color: "var(--primary-dark)", borderBottom: "1px solid #E2E8F0", paddingBottom: 6 }}>2. DADOS DOS RESPONSÁVEIS</h4>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                  {/* Mãe */}
+                  <div style={{ background: "#F8FAFC", padding: 12, borderRadius: 8 }}>
+                    <strong style={{ fontSize: 12, color: "#475569", display: "block", marginBottom: 8 }}>MÃE</strong>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                      <input type="text" className="text-input" placeholder="Nome" value={selectedSolicitude.mae?.nome || ""} onChange={e => handleEditSolicitudeField('mae', 'nome', e.target.value)} style={{ background: "white", fontSize: 12, padding: "8px 10px" }} />
+                      <input type="text" className="text-input" placeholder="CPF (apenas números)" value={selectedSolicitude.mae?.cpf || ""} onChange={e => handleEditSolicitudeField('mae', 'cpf', e.target.value)} style={{ background: "white", fontSize: 12, padding: "8px 10px" }} />
+                      <input type="email" className="text-input" placeholder="E-mail" value={selectedSolicitude.mae?.email || ""} onChange={e => handleEditSolicitudeField('mae', 'email', e.target.value)} style={{ background: "white", fontSize: 12, padding: "8px 10px" }} />
+                      <input type="text" className="text-input" placeholder="Celular" value={selectedSolicitude.mae?.telCelular || ""} onChange={e => handleEditSolicitudeField('mae', 'telCelular', e.target.value)} style={{ background: "white", fontSize: 12, padding: "8px 10px" }} />
+                    </div>
+                  </div>
+                  {/* Pai */}
+                  <div style={{ background: "#F8FAFC", padding: 12, borderRadius: 8 }}>
+                    <strong style={{ fontSize: 12, color: "#475569", display: "block", marginBottom: 8 }}>PAI</strong>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                      <input type="text" className="text-input" placeholder="Nome" value={selectedSolicitude.pai?.nome || ""} onChange={e => handleEditSolicitudeField('pai', 'nome', e.target.value)} style={{ background: "white", fontSize: 12, padding: "8px 10px" }} />
+                      <input type="text" className="text-input" placeholder="CPF (apenas números)" value={selectedSolicitude.pai?.cpf || ""} onChange={e => handleEditSolicitudeField('pai', 'cpf', e.target.value)} style={{ background: "white", fontSize: 12, padding: "8px 10px" }} />
+                      <input type="email" className="text-input" placeholder="E-mail" value={selectedSolicitude.pai?.email || ""} onChange={e => handleEditSolicitudeField('pai', 'email', e.target.value)} style={{ background: "white", fontSize: 12, padding: "8px 10px" }} />
+                      <input type="text" className="text-input" placeholder="Celular" value={selectedSolicitude.pai?.telCelular || ""} onChange={e => handleEditSolicitudeField('pai', 'telCelular', e.target.value)} style={{ background: "white", fontSize: 12, padding: "8px 10px" }} />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Seção 3: Endereço & Saúde */}
+              <div>
+                <h4 style={{ margin: "0 0 12px 0", fontSize: 13, fontWeight: 800, color: "var(--primary-dark)", borderBottom: "1px solid #E2E8F0", paddingBottom: 6 }}>3. ENDEREÇO & SAÚDE</h4>
+                <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 12, marginBottom: 12 }}>
+                  <div>
+                    <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#64748B", marginBottom: 4 }}>RUA, Nº, COMPL.</label>
+                    <input type="text" className="text-input" value={selectedSolicitude.endereco?.rua || ""} onChange={e => handleEditSolicitudeField('endereco', 'rua', e.target.value)} />
+                  </div>
+                  <div>
+                    <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#64748B", marginBottom: 4 }}>CEP</label>
+                    <input type="text" className="text-input" value={selectedSolicitude.endereco?.cep || ""} onChange={e => handleEditSolicitudeField('endereco', 'cep', e.target.value)} />
+                  </div>
+                </div>
+                <div>
+                  <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#64748B", marginBottom: 4 }}>ALERGIAS / RESTRIÇÕES</label>
+                  <input type="text" className="text-input" value={selectedSolicitude.saude?.alergias || ""} onChange={e => handleEditSolicitudeField('saude', 'alergias', e.target.value)} />
+                </div>
+              </div>
+
+            </div>
+
+            {/* Ações do Rodapé */}
+            <div style={{ background: "#F8FAFC", borderTop: "1px solid #E2E8F0", padding: "16px 32px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <button 
+                type="button" 
+                onClick={handleRejectSolicitude} 
+                disabled={saving}
+                className="btn" 
+                style={{ background: "#FEE2E2", color: "#EF4444", border: "none" }}
+              >
+                Recusar Ficha
+              </button>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button 
+                  type="button" 
+                  onClick={() => { setIsReviewModalOpen(false); setSelectedSolicitude(null); }} 
+                  className="btn btn--secondary"
+                >
+                  Cancelar
+                </button>
+                <button 
+                  type="button" 
+                  onClick={handleApproveSolicitude} 
+                  disabled={saving}
+                  className="btn btn--primary"
+                >
+                  {saving ? "Salvando..." : "✓ Aprovar e Efetivar"}
+                </button>
+              </div>
+            </div>
+
           </div>
         </div>
       )}
