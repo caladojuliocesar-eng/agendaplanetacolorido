@@ -15,6 +15,7 @@ export default function AdminMuralPage() {
   const [titulo, setTitulo] = useState("");
   const [mensagem, setMensagem] = useState("");
   const [tipo, setTipo] = useState<"info" | "alerta" | "urgente">("info");
+  const [turma, setTurma] = useState("geral");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -51,6 +52,7 @@ export default function AdminMuralPage() {
         tipo,
         criadoEm: new Date().toISOString(),
         ativo: true,
+        turma: turma
       };
 
       await saveAviso(novoAviso);
@@ -60,6 +62,7 @@ export default function AdminMuralPage() {
       setTitulo("");
       setMensagem("");
       setTipo("info");
+      setTurma("geral");
       setShowForm(false);
     } catch (error) {
       console.error("Error saving aviso:", error);
@@ -131,6 +134,19 @@ export default function AdminMuralPage() {
                 <option value="urgente">Urgente (Vermelho)</option>
               </select>
             </div>
+            <div>
+              <label style={{ display: "block", fontSize: 14, fontWeight: 600, color: "#475569", marginBottom: 8 }}>Destinatário (Turma)</label>
+              <select className="text-input" value={turma} onChange={e => setTurma(e.target.value)}>
+                <option value="geral">Geral (Toda a escola)</option>
+                <option value="Berçário I">Berçário I</option>
+                <option value="Berçário II">Berçário II</option>
+                <option value="Infantil I">Infantil I</option>
+                <option value="Infantil II">Infantil II</option>
+                <option value="Infantil III">Infantil III</option>
+                <option value="Infantil IV">Infantil IV</option>
+                <option value="Infantil V">Infantil V</option>
+              </select>
+            </div>
             <button 
               type="submit" 
               className="btn btn--primary" 
@@ -173,7 +189,7 @@ export default function AdminMuralPage() {
                     </span>
                   </div>
                   <p style={{ margin: 0, fontSize: 12, color: "#94A3B8" }}>
-                    Publicado em: {new Date(aviso.criadoEm).toLocaleDateString("pt-BR")}
+                    Publicado em: {new Date(aviso.criadoEm).toLocaleDateString("pt-BR")} | Destinatário: {aviso.turma === "geral" || !aviso.turma ? "Geral (Todos)" : aviso.turma}
                   </p>
                 </div>
                 <button 

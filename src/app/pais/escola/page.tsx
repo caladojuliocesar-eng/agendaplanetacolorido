@@ -8,7 +8,8 @@ import {
   getStudentsByParent, 
   getCoordinationChat, 
   saveCoordinationMessage, 
-  markCoordinationChatRead 
+  markCoordinationChatRead,
+  getTodayDateString
 } from "@/lib/firestore";
 import { Aviso, Evento, Student } from "@/types";
 
@@ -25,6 +26,26 @@ export default function EscolaPage() {
   const [chatMessages, setChatMessages] = useState<any[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [sendingChat, setSendingChat] = useState(false);
+
+  // Parent dismissed notices list
+  const [dismissedAvisos, setDismissedAvisos] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("dismissed_avisos");
+      if (stored) {
+        try {
+          setDismissedAvisos(JSON.parse(stored));
+        } catch (e) {}
+      }
+    }
+  }, []);
+
+  const handleDismissAviso = (avisoId: string) => {
+    const updated = [...dismissedAvisos, avisoId];
+    setDismissedAvisos(updated);
+    localStorage.setItem("dismissed_avisos", JSON.stringify(updated));
+  };
 
   useEffect(() => {
     if (!profile?.escolaId) return;
@@ -111,6 +132,16 @@ export default function EscolaPage() {
     }
   };
 
+  const todayStr = getTodayDateString();
+  const visibleEventos = eventos.filter(evento => evento.data >= todayStr);
+
+  const visibleAvisos = avisos.filter(aviso => {
+    if (dismissedAvisos.includes(aviso.id)) return false;
+    if (!aviso.turma || aviso.turma === "geral") return true;
+    if (selectedStudent && aviso.turma === selectedStudent.turma) return true;
+    return false;
+  });
+
   if (loading) {
     return (
       <div style={{ display: "flex", justifyContent: "center", padding: 40 }}>
@@ -188,12 +219,12 @@ export default function EscolaPage() {
       <div style={{ padding: 16 }}>
         {activeTab === "mural" && (
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            {avisos.length === 0 ? (
+            {visibleAvisos.length === 0 ? (
               <p style={{ textAlign: "center", color: "var(--text-muted)", padding: 40 }}>
                 Nenhum aviso no momento.
               </p>
             ) : (
-              avisos.map((aviso) => (
+              visibleAvisos.map((aviso) => (
                 <div
                   key={aviso.id}
                   className="card"
@@ -215,11 +246,27 @@ export default function EscolaPage() {
                       Urgente
                     </div>
                   )}
-                  <div style={{ padding: 16 }}>
+                  <div style={{ padding: 16, position: "relative" }}>
+                    <button
+                      onClick={() => handleDismissAviso(aviso.id)}
+                      style={{
+                        position: "absolute",
+                        right: 12,
+                        top: 12,
+                        background: "none",
+                        border: "none",
+                        fontSize: 11,
+                        color: "var(--text-muted)",
+                        cursor: "pointer",
+                        fontWeight: 600
+                      }}
+                    >
+                      ✕ Ocultar
+                    </button>
                     <div style={{ fontSize: "12px", color: "var(--text-muted)", marginBottom: 4 }}>
                       {new Date(aviso.criadoEm).toLocaleDateString("pt-BR")}
                     </div>
-                    <h3 style={{ margin: "0 0 8px 0", color: "var(--text-primary)" }}>{aviso.titulo}</h3>
+                    <h3 style={{ margin: "0 0 8px 0", color: "var(--text-primary)", paddingRight: 60 }}>{aviso.titulo}</h3>
                     <p style={{ margin: 0, color: "var(--text-secondary)", fontSize: "14px", whiteSpace: "pre-wrap" }}>
                       {aviso.mensagem}
                     </p>
@@ -232,12 +279,12 @@ export default function EscolaPage() {
 
         {activeTab === "calendario" && (
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            {eventos.length === 0 ? (
+            {visibleEventos.length === 0 ? (
               <p style={{ textAlign: "center", color: "var(--text-muted)", padding: 40 }}>
                 Nenhum evento agendado.
               </p>
             ) : (
-              eventos.map((evento) => {
+              visibleEventos.map((evento) => {
                 const dateObj = new Date(evento.data + "T12:00:00");
                 const day = dateObj.getDate().toString().padStart(2, "0");
                 const month = dateObj.toLocaleDateString("pt-BR", { month: "short" }).toUpperCase();

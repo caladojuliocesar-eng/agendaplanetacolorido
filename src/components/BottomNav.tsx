@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { getAvisos, getCobrancasByAluno, getTurmaRecords, getTodayDateString } from "@/lib/firestore";
+import { getAvisos, getCobrancasByAluno, getTurmaRecords, getTodayDateString, getStudentsByParent } from "@/lib/firestore";
 
 interface BottomNavProps {
   role: "pai" | "professor";
@@ -54,8 +54,23 @@ export default function BottomNav({ role }: BottomNavProps) {
         }
 
         // 3. Check Mural (New notices today)
+        const kids = await getStudentsByParent(profile!.filhos!);
+        const kidsTurmas = new Set(kids.map(k => k.turma));
+        
+        let dismissed: string[] = [];
+        if (typeof window !== "undefined") {
+          const stored = localStorage.getItem("dismissed_avisos");
+          if (stored) {
+            try {
+              dismissed = JSON.parse(stored);
+            } catch (e) {}
+          }
+        }
+
         const avisos = await getAvisos(profile!.escolaId!);
         const hasNewAvisos = avisos.some(a => {
+          if (dismissed.includes(a.id)) return false;
+          if (a.turma && a.turma !== "geral" && !kidsTurmas.has(a.turma)) return false;
           const criado = new Date(a.criadoEm);
           const hoje = new Date();
           return criado.getDate() === hoje.getDate() && criado.getMonth() === hoje.getMonth();

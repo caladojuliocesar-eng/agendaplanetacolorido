@@ -206,6 +206,7 @@ export interface Aviso {
   tipo: "info" | "alerta" | "urgente";
   ativo: boolean;
   criadoEm: string;
+  turma?: string; // "geral" ou o nome específico da turma
 }
 
 export interface Evento {
