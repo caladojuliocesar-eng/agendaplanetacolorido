@@ -566,6 +566,7 @@ export interface RelatorioPedagogico {
   periodo: string; // ex: "2026-T1"
   criadoEm: string;
   atualizadoEm: string;
+  liberado?: boolean; // Se o relatório já foi liberado para os pais após a reunião
 }
 
 export async function getLogsPedagogicos(alunoId: string): Promise<LogPedagogico[]> {
@@ -605,6 +606,15 @@ export async function getRelatorioPedagogico(alunoId: string, periodo: string): 
   const snap = await getDoc(doc(db(), "relatorios_pedagogicos", id));
   if (!snap.exists()) return null;
   return { id: snap.id, ...snap.data() } as RelatorioPedagogico;
+}
+
+export async function getRelatoriosByAluno(alunoId: string): Promise<RelatorioPedagogico[]> {
+  const q = query(
+    collection(db(), "relatorios_pedagogicos"),
+    where("alunoId", "==", alunoId)
+  );
+  const snap = await getDocs(q);
+  return snap.docs.map(d => ({ id: d.id, ...d.data() } as RelatorioPedagogico));
 }
 
 // ============================================

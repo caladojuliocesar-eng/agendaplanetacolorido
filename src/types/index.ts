@@ -260,3 +260,16 @@ export interface UniformItem {
   escolaId: string;
   atualizadoEm: string;
 }
+
+export interface RelatorioPedagogico {
+  id?: string;
+  alunoId: string;
+  escolaId: string;
+  professorId: string;
+  status: "rascunho_professor" | "aprovado" | "ajuste_solicitado";
+  conteudo: string;
+  periodo: string;
+  criadoEm: string;
+  atualizadoEm: string;
+  liberado?: boolean;
+}

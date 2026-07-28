@@ -84,6 +84,8 @@ export default function ShowroomDiretora() {
     return students.filter(s => s.turma === selectedClass);
   }, [students, selectedClass]);
 
+  const [reportsLiberated, setReportsLiberated] = useState<Record<string, boolean>>({});
+
   // Load students in this school
   useEffect(() => {
     if (profile?.escolaId) {
@@ -91,17 +93,44 @@ export default function ShowroomDiretora() {
         .then(async (list) => {
           setStudents(list);
           const statusMap: Record<string, string> = {};
+          const liberatedMap: Record<string, boolean> = {};
           for (const s of list) {
             const rel = await getRelatorioPedagogico(s.id, PERIODO_ATUAL);
             if (rel) {
               statusMap[s.id] = rel.status;
+              liberatedMap[s.id] = !!rel.liberado;
             }
           }
           setReportsStatus(statusMap);
+          setReportsLiberated(liberatedMap);
         })
         .catch(console.error);
     }
   }, [profile]);
+
+  async function handleToggleLiberado(e: React.MouseEvent, studentId: string, currentLiberado: boolean) {
+    e.stopPropagation();
+    try {
+      const rel = await getRelatorioPedagogico(studentId, PERIODO_ATUAL);
+      if (!rel) {
+        alert("Erro: Este aluno ainda não possui relatório aprovado.");
+        return;
+      }
+      await saveRelatorioPedagogico({
+        alunoId: studentId,
+        escolaId: rel.escolaId,
+        professorId: rel.professorId,
+        status: rel.status,
+        conteudo: rel.conteudo,
+        periodo: rel.periodo,
+        liberado: !currentLiberado
+      });
+      setReportsLiberated(prev => ({ ...prev, [studentId]: !currentLiberado }));
+    } catch (err) {
+      console.error(err);
+      alert("Erro ao alterar status de liberação do relatório.");
+    }
+  }
 
   useEffect(() => {
     if (selectedAluno) {
@@ -207,17 +236,21 @@ export default function ShowroomDiretora() {
   async function handleApproveReport() {
     if (!editableContent || !selectedAluno) return;
     try {
+      const existing = await getRelatorioPedagogico(selectedAluno, PERIODO_ATUAL);
+      const isLiberado = existing ? !!existing.liberado : false;
       await saveRelatorioPedagogico({
         alunoId: selectedAluno,
         escolaId: profile?.escolaId || "planeta-colorido",
         professorId: "coord_direcao",
         status: "aprovado",
         conteudo: editableContent,
-        periodo: PERIODO_ATUAL
+        periodo: PERIODO_ATUAL,
+        liberado: isLiberado
       });
       setReportApproved(true);
       setReportContent(editableContent);
       setReportsStatus(prev => ({ ...prev, [selectedAluno]: "aprovado" }));
+      setReportsLiberated(prev => ({ ...prev, [selectedAluno]: isLiberado }));
     } catch (error) {
       console.error(error);
       alert("Erro ao aprovar relatório.");
@@ -318,6 +351,27 @@ export default function ShowroomDiretora() {
                       </div>
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                      {isApproved && (
+                        <button
+                          type="button"
+                          onClick={(e) => handleToggleLiberado(e, student.id, !!reportsLiberated[student.id])}
+                          style={{
+                            background: reportsLiberated[student.id] ? "#ECFDF5" : "#FFF1F2",
+                            color: reportsLiberated[student.id] ? "#047857" : "#BE123C",
+                            border: `1px solid ${reportsLiberated[student.id] ? "#A7F3D0" : "#FECDD3"}`,
+                            padding: "6px 12px",
+                            borderRadius: 20,
+                            fontSize: 12,
+                            fontWeight: 700,
+                            cursor: "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 4
+                          }}
+                        >
+                          {reportsLiberated[student.id] ? "🔓 Liberado" : "🔒 Retido"}
+                        </button>
+                      )}
                       <span style={{ 
                         background: isApproved ? "#F0FDF4" : isPending ? "#F1F5F9" : "#FFF7ED", 
                         color: isApproved ? "#166534" : isPending ? "#64748B" : "#F97316", 
@@ -497,6 +551,47 @@ export default function ShowroomDiretora() {
                   🖨️ Imprimir
                 </button>
               </div>
+            </div>
+
+            {/* Card de Controle de Liberação para Pais */}
+            <div style={{
+              background: reportsLiberated[selectedAluno!] ? "#ECFDF5" : "#FFF1F2",
+              border: `1px solid ${reportsLiberated[selectedAluno!] ? "#A7F3D0" : "#FECDD3"}`,
+              borderRadius: 16,
+              padding: 20,
+              marginBottom: 32,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 16
+            }}>
+              <div>
+                <h4 style={{ margin: 0, fontSize: 16, color: reportsLiberated[selectedAluno!] ? "#047857" : "#9F1239", fontWeight: 800 }}>
+                  {reportsLiberated[selectedAluno!] ? "🔓 Disponibilizado no Aplicativo dos Pais" : "🔒 Retido / Oculto para os Pais"}
+                </h4>
+                <p style={{ margin: "4px 0 0", fontSize: 13, color: reportsLiberated[selectedAluno!] ? "#065F46" : "#9F1239" }}>
+                  {reportsLiberated[selectedAluno!] 
+                    ? "Os pais já podem visualizar este relatório trimestral em seu aplicativo."
+                    : "Os pais não têm acesso a este relatório até que a liberação seja efetuada presencialmente."}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={(e) => handleToggleLiberado(e, selectedAluno!, !!reportsLiberated[selectedAluno!])}
+                style={{
+                  padding: "10px 20px",
+                  borderRadius: 10,
+                  border: "none",
+                  background: reportsLiberated[selectedAluno!] ? "#EF4444" : "#10B981",
+                  color: "white",
+                  fontWeight: 700,
+                  fontSize: 13,
+                  cursor: "pointer",
+                  whiteSpace: "nowrap"
+                }}
+              >
+                {reportsLiberated[selectedAluno!] ? "🔒 Reter Visualização" : "🔓 Liberar para Pais"}
+              </button>
             </div>
 
             <div className="printable-a4" style={{

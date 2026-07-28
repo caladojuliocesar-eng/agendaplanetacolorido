@@ -9,16 +9,17 @@ import {
   getCoordinationChat, 
   saveCoordinationMessage, 
   markCoordinationChatRead,
-  getTodayDateString
+  getTodayDateString,
+  getRelatoriosByAluno
 } from "@/lib/firestore";
-import { Aviso, Evento, Student } from "@/types";
+import { Aviso, Evento, Student, RelatorioPedagogico } from "@/types";
 
 export default function EscolaPage() {
   const { profile } = useAuth();
   const [avisos, setAvisos] = useState<Aviso[]>([]);
   const [eventos, setEventos] = useState<Evento[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"mural" | "calendario" | "coordenacao">("mural");
+  const [activeTab, setActiveTab] = useState<"mural" | "calendario" | "coordenacao" | "relatorios">("mural");
 
   // Coordination Chat States
   const [students, setStudents] = useState<Student[]>([]);
@@ -29,6 +30,17 @@ export default function EscolaPage() {
 
   // Parent dismissed notices list
   const [dismissedAvisos, setDismissedAvisos] = useState<string[]>([]);
+
+  // Pedagogical reports states
+  const [reports, setReports] = useState<RelatorioPedagogico[]>([]);
+  const [viewingReport, setViewingReport] = useState<RelatorioPedagogico | null>(null);
+
+  useEffect(() => {
+    if (!selectedStudent) return;
+    getRelatoriosByAluno(selectedStudent.id)
+      .then(setReports)
+      .catch(console.error);
+  }, [selectedStudent]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -161,21 +173,25 @@ export default function EscolaPage() {
           position: "sticky",
           top: 60, // below header
           zIndex: 40,
+          overflowX: "auto",
+          scrollbarWidth: "none",
         }}
       >
         <button
           onClick={() => setActiveTab("mural")}
           style={{
             flex: 1,
-            padding: "16px 0",
+            padding: "16px 12px",
             background: "none",
             border: "none",
             borderBottom: activeTab === "mural" ? "3px solid var(--primary)" : "3px solid transparent",
             color: activeTab === "mural" ? "var(--primary)" : "var(--text-muted)",
             fontWeight: activeTab === "mural" ? 700 : 500,
-            fontSize: "15px",
+            fontSize: "14px",
             fontFamily: "Quicksand",
             cursor: "pointer",
+            flexShrink: 0,
+            whiteSpace: "nowrap"
           }}
         >
           Mural de Avisos
@@ -184,15 +200,17 @@ export default function EscolaPage() {
           onClick={() => setActiveTab("calendario")}
           style={{
             flex: 1,
-            padding: "16px 0",
+            padding: "16px 12px",
             background: "none",
             border: "none",
             borderBottom: activeTab === "calendario" ? "3px solid var(--primary)" : "3px solid transparent",
             color: activeTab === "calendario" ? "var(--primary)" : "var(--text-muted)",
             fontWeight: activeTab === "calendario" ? 700 : 500,
-            fontSize: "15px",
+            fontSize: "14px",
             fontFamily: "Quicksand",
             cursor: "pointer",
+            flexShrink: 0,
+            whiteSpace: "nowrap"
           }}
         >
           Calendário Escolar
@@ -201,18 +219,42 @@ export default function EscolaPage() {
           onClick={() => setActiveTab("coordenacao")}
           style={{
             flex: 1,
-            padding: "16px 0",
+            padding: "16px 12px",
             background: "none",
             border: "none",
             borderBottom: activeTab === "coordenacao" ? "3px solid var(--primary)" : "3px solid transparent",
             color: activeTab === "coordenacao" ? "var(--primary)" : "var(--text-muted)",
             fontWeight: activeTab === "coordenacao" ? 700 : 500,
-            fontSize: "15px",
+            fontSize: "14px",
             fontFamily: "Quicksand",
             cursor: "pointer",
+            flexShrink: 0,
+            whiteSpace: "nowrap"
           }}
         >
           Coordenação
+        </button>
+        <button
+          onClick={() => {
+            setActiveTab("relatorios");
+            setViewingReport(null);
+          }}
+          style={{
+            flex: 1,
+            padding: "16px 12px",
+            background: "none",
+            border: "none",
+            borderBottom: activeTab === "relatorios" ? "3px solid var(--primary)" : "3px solid transparent",
+            color: activeTab === "relatorios" ? "var(--primary)" : "var(--text-muted)",
+            fontWeight: activeTab === "relatorios" ? 700 : 500,
+            fontSize: "14px",
+            fontFamily: "Quicksand",
+            cursor: "pointer",
+            flexShrink: 0,
+            whiteSpace: "nowrap"
+          }}
+        >
+          Relatório de Evolução
         </button>
       </div>
 
@@ -422,6 +464,124 @@ export default function EscolaPage() {
                 </button>
               </div>
             </div>
+          </div>
+        )}
+
+        {activeTab === "relatorios" && selectedStudent && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            {viewingReport ? (
+              <div style={{ background: "white", padding: "32px 24px", borderRadius: 16, border: "1px solid var(--border)", boxShadow: "0 4px 20px rgba(0,0,0,0.05)" }}>
+                <button 
+                  onClick={() => setViewingReport(null)}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "var(--primary)",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    fontSize: 14,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 6,
+                    marginBottom: 20,
+                    padding: 0
+                  }}
+                >
+                  ← Voltar aos Relatórios
+                </button>
+                <div style={{ textAlign: "center", borderBottom: "2px solid #F1F5F9", paddingBottom: 16, marginBottom: 24 }}>
+                  <h3 style={{ margin: 0, fontSize: 20, fontWeight: 900, color: "#0F172A" }}>Escola Planeta Colorido</h3>
+                  <p style={{ margin: "4px 0 0", fontSize: 12, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 700 }}>
+                    Relatório Pedagógico Trimestral — {viewingReport.periodo.replace("-T", "º Trimestre ")}
+                  </p>
+                  <p style={{ margin: "4px 0 0", fontSize: 13, color: "#64748B" }}>
+                    Aluno(a): <strong>{selectedStudent.nome}</strong>
+                  </p>
+                </div>
+                <div style={{ fontSize: 14, lineHeight: 1.7, color: "#334155" }}>
+                  {viewingReport.conteudo.split('\n').map((line, i) => {
+                    if (line.startsWith('## ')) return <h2 key={i} style={{ fontSize: 18, color: "#1E293B", marginTop: 20, fontWeight: 800 }}>{line.replace('## ', '')}</h2>;
+                    if (line.startsWith('### ')) return <h3 key={i} style={{ fontSize: 16, color: "#1E293B", marginTop: 16, fontWeight: 700 }}>{line.replace('### ', '')}</h3>;
+                    if (line.startsWith('# ')) return <h2 key={i} style={{ fontSize: 20, color: "#1E293B", marginTop: 24, fontWeight: 800 }}>{line.replace('# ', '')}</h2>;
+                    
+                    const parts = line.split(/(\*\*.*?\*\*)/g);
+                    return (
+                      <p key={i} style={{ margin: "0 0 10px 0", minHeight: line.trim() === "" ? 10 : "auto" }}>
+                        {parts.map((part, j) => {
+                          if (part.startsWith('**') && part.endsWith('**')) {
+                            return <strong key={j}>{part.slice(2, -2)}</strong>;
+                          }
+                          return part;
+                        })}
+                      </p>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                {/* Selector of multiple kids if exists */}
+                {students.length > 1 && (
+                  <div style={{ display: "flex", gap: 8, marginBottom: 8, overflowX: "auto" }}>
+                    {students.map((s) => (
+                      <button
+                        key={s.id}
+                        className={`btn ${selectedStudent?.id === s.id ? "btn--primary" : "btn--secondary"}`}
+                        style={{ fontSize: 13, padding: "8px 16px", whiteSpace: "nowrap" }}
+                        onClick={() => setSelectedStudent(s)}
+                      >
+                        {s.nome}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {/* List of Periods */}
+                {["2026-T1", "2026-T2", "2026-T3", "2026-Anual"].map(period => {
+                  const rep = reports.find(r => r.periodo === period);
+                  const isApproved = rep && rep.status === "aprovado";
+                  const isReleased = rep && rep.liberado;
+
+                  let labelPeriod = period === "2026-Anual" ? "Consolidado Anual de Evolução" : `${period.split("-")[1].replace("T", "")}º Trimestre de ${period.split("-")[0]}`;
+
+                  if (isApproved && isReleased) {
+                    return (
+                      <div key={period} className="card" style={{ padding: 20, display: "flex", justifyContent: "space-between", alignItems: "center", borderLeft: "4px solid var(--success)" }}>
+                        <div>
+                          <h4 style={{ margin: 0, fontSize: 15, color: "#1E293B", fontWeight: 700 }}>{labelPeriod}</h4>
+                          <span style={{ fontSize: 11, color: "#059669", fontWeight: 600, display: "inline-block", marginTop: 4 }}>🔓 Disponível para Visualização</span>
+                        </div>
+                        <button 
+                          onClick={() => setViewingReport(rep)}
+                          className="btn btn--primary" 
+                          style={{ padding: "8px 16px", fontSize: 12 }}
+                        >
+                          📄 Abrir Relatório
+                        </button>
+                      </div>
+                    );
+                  } else if (rep && !isReleased) {
+                    return (
+                      <div key={period} className="card" style={{ padding: 20, borderLeft: "4px solid var(--danger)", background: "#FFFBFB" }}>
+                        <h4 style={{ margin: 0, fontSize: 15, color: "#9F1239", fontWeight: 700 }}>🔒 {labelPeriod}</h4>
+                        <p style={{ margin: "8px 0 0 0", fontSize: 13, lineHeight: 1.5, color: "#9F1239" }}>
+                          Relatório Indisponível. Documento liberado mediante presença na Reunião de Pais presencial de alinhamento pedagógico. Para orientações, entre em contato com a secretaria.
+                        </p>
+                      </div>
+                    );
+                  } else {
+                    return (
+                      <div key={period} className="card" style={{ padding: 20, borderLeft: "4px solid var(--border)", opacity: 0.7 }}>
+                        <h4 style={{ margin: 0, fontSize: 15, color: "var(--text-muted)", fontWeight: 700 }}>⏳ {labelPeriod}</h4>
+                        <p style={{ margin: "4px 0 0 0", fontSize: 12, color: "var(--text-muted)" }}>
+                          Relatório em processamento ou aguardando preenchimento pela equipe pedagógica.
+                        </p>
+                      </div>
+                    );
+                  }
+                })}
+              </div>
+            )}
           </div>
         )}
       </div>
