@@ -424,6 +424,11 @@ export async function getAllUsers(escolaId: string): Promise<UserProfile[]> {
   return users.sort((a, b) => a.nome.localeCompare(b.nome));
 }
 
+export async function deleteUser(uid: string): Promise<void> {
+  const { deleteDoc } = await import("firebase/firestore");
+  await deleteDoc(doc(db(), "usuarios", uid));
+}
+
 export async function updateStudentTurma(studentIds: string[], novaTurma: string): Promise<void> {
   const { writeBatch } = await import("firebase/firestore");
   const batch = writeBatch(db());

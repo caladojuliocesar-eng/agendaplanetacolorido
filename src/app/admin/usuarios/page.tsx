@@ -2,7 +2,7 @@
 
 import { useAuth } from "@/contexts/AuthContext";
 import { useState, useEffect } from "react";
-import { getAllUsers, addUser, updateUser } from "@/lib/firestore";
+import { getAllUsers, addUser, updateUser, deleteUser } from "@/lib/firestore";
 import { UserProfile, UserRole } from "@/types";
 
 export default function UsuariosAdminPage() {
@@ -74,6 +74,27 @@ export default function UsuariosAdminPage() {
     }
   };
 
+  const handleDeleteUser = async (userId: string, userNome: string) => {
+    if (userId === profile?.uid) {
+      alert("Operação negada: Você não pode excluir o seu próprio usuário de login atual.");
+      return;
+    }
+
+    const confirmDelete = window.confirm(`ATENÇÃO: Tem certeza absoluta de que deseja excluir o integrante "${userNome}"?\n\nEsta ação removerá o perfil do banco de dados e ele perderá imediatamente o acesso ao aplicativo escolar.`);
+    if (!confirmDelete) return;
+
+    setSaving(true);
+    try {
+      await deleteUser(userId);
+      await loadUsers();
+    } catch (err) {
+      console.error(err);
+      alert("Erro ao deletar usuário do banco.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   if (loading) return <div className="spinner" />;
 
   return (
@@ -95,6 +116,7 @@ export default function UsuariosAdminPage() {
               <th style={{ padding: 16, textAlign: "left" }}>E-mail</th>
               <th style={{ padding: 16, textAlign: "left" }}>Cargo</th>
               <th style={{ padding: 16, textAlign: "left" }}>Turma</th>
+              <th style={{ padding: 16, textAlign: "right" }}>Ações</th>
             </tr>
           </thead>
           <tbody>
@@ -138,6 +160,27 @@ export default function UsuariosAdminPage() {
                   })()}
                 </td>
                 <td style={{ padding: 16 }}>{u.turma || "---"}</td>
+                <td style={{ padding: 16, textAlign: "right" }}>
+                  {u.uid !== profile?.uid ? (
+                    <button
+                      onClick={() => handleDeleteUser(u.uid, u.nome)}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        color: "#EF4444",
+                        cursor: "pointer",
+                        fontWeight: 700,
+                        fontSize: 13,
+                        padding: "4px 8px",
+                      }}
+                      title="Excluir Integrante"
+                    >
+                      🗑️ Excluir
+                    </button>
+                  ) : (
+                    <span style={{ fontSize: 12, color: "#94A3B8", fontWeight: 600, paddingRight: 8 }}>Você</span>
+                  )}
+                </td>
               </tr>
             ))}
           </tbody>
