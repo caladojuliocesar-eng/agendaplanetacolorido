@@ -10,13 +10,16 @@ export default function AdminFinanceiroPage() {
   const { profile } = useAuth();
   const [cobrancas, setCobrancas] = useState<Cobranca[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"todas" | "pendentes">("todas");
+  const [activeTab, setActiveTab] = useState<"ativas" | "pagas">("ativas");
 
   useEffect(() => {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
-      if (params.get("tab") === "pendentes") {
-        setActiveTab("pendentes");
+      const tabParam = params.get("tab");
+      if (tabParam === "pagas") {
+        setActiveTab("pagas");
+      } else {
+        setActiveTab("ativas");
       }
     }
   }, []);
@@ -30,7 +33,22 @@ export default function AdminFinanceiroPage() {
   async function loadCobrancas() {
     try {
       const data = await getCobrancasByEscola(profile!.escolaId);
-      setCobrancas(data);
+      const todayStr = new Date().toISOString().split("T")[0];
+
+      // Atualizar automaticamente o status de cobranças pendentes que venceram
+      const updatedData = await Promise.all(data.map(async (c) => {
+        if (c.status === "pendente" && c.dataVencimento < todayStr) {
+          try {
+            await updateCobrancaStatus(c.id, "atrasado");
+            return { ...c, status: "atrasado" as CobrancaStatus };
+          } catch (err) {
+            console.error("Erro ao atualizar status de cobrança vencida:", err);
+          }
+        }
+        return c;
+      }));
+
+      setCobrancas(updatedData);
     } catch (error) {
       console.error("Erro ao carregar cobranças:", error);
     } finally {
@@ -39,11 +57,13 @@ export default function AdminFinanceiroPage() {
   }
 
   const filteredCobrancas = cobrancas.filter(c => {
-    if (activeTab === "pendentes") {
-      return !!c.urlComprovante && c.status !== "pago";
+    if (activeTab === "ativas") {
+      return c.status !== "pago" && c.status !== "cancelado";
+    } else {
+      return c.status === "pago" || c.status === "cancelado";
     }
-    return true;
   });
+
 
 
   async function handleConfirmPayment(id: string) {
@@ -118,28 +138,12 @@ export default function AdminFinanceiroPage() {
       {/* Tabs para Filtrar Cobranças */}
       <div style={{ display: "flex", gap: 16, marginBottom: 20, borderBottom: "1px solid #E2E8F0", paddingBottom: 12 }}>
         <button
-          onClick={() => setActiveTab("todas")}
+          onClick={() => setActiveTab("ativas")}
           style={{
             background: "none",
             border: "none",
-            borderBottom: activeTab === "todas" ? "3px solid var(--primary)" : "3px solid transparent",
-            color: activeTab === "todas" ? "var(--primary-dark)" : "#64748B",
-            fontWeight: 700,
-            padding: "8px 16px",
-            fontSize: 14,
-            cursor: "pointer",
-            transition: "all 0.2s"
-          }}
-        >
-          📂 Todas as Cobranças
-        </button>
-        <button
-          onClick={() => setActiveTab("pendentes")}
-          style={{
-            background: "none",
-            border: "none",
-            borderBottom: activeTab === "pendentes" ? "3px solid var(--primary)" : "3px solid transparent",
-            color: activeTab === "pendentes" ? "var(--primary-dark)" : "#64748B",
+            borderBottom: activeTab === "ativas" ? "3px solid var(--primary)" : "3px solid transparent",
+            color: activeTab === "ativas" ? "var(--primary-dark)" : "#64748B",
             fontWeight: 700,
             padding: "8px 16px",
             fontSize: 14,
@@ -150,19 +154,47 @@ export default function AdminFinanceiroPage() {
             transition: "all 0.2s"
           }}
         >
-          <span>⏳ Comprovantes a Validar</span>
-          {cobrancas.filter(c => c.urlComprovante && c.status !== 'pago').length > 0 && (
+          📂 Cobranças em Aberto
+          {cobrancas.filter(c => c.status !== 'pago' && c.status !== 'cancelado').length > 0 && (
             <span style={{
-              background: "#EF4444",
+              background: "#64748B",
               color: "white",
               fontSize: 11,
               fontWeight: 800,
               padding: "2px 8px",
               borderRadius: 20
             }}>
-              {cobrancas.filter(c => c.urlComprovante && c.status !== 'pago').length}
+              {cobrancas.filter(c => c.status !== 'pago' && c.status !== 'cancelado').length}
             </span>
           )}
+          {cobrancas.filter(c => c.urlComprovante && c.status !== 'pago').length > 0 && (
+            <span style={{
+              background: "#F59E0B",
+              color: "#1E293B",
+              fontSize: 10,
+              fontWeight: 800,
+              padding: "2px 8px",
+              borderRadius: 20
+            }} title="Comprovantes anexados aguardando validação">
+              {cobrancas.filter(c => c.urlComprovante && c.status !== 'pago').length} com comprovante
+            </span>
+          )}
+        </button>
+        <button
+          onClick={() => setActiveTab("pagas")}
+          style={{
+            background: "none",
+            border: "none",
+            borderBottom: activeTab === "pagas" ? "3px solid var(--primary)" : "3px solid transparent",
+            color: activeTab === "pagas" ? "var(--primary-dark)" : "#64748B",
+            fontWeight: 700,
+            padding: "8px 16px",
+            fontSize: 14,
+            cursor: "pointer",
+            transition: "all 0.2s"
+          }}
+        >
+          ✅ Histórico de Recebidas
         </button>
       </div>
 
@@ -182,61 +214,82 @@ export default function AdminFinanceiroPage() {
             {filteredCobrancas.length === 0 ? (
               <tr>
                 <td colSpan={6} style={{ padding: 40, textAlign: "center", color: "#64748B" }}>
-                  {activeTab === "pendentes" 
-                    ? "Nenhum comprovante pendente de validação." 
-                    : "Nenhuma cobrança encontrada."}
+                  {activeTab === "ativas" 
+                    ? "Tudo limpo! Nenhuma cobrança em aberto no momento." 
+                    : "Nenhuma cobrança recebida no histórico."}
                 </td>
               </tr>
             ) : (
-              filteredCobrancas.map((c) => (
-                <tr key={c.id} style={{ borderBottom: "1px solid #F1F5F9" }}>
-                  <td style={{ padding: "16px" }}>
-                    <div style={{ fontWeight: 700, color: "#1E293B", fontSize: 14 }}>{c.alunoNome}</div>
-                    <div style={{ fontSize: 11, color: "#64748B" }}>{c.alunoTurma}</div>
-                  </td>
-                  <td style={{ padding: "16px" }}>
-                    <div style={{ fontWeight: 600, color: "#1E293B", fontSize: 13 }}>{c.titulo}</div>
-                    <div style={{ fontSize: 11, color: "#64748B" }}>Venc: {new Date(c.dataVencimento + 'T12:00:00').toLocaleDateString('pt-BR')}</div>
-                  </td>
-                  <td style={{ padding: "16px", fontWeight: 700, color: "#1E293B" }}>
-                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(c.valor)}
-                  </td>
-                  <td style={{ padding: "16px" }}>
-                    <span style={{ 
-                      padding: "4px 12px", 
-                      borderRadius: 20, 
-                      fontSize: 11, 
-                      fontWeight: 700, 
-                      background: getStatusColor(c.status) + '15',
-                      color: getStatusColor(c.status)
-                    }}>
-                      {c.status.toUpperCase()}
-                    </span>
-                  </td>
-                  <td style={{ padding: "16px" }}>
-                    {c.urlComprovante ? (
-                      <a 
-                        href={c.urlComprovante}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{ 
-                          display: "inline-block",
-                          background: "#F0FDF4", 
-                          border: "1px solid #BBF7D0", 
-                          color: "#166534", 
-                          padding: "4px 8px", 
-                          borderRadius: 8, 
-                          fontSize: 12, 
-                          fontWeight: 600, 
-                          textDecoration: "none"
-                        }}
-                      >
-                        📄 Ver Anexo
-                      </a>
-                    ) : (
-                      <span style={{ color: "#94A3B8", fontSize: 12 }}>Nenhum</span>
-                    )}
-                  </td>
+              filteredCobrancas.map((c) => {
+                const isOverdue = c.status === 'atrasado';
+                const hasVoucherToValidate = c.urlComprovante && c.status !== 'pago';
+
+                return (
+                  <tr 
+                    key={c.id} 
+                    style={{ 
+                      borderBottom: "1px solid #F1F5F9",
+                      background: isOverdue ? "#FFF1F2" : hasVoucherToValidate ? "#EFF6FF" : "transparent"
+                    }}
+                  >
+                    <td style={{ padding: "16px" }}>
+                      <div style={{ fontWeight: 700, color: "#1E293B", fontSize: 14 }}>{c.alunoNome}</div>
+                      <div style={{ fontSize: 11, color: "#64748B" }}>{c.alunoTurma}</div>
+                    </td>
+                    <td style={{ padding: "16px" }}>
+                      <div style={{ fontWeight: 600, color: "#1E293B", fontSize: 13 }}>{c.titulo}</div>
+                      <div style={{ fontSize: 11, color: "#64748B" }}>Venc: {new Date(c.dataVencimento + 'T12:00:00').toLocaleDateString('pt-BR')}</div>
+                    </td>
+                    <td style={{ padding: "16px", fontWeight: 700, color: "#1E293B" }}>
+                      {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(c.valor)}
+                    </td>
+                    <td style={{ padding: "16px" }}>
+                      <span style={{ 
+                        padding: "4px 12px", 
+                        borderRadius: 20, 
+                        fontSize: 11, 
+                        fontWeight: 700, 
+                        background: getStatusColor(c.status) + '15',
+                        color: getStatusColor(c.status),
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 4
+                      }}>
+                        {isOverdue && "⚠️ "}
+                        {c.status.toUpperCase()}
+                      </span>
+                    </td>
+                    <td style={{ padding: "16px" }}>
+                      {c.urlComprovante ? (
+                        <div style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "flex-start" }}>
+                          <a 
+                            href={c.urlComprovante}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{ 
+                              display: "inline-block",
+                              background: "#F0FDF4", 
+                              border: "1px solid #BBF7D0", 
+                              color: "#166534", 
+                              padding: "4px 8px", 
+                              borderRadius: 8, 
+                              fontSize: 12, 
+                              fontWeight: 700, 
+                              textDecoration: "none"
+                            }}
+                          >
+                            📄 Ver Anexo
+                          </a>
+                          {hasVoucherToValidate && (
+                            <span style={{ fontSize: 10, color: "#2563EB", fontWeight: 700 }}>
+                              📥 Aguardando Validação
+                            </span>
+                          )}
+                        </div>
+                      ) : (
+                        <span style={{ color: "#94A3B8", fontSize: 12 }}>Nenhum</span>
+                      )}
+                    </td>
                   <td style={{ padding: "16px" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       {c.urlComprovante && c.status !== 'pago' && (
