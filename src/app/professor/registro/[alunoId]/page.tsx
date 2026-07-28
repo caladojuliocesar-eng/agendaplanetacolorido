@@ -89,6 +89,77 @@ export default function RegistroIndividual() {
     };
   }, [today]);
 
+  // Web Speech API for voice note transcription
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      if (isListening) {
+        alert("O reconhecimento de voz não é suportado neste navegador/dispositivo.");
+        setIsListening(false);
+      }
+      return;
+    }
+
+    let recognition: any = null;
+
+    if (isListening) {
+      recognition = new SpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = "pt-BR";
+
+      let finalTranscript = "";
+
+      recognition.onresult = (event: any) => {
+        let interimTranscript = "";
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          if (event.results[i].isFinal) {
+            finalTranscript += event.results[i][0].transcript;
+          } else {
+            interimTranscript += event.results[i][0].transcript;
+          }
+        }
+        
+        if (finalTranscript) {
+          const textToAdd = finalTranscript.trim();
+          setIaText(prev => {
+            const base = prev.trim();
+            return base ? `${base} ${textToAdd}` : textToAdd;
+          });
+          finalTranscript = "";
+        }
+      };
+
+      recognition.onerror = (event: any) => {
+        console.error("Speech recognition error:", event.error);
+        if (event.error !== "no-speech") {
+          setIsListening(false);
+        }
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+
+      try {
+        recognition.start();
+      } catch (err) {
+        console.error("Failed to start speech recognition:", err);
+        setIsListening(false);
+      }
+    }
+
+    return () => {
+      if (recognition) {
+        try {
+          recognition.stop();
+        } catch (e) {}
+      }
+    };
+  }, [isListening]);
+
   useEffect(() => {
     async function load() {
       setLoading(true);
