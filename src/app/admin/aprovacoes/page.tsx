@@ -72,6 +72,18 @@ export default function ShowroomDiretora() {
 
   const [selectedAluno, setSelectedAluno] = useState<string | null>(null);
 
+  const [selectedClass, setSelectedClass] = useState<string>("todas");
+
+  const classes = useMemo(() => {
+    const set = new Set(students.map(s => s.turma));
+    return ["todas", ...Array.from(set)].sort();
+  }, [students]);
+
+  const filteredStudentsList = useMemo(() => {
+    if (selectedClass === "todas") return students;
+    return students.filter(s => s.turma === selectedClass);
+  }, [students, selectedClass]);
+
   // Load students in this school
   useEffect(() => {
     if (profile?.escolaId) {
@@ -258,41 +270,70 @@ export default function ShowroomDiretora() {
 
         <div style={{ maxWidth: 900, margin: "-48px auto 0", padding: "0 24px 64px", position: "relative", zIndex: 2 }}>
           <div style={{ background: "white", borderRadius: 20, padding: 24, border: "1px solid #F1F5F9", boxShadow: "0 4px 20px rgba(0,0,0,0.05)", display: "flex", flexDirection: "column", gap: 12 }}>
-            {students.map(student => {
-              const status = reportsStatus[student.id];
-              const isApproved = status === "aprovado";
-              const isPending = !status;
-              
-              return (
-                <button 
-                  key={student.id} 
-                  onClick={() => setSelectedAluno(student.id)} 
-                  style={{ background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: 16, padding: "20px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer", transition: "all 0.2s" }} 
-                  className="hover:border-orange-400 hover:bg-orange-50"
+            {/* Filtro por Turma */}
+            <div style={{ display: "flex", gap: 8, marginBottom: 12, overflowX: "auto", paddingBottom: 8 }}>
+              {classes.map(c => (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => setSelectedClass(c)}
+                  style={{
+                    padding: "8px 16px",
+                    borderRadius: 20,
+                    border: selectedClass === c ? "none" : "1px solid #E2E8F0",
+                    background: selectedClass === c ? "var(--primary)" : "#F8FAFC",
+                    color: selectedClass === c ? "white" : "#64748B",
+                    fontWeight: 700,
+                    fontSize: 13,
+                    cursor: "pointer",
+                    whiteSpace: "nowrap",
+                    transition: "all 0.2s"
+                  }}
                 >
-                  <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-                    <span style={{ fontSize: 32 }}>{student.nome === "Luna" ? "👧🏻" : student.nome === "Otto" ? "👦🏼" : "👶"}</span>
-                    <div style={{ textAlign: "left" }}>
-                      <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: "#1E293B" }}>{student.nome}</h3>
-                      <p style={{ margin: "4px 0 0", fontSize: 13, color: "#64748B" }}>{student.turma}</p>
-                    </div>
-                  </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                    <span style={{ 
-                      background: isApproved ? "#F0FDF4" : isPending ? "#F1F5F9" : "#FFF7ED", 
-                      color: isApproved ? "#166534" : isPending ? "#64748B" : "#F97316", 
-                      padding: "6px 12px", 
-                      borderRadius: 20, 
-                      fontSize: 12, 
-                      fontWeight: 700 
-                    }}>
-                      {isApproved ? "✅ Aprovado" : isPending ? "Pendente de Geração" : "Aguardando Revisão"}
-                    </span>
-                    <span style={{ color: "#F97316" }}>→</span>
-                  </div>
+                  {c === "todas" ? "🎯 Todas as Turmas" : c}
                 </button>
-              );
-            })}
+              ))}
+            </div>
+
+            {filteredStudentsList.length === 0 ? (
+              <p style={{ textAlign: "center", color: "#64748B", padding: 24, fontSize: 14 }}>Nenhum aluno encontrado nesta turma.</p>
+            ) : (
+              filteredStudentsList.map(student => {
+                const status = reportsStatus[student.id];
+                const isApproved = status === "aprovado";
+                const isPending = !status;
+                
+                return (
+                  <button 
+                    key={student.id} 
+                    onClick={() => setSelectedAluno(student.id)} 
+                    style={{ background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: 16, padding: "20px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer", transition: "all 0.2s" }} 
+                    className="hover:border-orange-400 hover:bg-orange-50"
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                      <span style={{ fontSize: 32 }}>{student.nome === "Luna" ? "👧🏻" : student.nome === "Otto" ? "👦🏼" : "👶"}</span>
+                      <div style={{ textAlign: "left" }}>
+                        <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: "#1E293B" }}>{student.nome}</h3>
+                        <p style={{ margin: "4px 0 0", fontSize: 13, color: "#64748B" }}>{student.turma}</p>
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                      <span style={{ 
+                        background: isApproved ? "#F0FDF4" : isPending ? "#F1F5F9" : "#FFF7ED", 
+                        color: isApproved ? "#166534" : isPending ? "#64748B" : "#F97316", 
+                        padding: "6px 12px", 
+                        borderRadius: 20, 
+                        fontSize: 12, 
+                        fontWeight: 700 
+                      }}>
+                        {isApproved ? "✅ Aprovado" : isPending ? "Pendente de Geração" : "Aguardando Revisão"}
+                      </span>
+                      <span style={{ color: "#F97316" }}>→</span>
+                    </div>
+                  </button>
+                );
+              })
+            )}
           </div>
         </div>
       </div>
