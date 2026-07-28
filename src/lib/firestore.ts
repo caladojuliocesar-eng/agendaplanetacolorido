@@ -195,6 +195,19 @@ export async function getTurmaRecords(
   return snap.docs.map((d) => ({ id: d.id, ...d.data() } as DailyRecord));
 }
 
+export async function getEscolaRecordsForDate(
+  escolaId: string,
+  data: string
+): Promise<DailyRecord[]> {
+  const q = query(
+    collection(db(), "registros_diarios"),
+    where("escolaId", "==", escolaId),
+    where("data", "==", data)
+  );
+  const snap = await getDocs(q);
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as DailyRecord));
+}
+
 export async function markParentMessageRead(recordId: string): Promise<void> {
   const ref = doc(db(), "registros_diarios", recordId);
   const snap = await getDoc(ref);
