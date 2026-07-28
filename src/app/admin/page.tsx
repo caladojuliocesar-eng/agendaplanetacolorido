@@ -184,7 +184,7 @@ export default function AdminDashboard() {
                   <span style={{ fontSize: 12, fontWeight: 800, color: "#2563EB", display: "block", marginBottom: 4 }}>💰 PAGAMENTOS A VALIDAR</span>
                   <strong style={{ fontSize: 20, color: "#1E3A8A" }}>{pendingComprovantes} comprovante(s)</strong>
                 </div>
-                <Link href="/admin/financeiro" style={{ fontSize: 12, fontWeight: 700, color: "var(--primary)", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 4 }}>
+                <Link href="/admin/financeiro?tab=pendentes" style={{ fontSize: 12, fontWeight: 700, color: "var(--primary)", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 4 }}>
                   Ver Financeiro ➔
                 </Link>
               </div>

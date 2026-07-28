@@ -1,7 +1,13 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { getRelatorioPedagogico, saveRelatorioPedagogico, getAllStudents } from "@/lib/firestore";
+import { 
+  getRelatorioPedagogico, 
+  saveRelatorioPedagogico, 
+  getAllStudents,
+  getActivePeriod,
+  setActivePeriod
+} from "@/lib/firestore";
 import { Student } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
 import Link from "next/link";
@@ -66,6 +72,10 @@ export default function ShowroomDiretora() {
   const [reportApproved, setReportApproved] = useState(false);
   const [reportFromProfessor, setReportFromProfessor] = useState(false);
   
+  // Períodos / Trimestres
+  const [periodoSelecionado, setPeriodoSelecionado] = useState<string>("2026-T2");
+  const [periodoAtivoGeral, setPeriodoAtivoGeral] = useState<string>("2026-T2");
+
   // Prompt de ajuste IA
   const [adjustPrompt, setAdjustPrompt] = useState("");
   const [adjusting, setAdjusting] = useState(false);
@@ -86,32 +96,58 @@ export default function ShowroomDiretora() {
 
   const [reportsLiberated, setReportsLiberated] = useState<Record<string, boolean>>({});
 
-  // Load students in this school
+  // 1. Carregar período ativo oficial e alunos no início
   useEffect(() => {
     if (profile?.escolaId) {
-      getAllStudents(profile.escolaId)
-        .then(async (list) => {
-          setStudents(list);
-          const statusMap: Record<string, string> = {};
-          const liberatedMap: Record<string, boolean> = {};
-          for (const s of list) {
-            const rel = await getRelatorioPedagogico(s.id, PERIODO_ATUAL);
-            if (rel) {
-              statusMap[s.id] = rel.status;
-              liberatedMap[s.id] = !!rel.liberado;
-            }
-          }
-          setReportsStatus(statusMap);
-          setReportsLiberated(liberatedMap);
+      getActivePeriod(profile.escolaId)
+        .then(period => {
+          setPeriodoSelecionado(period);
+          setPeriodoAtivoGeral(period);
         })
+        .catch(console.error);
+
+      getAllStudents(profile.escolaId)
+        .then(setStudents)
         .catch(console.error);
     }
   }, [profile]);
 
+  // 2. Carregar relatórios do período selecionado
+  useEffect(() => {
+    if (profile?.escolaId && students.length > 0) {
+      async function loadReports() {
+        const statusMap: Record<string, string> = {};
+        const liberatedMap: Record<string, boolean> = {};
+        for (const s of students) {
+          const rel = await getRelatorioPedagogico(s.id, periodoSelecionado);
+          if (rel) {
+            statusMap[s.id] = rel.status;
+            liberatedMap[s.id] = !!rel.liberado;
+          }
+        }
+        setReportsStatus(statusMap);
+        setReportsLiberated(liberatedMap);
+      }
+      loadReports().catch(console.error);
+    }
+  }, [profile, students, periodoSelecionado]);
+
+  async function handleDefinirPeriodoAtivo() {
+    if (!profile?.escolaId) return;
+    try {
+      await setActivePeriod(profile.escolaId, periodoSelecionado);
+      setPeriodoAtivoGeral(periodoSelecionado);
+      alert(`Período oficial da escola atualizado para "${periodoSelecionado}"!`);
+    } catch (err) {
+      console.error(err);
+      alert("Erro ao salvar período ativo no Firestore.");
+    }
+  }
+
   async function handleToggleLiberado(e: React.MouseEvent, studentId: string, currentLiberado: boolean) {
     e.stopPropagation();
     try {
-      const rel = await getRelatorioPedagogico(studentId, PERIODO_ATUAL);
+      const rel = await getRelatorioPedagogico(studentId, periodoSelecionado);
       if (!rel) {
         alert("Erro: Este aluno ainda não possui relatório aprovado.");
         return;
@@ -122,7 +158,7 @@ export default function ShowroomDiretora() {
         professorId: rel.professorId,
         status: rel.status,
         conteudo: rel.conteudo,
-        periodo: rel.periodo,
+        periodo: rel.periodo || periodoSelecionado,
         liberado: !currentLiberado
       });
       setReportsLiberated(prev => ({ ...prev, [studentId]: !currentLiberado }));
@@ -142,7 +178,7 @@ export default function ShowroomDiretora() {
         .finally(() => setLoading(false));
 
       // Check for report sent by professor
-      getRelatorioPedagogico(selectedAluno, PERIODO_ATUAL).then(rel => {
+      getRelatorioPedagogico(selectedAluno, periodoSelecionado).then(rel => {
         if (rel) {
           setReportContent(rel.conteudo);
           setEditableContent(rel.conteudo);
@@ -162,7 +198,8 @@ export default function ShowroomDiretora() {
     } else {
       setLoading(false);
     }
-  }, [selectedAluno]);
+  }, [selectedAluno, periodoSelecionado]);
+
 
   const grouped = useMemo(() => groupByPilar(logs), [logs]);
   const globalScore = useMemo(() => calcScore(logs), [logs]);
@@ -236,7 +273,7 @@ export default function ShowroomDiretora() {
   async function handleApproveReport() {
     if (!editableContent || !selectedAluno) return;
     try {
-      const existing = await getRelatorioPedagogico(selectedAluno, PERIODO_ATUAL);
+      const existing = await getRelatorioPedagogico(selectedAluno, periodoSelecionado);
       const isLiberado = existing ? !!existing.liberado : false;
       await saveRelatorioPedagogico({
         alunoId: selectedAluno,
@@ -244,7 +281,7 @@ export default function ShowroomDiretora() {
         professorId: "coord_direcao",
         status: "aprovado",
         conteudo: editableContent,
-        periodo: PERIODO_ATUAL,
+        periodo: periodoSelecionado,
         liberado: isLiberado
       });
       setReportApproved(true);
@@ -297,7 +334,58 @@ export default function ShowroomDiretora() {
             <h1 style={{ fontSize: 32, fontWeight: 800, margin: "0 0 8px", letterSpacing: "-0.02em" }}>
               Caixa de Entrada: Aprovações
             </h1>
-            <p style={{ color: "#94A3B8", margin: 0, fontSize: 15 }}>Relatórios enviados pelos professores aguardando revisão final.</p>
+            <p style={{ color: "#94A3B8", margin: "0 0 20px 0", fontSize: 15 }}>Relatórios enviados pelos professores aguardando revisão final.</p>
+            
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16, borderTop: "1px solid #334155", paddingTop: 16 }}>
+              <div>
+                <span style={{ fontSize: 11, fontWeight: 800, color: "#38BDF8", display: "block", marginBottom: 6 }}>PERÍODO TRIMESTRAL EM EXIBIÇÃO</span>
+                <select
+                  value={periodoSelecionado}
+                  onChange={(e) => setPeriodoSelecionado(e.target.value)}
+                  style={{
+                    background: "#1E293B",
+                    color: "white",
+                    border: "1px solid #475569",
+                    padding: "8px 16px",
+                    borderRadius: 10,
+                    fontSize: 14,
+                    fontWeight: 700,
+                    outline: "none",
+                    cursor: "pointer"
+                  }}
+                >
+                  <option value="2026-T1">1º Trimestre / 2026</option>
+                  <option value="2026-T2">2º Trimestre / 2026</option>
+                  <option value="2026-T3">3º Trimestre / 2026</option>
+                  <option value="2026-T4">4º Trimestre / 2026</option>
+                </select>
+              </div>
+
+              {periodoSelecionado !== periodoAtivoGeral ? (
+                <button
+                  type="button"
+                  onClick={handleDefinirPeriodoAtivo}
+                  style={{
+                    background: "#F59E0B",
+                    color: "#1E293B",
+                    border: "none",
+                    padding: "10px 18px",
+                    borderRadius: 10,
+                    fontSize: 13,
+                    fontWeight: 800,
+                    cursor: "pointer",
+                    boxShadow: "0 4px 12px rgba(245, 158, 11, 0.2)",
+                    transition: "all 0.2s"
+                  }}
+                >
+                  👑 Definir como Oficial para Professoras
+                </button>
+              ) : (
+                <span style={{ fontSize: 11, fontWeight: 800, color: "#34D399", background: "#064E3B", padding: "8px 16px", borderRadius: 10, border: "1px solid #065F46" }}>
+                  ✓ Período Oficial Ativo na Escola
+                </span>
+              )}
+            </div>
           </div>
         </header>
 

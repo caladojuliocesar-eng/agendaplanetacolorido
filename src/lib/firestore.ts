@@ -922,3 +922,24 @@ export async function sellUniformItem(
     ]
   });
 }
+
+// ============================================
+// Configuração Global de Período Ativo
+// ============================================
+
+export async function getActivePeriod(escolaId: string): Promise<string> {
+  const ref = doc(db(), "escola_configuracoes", escolaId);
+  const snap = await getDoc(ref);
+  if (snap.exists()) {
+    return snap.data().periodoAtual || "2026-T2";
+  }
+  return "2026-T2";
+}
+
+export async function setActivePeriod(escolaId: string, periodo: string): Promise<void> {
+  const ref = doc(db(), "escola_configuracoes", escolaId);
+  await setDoc(ref, {
+    periodoAtual: periodo
+  }, { merge: true });
+}
+

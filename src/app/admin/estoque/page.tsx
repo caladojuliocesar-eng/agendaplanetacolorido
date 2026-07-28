@@ -61,13 +61,37 @@ export default function AdminEstoquePage() {
     }
   }
 
-  const handleCreateItem = async (e: React.FormEvent) => {
+  const handleOpenCreate = () => {
+    setSelectedItem(null);
+    setItemForm({
+      nome: "",
+      tamanho: "T2",
+      quantidade: 10,
+      estoqueMinimo: 3,
+      precoUnitario: 45.00
+    });
+    setIsItemModalOpen(true);
+  };
+
+  const handleOpenEdit = (item: UniformItem) => {
+    setSelectedItem(item);
+    setItemForm({
+      nome: item.nome,
+      tamanho: item.tamanho,
+      quantidade: item.quantidade,
+      estoqueMinimo: item.estoqueMinimo,
+      precoUnitario: item.precoUnitario
+    });
+    setIsItemModalOpen(true);
+  };
+
+  const handleSaveItem = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!itemForm.nome.trim()) return;
     
     setProcessing(true);
     try {
-      const id = `${itemForm.nome.toLowerCase().replace(/\s+/g, "-")}_${itemForm.tamanho.toLowerCase()}`;
+      const id = selectedItem ? selectedItem.id : `${itemForm.nome.toLowerCase().replace(/\s+/g, "-")}_${itemForm.tamanho.toLowerCase()}`;
       await saveUniformItem({
         id,
         nome: itemForm.nome,
@@ -78,16 +102,18 @@ export default function AdminEstoquePage() {
         escolaId: profile!.escolaId!
       });
       setIsItemModalOpen(false);
+      setSelectedItem(null);
       setItemForm({ nome: "", tamanho: "T2", quantidade: 10, estoqueMinimo: 3, precoUnitario: 45.00 });
       await loadData();
-      alert("Item de uniforme cadastrado com sucesso!");
+      alert(selectedItem ? "Item de uniforme atualizado com sucesso!" : "Item de uniforme cadastrado com sucesso!");
     } catch (err) {
       console.error(err);
-      alert("Erro ao cadastrar item.");
+      alert(selectedItem ? "Erro ao atualizar item." : "Erro ao cadastrar item.");
     } finally {
       setProcessing(false);
     }
   };
+
 
   const handleAddStock = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -156,7 +182,7 @@ export default function AdminEstoquePage() {
           <h1 style={{ fontSize: 28, fontWeight: 800, color: "#1E293B", margin: "0 0 4px 0" }}>Estoque de Uniformes</h1>
           <p style={{ color: "#64748B", margin: 0 }}>Gerencie o inventário físico de peças e realize vendas diretas integradas ao Financeiro.</p>
         </div>
-        <button className="btn btn--primary" onClick={() => setIsItemModalOpen(true)}>
+        <button className="btn btn--primary" onClick={handleOpenCreate}>
           + Cadastrar Peça
         </button>
       </header>
@@ -220,6 +246,13 @@ export default function AdminEstoquePage() {
                     <td style={{ padding: "16px 24px", textAlign: "right" }}>
                       <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
                         <button 
+                          onClick={() => handleOpenEdit(item)}
+                          className="btn btn--secondary" 
+                          style={{ fontSize: 11, padding: "6px 12px", background: "#F1F5F9", color: "#475569" }}
+                        >
+                          ✏️ Editar
+                        </button>
+                        <button 
                           onClick={() => { setSelectedItem(item); setIsEntryModalOpen(true); }}
                           className="btn btn--secondary" 
                           style={{ fontSize: 11, padding: "6px 12px" }}
@@ -244,11 +277,13 @@ export default function AdminEstoquePage() {
         </table>
       </div>
 
-      {/* Modal 1: Cadastrar Peça */}
+      {/* Modal 1: Cadastrar/Editar Peça */}
       {isItemModalOpen && (
         <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(15, 23, 42, 0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100 }}>
-          <form onSubmit={handleCreateItem} className="card" style={{ width: "100%", maxWidth: 400, padding: 32 }}>
-            <h3 style={{ marginBottom: 20, fontSize: 18, fontWeight: 800, color: "#1E293B" }}>Nova Peça de Uniforme</h3>
+          <form onSubmit={handleSaveItem} className="card" style={{ width: "100%", maxWidth: 400, padding: 32 }}>
+            <h3 style={{ marginBottom: 20, fontSize: 18, fontWeight: 800, color: "#1E293B" }}>
+              {selectedItem ? "Editar Peça de Uniforme" : "Nova Peça de Uniforme"}
+            </h3>
             
             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
               <div>
@@ -291,7 +326,9 @@ export default function AdminEstoquePage() {
 
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
                 <div>
-                  <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#64748B", marginBottom: 4 }}>QTD. INICIAL</label>
+                  <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#64748B", marginBottom: 4 }}>
+                    {selectedItem ? "QUANTIDADE" : "QTD. INICIAL"}
+                  </label>
                   <input 
                     type="number" 
                     className="text-input" 
@@ -316,7 +353,7 @@ export default function AdminEstoquePage() {
             <div style={{ display: "flex", gap: 8, marginTop: 24 }}>
               <button 
                 type="button" 
-                onClick={() => setIsItemModalOpen(false)} 
+                onClick={() => { setIsItemModalOpen(false); setSelectedItem(null); }} 
                 className="btn btn--secondary" 
                 style={{ flex: 1 }}
               >
@@ -328,7 +365,7 @@ export default function AdminEstoquePage() {
                 className="btn btn--primary" 
                 style={{ flex: 1 }}
               >
-                {processing ? "Cadastrando..." : "Cadastrar"}
+                {processing ? "Salvando..." : (selectedItem ? "Salvar Alterações" : "Cadastrar")}
               </button>
             </div>
           </form>

@@ -10,6 +10,16 @@ export default function AdminFinanceiroPage() {
   const { profile } = useAuth();
   const [cobrancas, setCobrancas] = useState<Cobranca[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<"todas" | "pendentes">("todas");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("tab") === "pendentes") {
+        setActiveTab("pendentes");
+      }
+    }
+  }, []);
 
   useEffect(() => {
     if (profile?.escolaId) {
@@ -27,6 +37,14 @@ export default function AdminFinanceiroPage() {
       setLoading(false);
     }
   }
+
+  const filteredCobrancas = cobrancas.filter(c => {
+    if (activeTab === "pendentes") {
+      return !!c.urlComprovante && c.status !== "pago";
+    }
+    return true;
+  });
+
 
   async function handleConfirmPayment(id: string) {
     if (confirm("Confirmar que o pagamento foi recebido? O status passará para PAGO.")) {
@@ -97,6 +115,57 @@ export default function AdminFinanceiroPage() {
         </Link>
       </div>
 
+      {/* Tabs para Filtrar Cobranças */}
+      <div style={{ display: "flex", gap: 16, marginBottom: 20, borderBottom: "1px solid #E2E8F0", paddingBottom: 12 }}>
+        <button
+          onClick={() => setActiveTab("todas")}
+          style={{
+            background: "none",
+            border: "none",
+            borderBottom: activeTab === "todas" ? "3px solid var(--primary)" : "3px solid transparent",
+            color: activeTab === "todas" ? "var(--primary-dark)" : "#64748B",
+            fontWeight: 700,
+            padding: "8px 16px",
+            fontSize: 14,
+            cursor: "pointer",
+            transition: "all 0.2s"
+          }}
+        >
+          📂 Todas as Cobranças
+        </button>
+        <button
+          onClick={() => setActiveTab("pendentes")}
+          style={{
+            background: "none",
+            border: "none",
+            borderBottom: activeTab === "pendentes" ? "3px solid var(--primary)" : "3px solid transparent",
+            color: activeTab === "pendentes" ? "var(--primary-dark)" : "#64748B",
+            fontWeight: 700,
+            padding: "8px 16px",
+            fontSize: 14,
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            transition: "all 0.2s"
+          }}
+        >
+          <span>⏳ Comprovantes a Validar</span>
+          {cobrancas.filter(c => c.urlComprovante && c.status !== 'pago').length > 0 && (
+            <span style={{
+              background: "#EF4444",
+              color: "white",
+              fontSize: 11,
+              fontWeight: 800,
+              padding: "2px 8px",
+              borderRadius: 20
+            }}>
+              {cobrancas.filter(c => c.urlComprovante && c.status !== 'pago').length}
+            </span>
+          )}
+        </button>
+      </div>
+
       <div style={{ background: "white", borderRadius: 16, border: "1px solid #E2E8F0", overflow: "hidden" }}>
         <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
           <thead>
@@ -110,14 +179,16 @@ export default function AdminFinanceiroPage() {
             </tr>
           </thead>
           <tbody>
-            {cobrancas.length === 0 ? (
+            {filteredCobrancas.length === 0 ? (
               <tr>
                 <td colSpan={6} style={{ padding: 40, textAlign: "center", color: "#64748B" }}>
-                  Nenhuma cobrança encontrada.
+                  {activeTab === "pendentes" 
+                    ? "Nenhum comprovante pendente de validação." 
+                    : "Nenhuma cobrança encontrada."}
                 </td>
               </tr>
             ) : (
-              cobrancas.map((c) => (
+              filteredCobrancas.map((c) => (
                 <tr key={c.id} style={{ borderBottom: "1px solid #F1F5F9" }}>
                   <td style={{ padding: "16px" }}>
                     <div style={{ fontWeight: 700, color: "#1E293B", fontSize: 14 }}>{c.alunoNome}</div>

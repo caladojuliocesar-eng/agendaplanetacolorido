@@ -2,7 +2,13 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { getLogsPedagogicos, saveRelatorioPedagogico, getRelatorioPedagogico, getStudentsByTurma } from "@/lib/firestore";
+import { 
+  getLogsPedagogicos, 
+  saveRelatorioPedagogico, 
+  getRelatorioPedagogico, 
+  getStudentsByTurma,
+  getActivePeriod
+} from "@/lib/firestore";
 import { Student } from "@/types";
 import Link from "next/link";
 
@@ -176,28 +182,42 @@ export default function ShowroomPedagogico() {
   const [editableContent, setEditableContent] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const [reportApproved, setReportApproved] = useState(false);
+
+  // Período ativo oficial definido pela direção
+  const [periodoAtivo, setPeriodoAtivo] = useState<string>("2026-T2");
   
   const [adjustPrompt, setAdjustPrompt] = useState("");
   const [adjusting, setAdjusting] = useState(false);
 
-  // Load students in this class
+  // 1. Carregar período ativo oficial e lista de alunos
   useEffect(() => {
     if (profile?.escolaId && profile?.turma) {
+      getActivePeriod(profile.escolaId)
+        .then(setPeriodoAtivo)
+        .catch(console.error);
+
       getStudentsByTurma(profile.escolaId, profile.turma)
-        .then(async (list) => {
-          setStudents(list);
-          const statusMap: Record<string, string> = {};
-          for (const s of list) {
-            const rel = await getRelatorioPedagogico(s.id, PERIODO_ATUAL);
-            if (rel) {
-              statusMap[s.id] = rel.status;
-            }
-          }
-          setReportsStatus(statusMap);
-        })
+        .then(setStudents)
         .catch(console.error);
     }
   }, [profile]);
+
+  // 2. Carregar status dos relatórios do período ativo
+  useEffect(() => {
+    if (profile?.escolaId && students.length > 0) {
+      async function loadReports() {
+        const statusMap: Record<string, string> = {};
+        for (const s of students) {
+          const rel = await getRelatorioPedagogico(s.id, periodoAtivo);
+          if (rel) {
+            statusMap[s.id] = rel.status;
+          }
+        }
+        setReportsStatus(statusMap);
+      }
+      loadReports().catch(console.error);
+    }
+  }, [profile, students, periodoAtivo]);
 
   useEffect(() => {
     if (selectedAluno) {
@@ -210,7 +230,7 @@ export default function ShowroomPedagogico() {
         .finally(() => setLoading(false));
 
       // Check if a report already exists
-      getRelatorioPedagogico(selectedAluno, PERIODO_ATUAL).then(rel => {
+      getRelatorioPedagogico(selectedAluno, periodoAtivo).then(rel => {
         if (rel) {
           setReportContent(rel.conteudo);
           setEditableContent(rel.conteudo);
@@ -228,7 +248,7 @@ export default function ShowroomPedagogico() {
     } else {
       setLoading(false);
     }
-  }, [selectedAluno]);
+  }, [selectedAluno, periodoAtivo]);
 
   async function handleGenerateReport() {
     if (generatingReport || !selectedAluno) return;
@@ -294,7 +314,7 @@ export default function ShowroomPedagogico() {
         professorId: profile.uid,
         status: "rascunho_professor",
         conteudo: editableContent,
-        periodo: PERIODO_ATUAL
+        periodo: periodoAtivo
       });
       setReportApproved(true);
       setReportContent(editableContent);
@@ -338,10 +358,15 @@ export default function ShowroomPedagogico() {
           padding: "24px 24px 32px", color: "#1E293B", position: "relative",
         }}>
           <div style={{ maxWidth: 900, margin: "0 auto", position: "relative", zIndex: 1 }}>
-            <h1 style={{ fontSize: 24, fontWeight: 800, margin: "0 0 8px", letterSpacing: "-0.02em" }}>
-              Fechamento Trimestral
-            </h1>
-            <p style={{ color: "#64748B", margin: 0, fontSize: 14 }}>Selecione um aluno para gerar o relatório.</p>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap", gap: 12 }}>
+              <h1 style={{ fontSize: 24, fontWeight: 800, margin: "0 0 8px", letterSpacing: "-0.02em" }}>
+                Fechamento Trimestral
+              </h1>
+              <span style={{ fontSize: 12, fontWeight: 800, color: "#4F46E5", background: "#EEF2FF", padding: "4px 10px", borderRadius: 8, border: "1px solid #C7D2FE" }}>
+                Período Ativo: {periodoAtivo === "2026-T1" ? "1º Trimestre / 2026" : periodoAtivo === "2026-T2" ? "2º Trimestre / 2026" : periodoAtivo === "2026-T3" ? "3º Trimestre / 2026" : periodoAtivo === "2026-T4" ? "4º Trimestre / 2026" : periodoAtivo}
+              </span>
+            </div>
+            <p style={{ color: "#64748B", margin: 0, fontSize: 14 }}>Selecione um aluno para gerar ou editar o relatório pedagógico deste trimestre.</p>
           </div>
         </header>
 

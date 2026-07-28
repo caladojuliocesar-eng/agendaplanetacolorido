@@ -164,8 +164,16 @@ export default function EscolaPage() {
 
   return (
     <div className="app-shell" style={{ padding: 0 }}>
+      {/* CSS customizado para esconder barra de rolagem */}
+      <style dangerouslySetInnerHTML={{ __html: `
+        .hide-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+      `}} />
+
       {/* Custom Tabs inside the page */}
       <div
+        className="hide-scrollbar"
         style={{
           display: "flex",
           background: "var(--bg-card)",
@@ -175,13 +183,15 @@ export default function EscolaPage() {
           zIndex: 40,
           overflowX: "auto",
           scrollbarWidth: "none",
+          WebkitOverflowScrolling: "touch",
+          paddingRight: 40, // Espaço de respiro para o último item
         }}
       >
         <button
           onClick={() => setActiveTab("mural")}
           style={{
-            flex: 1,
-            padding: "16px 12px",
+            flex: "0 0 auto",
+            padding: "16px 20px",
             background: "none",
             border: "none",
             borderBottom: activeTab === "mural" ? "3px solid var(--primary)" : "3px solid transparent",
@@ -199,8 +209,8 @@ export default function EscolaPage() {
         <button
           onClick={() => setActiveTab("calendario")}
           style={{
-            flex: 1,
-            padding: "16px 12px",
+            flex: "0 0 auto",
+            padding: "16px 20px",
             background: "none",
             border: "none",
             borderBottom: activeTab === "calendario" ? "3px solid var(--primary)" : "3px solid transparent",
@@ -218,8 +228,8 @@ export default function EscolaPage() {
         <button
           onClick={() => setActiveTab("coordenacao")}
           style={{
-            flex: 1,
-            padding: "16px 12px",
+            flex: "0 0 auto",
+            padding: "16px 20px",
             background: "none",
             border: "none",
             borderBottom: activeTab === "coordenacao" ? "3px solid var(--primary)" : "3px solid transparent",
@@ -240,8 +250,8 @@ export default function EscolaPage() {
             setViewingReport(null);
           }}
           style={{
-            flex: 1,
-            padding: "16px 12px",
+            flex: "0 0 auto",
+            padding: "16px 20px",
             background: "none",
             border: "none",
             borderBottom: activeTab === "relatorios" ? "3px solid var(--primary)" : "3px solid transparent",
