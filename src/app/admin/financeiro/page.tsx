@@ -325,7 +325,8 @@ export default function AdminFinanceiroPage() {
                     </div>
                   </td>
                 </tr>
-              ))
+                );
+              })
             )}
           </tbody>
         </table>
