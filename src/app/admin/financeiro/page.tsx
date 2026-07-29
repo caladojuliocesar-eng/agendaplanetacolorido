@@ -11,6 +11,7 @@ export default function AdminFinanceiroPage() {
   const [cobrancas, setCobrancas] = useState<Cobranca[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"ativas" | "pagas">("ativas");
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -20,6 +21,10 @@ export default function AdminFinanceiroPage() {
         setActiveTab("pagas");
       } else {
         setActiveTab("ativas");
+      }
+      const searchParam = params.get("search");
+      if (searchParam) {
+        setSearchTerm(searchParam);
       }
     }
   }, []);
@@ -57,11 +62,14 @@ export default function AdminFinanceiroPage() {
   }
 
   const filteredCobrancas = cobrancas.filter(c => {
-    if (activeTab === "ativas") {
-      return c.status !== "pago" && c.status !== "cancelado";
-    } else {
-      return c.status === "pago" || c.status === "cancelado";
-    }
+    const matchesTab = activeTab === "ativas" 
+      ? c.status !== "pago" && c.status !== "cancelado"
+      : c.status === "pago" || c.status === "cancelado";
+    const matchesSearch = !searchTerm || 
+      c.alunoNome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      c.titulo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (c.alunoTurma && c.alunoTurma.toLowerCase().includes(searchTerm.toLowerCase()));
+    return matchesTab && matchesSearch;
   });
 
 
@@ -196,6 +204,28 @@ export default function AdminFinanceiroPage() {
         >
           ✅ Histórico de Recebidas
         </button>
+      </div>
+
+      {/* Barra de Pesquisa */}
+      <div style={{ marginBottom: 20, display: "flex", gap: 12, alignItems: "center" }}>
+        <div style={{ position: "relative", flex: 1 }}>
+          <input 
+            type="text" 
+            placeholder="🔍 Buscar por aluno, turma ou título da cobrança..." 
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="text-input"
+            style={{ width: "100%", paddingLeft: 12, margin: 0 }}
+          />
+          {searchTerm && (
+            <button 
+              onClick={() => setSearchTerm("")} 
+              style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "#94A3B8", cursor: "pointer", fontWeight: 700 }}
+            >
+              ✕
+            </button>
+          )}
+        </div>
       </div>
 
       <div style={{ background: "white", borderRadius: 16, border: "1px solid #E2E8F0", overflow: "hidden" }}>

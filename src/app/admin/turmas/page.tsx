@@ -11,6 +11,22 @@ const TURMAS_SUGERIDAS = [
   "Infantil I", "Infantil II", "Infantil III", "Infantil IV", "Infantil V"
 ];
 
+const hasRealMedicalWarning = (val?: string): boolean => {
+  if (!val) return false;
+  const clean = val.trim().toLowerCase();
+  return clean.length > 0 && 
+         clean !== "não" && 
+         clean !== "nao" && 
+         clean !== "nenhum" && 
+         clean !== "nenhuma" && 
+         clean !== "não possui" && 
+         clean !== "nao possui" && 
+         clean !== "não tem" && 
+         clean !== "nao tem" && 
+         clean !== "n/a" && 
+         clean !== "-";
+};
+
 export default function TurmasAdminPage() {
   const { profile } = useAuth();
   const [students, setStudents] = useState<Student[]>([]);
@@ -184,7 +200,9 @@ export default function TurmasAdminPage() {
             <div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 20 }}>
                 {alunosNaTurma.map(aluno => {
-                  const hasMedicalAlert = !!(aluno.alergias || aluno.restricoesAlimentares || aluno.medicamentosContinuos);
+                  const hasMedicalAlert = hasRealMedicalWarning(aluno.alergias) || 
+                                          hasRealMedicalWarning(aluno.restricoesAlimentares) || 
+                                          hasRealMedicalWarning(aluno.medicamentosContinuos);
                   const nameParts = aluno.nome.trim().split(" ");
                   const displayName = nameParts.length > 1 ? `${nameParts[0]} ${nameParts[nameParts.length - 1]}` : aluno.nome;
 
@@ -240,9 +258,9 @@ export default function TurmasAdminPage() {
                                 <strong style={{ color: "#FCA5A5" }}>⚠️ Alerta de Saúde</strong>
                                 <span style={{ cursor: "pointer", fontWeight: "bold" }} onClick={() => setActiveMedicalId(null)}>✕</span>
                               </div>
-                              {aluno.alergias && <div style={{ marginBottom: 4 }}><strong>Alergias:</strong> {aluno.alergias}</div>}
-                              {aluno.restricoesAlimentares && <div style={{ marginBottom: 4 }}><strong>Restrições:</strong> {aluno.restricoesAlimentares}</div>}
-                              {aluno.medicamentosContinuos && <div><strong>Medicamentos:</strong> {aluno.medicamentosContinuos}</div>}
+                              {hasRealMedicalWarning(aluno.alergias) && <div style={{ marginBottom: 4 }}><strong>Alergias:</strong> {aluno.alergias}</div>}
+                              {hasRealMedicalWarning(aluno.restricoesAlimentares) && <div style={{ marginBottom: 4 }}><strong>Restrições:</strong> {aluno.restricoesAlimentares}</div>}
+                              {hasRealMedicalWarning(aluno.medicamentosContinuos) && <div><strong>Medicamentos:</strong> {aluno.medicamentosContinuos}</div>}
                             </div>
                           )}
                         </div>
@@ -264,7 +282,7 @@ export default function TurmasAdminPage() {
                       {/* Shortcut buttons */}
                       <div style={{ display: "flex", gap: 8, width: "100%", borderTop: "1px solid #F1F5F9", paddingTop: 12, justifyContent: "center" }}>
                         <Link 
-                          href={`/admin/alunos?search=${encodeURIComponent(aluno.nome)}`}
+                          href={`/admin/alunos?edit=${aluno.id}`}
                           style={{
                             width: 32,
                             height: 32,
@@ -283,7 +301,7 @@ export default function TurmasAdminPage() {
                           👤
                         </Link>
                         <Link 
-                          href={`/admin/financeiro`}
+                          href={`/admin/financeiro?search=${encodeURIComponent(aluno.nome)}`}
                           style={{
                             width: 32,
                             height: 32,
@@ -302,7 +320,7 @@ export default function TurmasAdminPage() {
                           💰
                         </Link>
                         <Link 
-                          href={`/admin/aprovacoes?turma=${encodeURIComponent(selectedTurma)}`}
+                          href={`/admin/aprovacoes?turma=${encodeURIComponent(selectedTurma)}&alunoId=${aluno.id}`}
                           style={{
                             width: 32,
                             height: 32,

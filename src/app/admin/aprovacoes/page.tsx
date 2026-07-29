@@ -112,6 +112,20 @@ export default function ShowroomDiretora() {
     }
   }, [profile]);
 
+  useEffect(() => {
+    if (typeof window !== "undefined" && students.length > 0) {
+      const params = new URLSearchParams(window.location.search);
+      const urlTurma = params.get("turma");
+      const urlAlunoId = params.get("alunoId");
+      if (urlTurma) {
+        setSelectedClass(urlTurma);
+      }
+      if (urlAlunoId) {
+        setSelectedAluno(urlAlunoId);
+      }
+    }
+  }, [students]);
+
   // 2. Carregar relatórios do período selecionado
   useEffect(() => {
     if (profile?.escolaId && students.length > 0) {

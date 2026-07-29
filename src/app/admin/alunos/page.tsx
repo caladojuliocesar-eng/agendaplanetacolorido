@@ -243,6 +243,19 @@ export default function AlunosAdminPage() {
     setIsModalOpen(true);
   };
 
+  useEffect(() => {
+    if (students.length > 0) {
+      const params = new URLSearchParams(window.location.search);
+      const editId = params.get("edit");
+      if (editId) {
+        const studentToEdit = students.find(s => s.id === editId);
+        if (studentToEdit) {
+          handleOpenModal(studentToEdit);
+        }
+      }
+    }
+  }, [students]);
+
   const handleSaveStudent = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
