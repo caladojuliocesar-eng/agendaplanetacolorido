@@ -259,11 +259,11 @@ export default function ParentFinanceiroPage() {
             </div>
 
             {/* Items detail list */}
-            {selectedCobranca.itens && selectedCobranca.itens.length > 0 && (
+            {((selectedCobranca.itens && selectedCobranca.itens.length > 0) || selectedCobranca.linkBoleto) && (
               <div style={{ marginBottom: 20 }}>
-                <h4 style={{ fontSize: 11, fontWeight: 800, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 10 }}>Itens da Cobrança</h4>
+                <h4 style={{ fontSize: 11, fontWeight: 800, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 10 }}>Demonstrativo de Lançamentos</h4>
                 <div style={{ display: "flex", flexDirection: "column", gap: 8, background: "#F8FAFC", padding: 12, borderRadius: 12, border: "1px solid #F1F5F9" }}>
-                  {selectedCobranca.itens.map((item, idx) => (
+                  {selectedCobranca.itens && selectedCobranca.itens.map((item, idx) => (
                     <div key={idx} style={{ display: "flex", justifyContent: "space-between", fontSize: 13, color: "#475569" }}>
                       <span>{item.descricao}</span>
                       <span style={{ fontWeight: 700, color: "#1E293B" }}>
@@ -271,6 +271,35 @@ export default function ParentFinanceiroPage() {
                       </span>
                     </div>
                   ))}
+                  
+                  {selectedCobranca.linkBoleto && (
+                    <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid #E2E8F0", display: "flex", flexDirection: "column", gap: 4 }}>
+                      <span style={{ fontSize: 9, fontWeight: 800, color: "#64748B", letterSpacing: "0.05em" }}>LINK DO BOLETO / CHAVE PIX</span>
+                      {selectedCobranca.linkBoleto.startsWith("http") ? (
+                        <a 
+                          href={selectedCobranca.linkBoleto} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          style={{ fontSize: 13, color: "#EA580C", fontWeight: 700, textDecoration: "underline", wordBreak: "break-all" }}
+                        >
+                          {selectedCobranca.linkBoleto}
+                        </a>
+                      ) : (
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
+                          <span style={{ fontSize: 11, fontFamily: "monospace", color: "#334155", wordBreak: "break-all", flex: 1 }}>{selectedCobranca.linkBoleto}</span>
+                          <button 
+                            onClick={() => {
+                              navigator.clipboard.writeText(selectedCobranca.linkBoleto!);
+                              alert("Código de pagamento copiado para a área de transferência!");
+                            }}
+                            style={{ padding: "4px 8px", background: "#E0F2FE", border: "none", color: "#0369A1", fontSize: 11, fontWeight: 700, borderRadius: 6, cursor: "pointer", flexShrink: 0 }}
+                          >
+                            Copiar
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             )}
