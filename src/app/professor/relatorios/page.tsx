@@ -383,7 +383,13 @@ export default function ShowroomPedagogico() {
                   className="hover:border-indigo-400 hover:bg-indigo-50"
                 >
                   <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-                    <span style={{ fontSize: 32 }}>{student.nome === "Luna" ? "👧🏻" : student.nome === "Otto" ? "👦🏼" : "👶"}</span>
+                    <div style={{ width: 44, height: 44, background: "#E2E8F0", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, overflow: "hidden", flexShrink: 0 }}>
+                      {student.fotoUrl ? (
+                        <img src={student.fotoUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      ) : (
+                        student.nome === "Luna" ? "👧🏻" : student.nome === "Otto" ? "👦🏼" : "👶"
+                      )}
+                    </div>
                     <div style={{ textAlign: "left" }}>
                       <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: "#1E293B" }}>{student.nome}</h3>
                       <p style={{ margin: "4px 0 0", fontSize: 13, color: "#64748B" }}>{student.turma}</p>

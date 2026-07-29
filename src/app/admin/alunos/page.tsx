@@ -2,6 +2,8 @@
 
 import { useAuth } from "@/contexts/AuthContext";
 import { useState, useEffect } from "react";
+import { storage } from "@/lib/firebase";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { 
   getAllStudents, 
   addStudent, 
@@ -29,6 +31,60 @@ export default function AlunosAdminPage() {
   const [users, setUserProfile] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [tempFotoUrl, setTempFotoUrl] = useState<string | null>(null);
+  const [uploadingFoto, setUploadingFoto] = useState(false);
+
+  const compressAndUploadImage = async (file: File, schoolId: string): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target?.result as string;
+        img.onload = async () => {
+          const canvas = document.createElement("canvas");
+          const MAX_WIDTH = 250;
+          const MAX_HEIGHT = 250;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height *= MAX_WIDTH / width;
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width *= MAX_HEIGHT / height;
+              height = MAX_HEIGHT;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          ctx?.drawImage(img, 0, 0, width, height);
+
+          canvas.toBlob(async (blob) => {
+            if (!blob) {
+              reject(new Error("Erro na compressão"));
+              return;
+            }
+            try {
+              const fileRef = ref(storage(), `student_profiles/${schoolId}/${Date.now()}_photo.webp`);
+              await uploadBytes(fileRef, blob);
+              const url = await getDownloadURL(fileRef);
+              resolve(url);
+            } catch (err) {
+              reject(err);
+            }
+          }, "image/webp", 0.7);
+        };
+        img.onerror = (err) => reject(err);
+      };
+      reader.onerror = (err) => reject(err);
+    });
+  };
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
@@ -149,6 +205,7 @@ export default function AlunosAdminPage() {
     console.log("Abrindo modal para:", student?.nome || "Novo Aluno");
     if (student) {
       setEditingStudent(student);
+      setTempFotoUrl(student.fotoUrl || null);
       setFormData({ 
         nome: student.nome, 
         turma: student.turma,
@@ -165,6 +222,7 @@ export default function AlunosAdminPage() {
       setActiveTab("geral");
     } else {
       setEditingStudent(null);
+      setTempFotoUrl(null);
       setFormData({ 
         nome: "", 
         turma: "",
@@ -192,6 +250,7 @@ export default function AlunosAdminPage() {
       if (editingStudent) {
         await updateStudent(editingStudent.id, {
           ...formData,
+          fotoUrl: tempFotoUrl,
           atualizadoEm: new Date().toISOString()
         });
       } else {
@@ -199,7 +258,7 @@ export default function AlunosAdminPage() {
           ...formData,
           escolaId: profile!.escolaId!,
           paiIds: [],
-          fotoUrl: null,
+          fotoUrl: tempFotoUrl,
           criadoEm: new Date().toISOString()
         });
       }
@@ -486,6 +545,61 @@ export default function AlunosAdminPage() {
             <div style={{ padding: 32 }}>
               {activeTab === "geral" && (
                 <form onSubmit={handleSaveStudent} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                  {/* Campo de Upload de Foto de Perfil */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 20, marginBottom: 16, borderBottom: "1px dashed #E2E8F0", paddingBottom: 16 }}>
+                    <div style={{ position: "relative", width: 80, height: 80, borderRadius: "50%", background: "#F1F5F9", border: "2px solid #E2E8F0", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", fontSize: 32, flexShrink: 0 }}>
+                      {tempFotoUrl ? (
+                        <img src={tempFotoUrl} alt="Foto do aluno" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      ) : (
+                        "👶"
+                      )}
+                      {uploadingFoto && (
+                        <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(255,255,255,0.8)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: "var(--primary)" }}>
+                          Envio...
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <input 
+                        type="file" 
+                        id="student-photo-file" 
+                        accept="image/*" 
+                        style={{ display: "none" }}
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            setUploadingFoto(true);
+                            try {
+                              const url = await compressAndUploadImage(file, profile!.escolaId!);
+                              setTempFotoUrl(url);
+                            } catch (err) {
+                              console.error(err);
+                              alert("Erro ao processar/enviar foto.");
+                            } finally {
+                              setUploadingFoto(false);
+                            }
+                          }
+                        }}
+                      />
+                      <label 
+                        htmlFor="student-photo-file"
+                        style={{ display: "inline-block", padding: "8px 16px", background: "white", border: "1px solid #CBD5E1", borderRadius: 8, fontSize: 13, fontWeight: 700, color: "#475569", cursor: "pointer", marginRight: 8 }}
+                      >
+                        {tempFotoUrl ? "Alterar Foto" : "Selecionar Foto"}
+                      </label>
+                      {tempFotoUrl && (
+                        <button 
+                          type="button" 
+                          onClick={() => setTempFotoUrl(null)}
+                          style={{ padding: "8px 16px", background: "#FEE2E2", border: "none", color: "#EF4444", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer" }}
+                        >
+                          Remover
+                        </button>
+                      )}
+                      <p style={{ margin: "6px 0 0 0", fontSize: 11, color: "#94A3B8" }}>As fotos serão redimensionadas e comprimidas no próprio celular/PC para economizar espaço.</p>
+                    </div>
+                  </div>
+
                   <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 16 }}>
                     <div>
                       <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#64748B", marginBottom: 6 }}>NOME COMPLETO *</label>
