@@ -58,6 +58,7 @@ export default function AdminLayout({
         { href: "/admin/aprovacoes", label: "Aprovações", icon: "✅" },
         { href: "/admin/diario-classe", label: "Diário de Classe", icon: "📖" },
         { href: "/admin/financeiro", label: "Financeiro", icon: "💰" },
+        { href: "/admin/proposta", label: "Proposta 2027", icon: "🚀" },
       ]
     },
     {
