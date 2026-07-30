@@ -403,23 +403,23 @@ export default function ShowroomDiretora() {
           </div>
         </header>
 
-        <div style={{ maxWidth: 900, margin: "-48px auto 0", padding: "0 24px 64px", position: "relative", zIndex: 2 }}>
-          <div style={{ background: "white", borderRadius: 20, padding: 24, border: "1px solid #F1F5F9", boxShadow: "0 4px 20px rgba(0,0,0,0.05)", display: "flex", flexDirection: "column", gap: 12 }}>
+        <div style={{ maxWidth: 900, margin: "8px auto 0", padding: "0 16px 64px", position: "relative", zIndex: 2 }}>
+          <div style={{ background: "white", borderRadius: 16, padding: 16, border: "1px solid #F1F5F9", boxShadow: "0 4px 20px rgba(0,0,0,0.05)", display: "flex", flexDirection: "column", gap: 8 }}>
             {/* Filtro por Turma */}
-            <div style={{ display: "flex", gap: 8, marginBottom: 12, overflowX: "auto", paddingBottom: 8 }}>
+            <div style={{ display: "flex", gap: 8, marginBottom: 8, overflowX: "auto", paddingBottom: 6 }}>
               {classes.map(c => (
                 <button
                   key={c}
                   type="button"
                   onClick={() => setSelectedClass(c)}
                   style={{
-                    padding: "8px 16px",
-                    borderRadius: 20,
+                    padding: "6px 14px",
+                    borderRadius: 16,
                     border: selectedClass === c ? "none" : "1px solid #E2E8F0",
                     background: selectedClass === c ? "var(--primary)" : "#F8FAFC",
                     color: selectedClass === c ? "white" : "#64748B",
                     fontWeight: 700,
-                    fontSize: 13,
+                    fontSize: 12,
                     cursor: "pointer",
                     whiteSpace: "nowrap",
                     transition: "all 0.2s"
@@ -442,11 +442,11 @@ export default function ShowroomDiretora() {
                   <button 
                     key={student.id} 
                     onClick={() => setSelectedAluno(student.id)} 
-                    style={{ background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: 16, padding: "20px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer", transition: "all 0.2s" }} 
+                    style={{ background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: 12, padding: "10px 14px", display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer", transition: "all 0.2s" }} 
                     className="hover:border-orange-400 hover:bg-orange-50"
                   >
-                    <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-                      <div style={{ width: 44, height: 44, background: "#E2E8F0", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, overflow: "hidden", flexShrink: 0 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                      <div style={{ width: 36, height: 36, background: "#E2E8F0", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, overflow: "hidden", flexShrink: 0 }}>
                         {student.fotoUrl ? (
                           <img src={student.fotoUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                         ) : (
@@ -454,43 +454,23 @@ export default function ShowroomDiretora() {
                         )}
                       </div>
                       <div style={{ textAlign: "left" }}>
-                        <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: "#1E293B" }}>{student.nome}</h3>
-                        <p style={{ margin: "4px 0 0", fontSize: 13, color: "#64748B" }}>{student.turma}</p>
+                        <h3 style={{ margin: 0, fontSize: 15, fontWeight: 800, color: "#1E293B" }}>{student.nome}</h3>
+                        <p style={{ margin: "1px 0 0", fontSize: 12, color: "#64748B" }}>{student.turma}</p>
                       </div>
                     </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                      {isApproved && (
-                        <button
-                          type="button"
-                          onClick={(e) => handleToggleLiberado(e, student.id, !!reportsLiberated[student.id])}
-                          style={{
-                            background: reportsLiberated[student.id] ? "#ECFDF5" : "#FFF1F2",
-                            color: reportsLiberated[student.id] ? "#047857" : "#BE123C",
-                            border: `1px solid ${reportsLiberated[student.id] ? "#A7F3D0" : "#FECDD3"}`,
-                            padding: "6px 12px",
-                            borderRadius: 20,
-                            fontSize: 12,
-                            fontWeight: 700,
-                            cursor: "pointer",
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 4
-                          }}
-                        >
-                          {reportsLiberated[student.id] ? "🔓 Liberado" : "🔒 Retido"}
-                        </button>
-                      )}
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <span style={{ 
-                        background: isApproved ? "#F0FDF4" : isPending ? "#F1F5F9" : "#FFF7ED", 
-                        color: isApproved ? "#166534" : isPending ? "#64748B" : "#F97316", 
-                        padding: "6px 12px", 
-                        borderRadius: 20, 
-                        fontSize: 12, 
-                        fontWeight: 700 
+                        background: isApproved ? "#F0FDF4" : isPending ? "#FFFBEB" : "#EFF6FF", 
+                        color: isApproved ? "#166534" : isPending ? "#B45309" : "#1D4ED8", 
+                        padding: "4px 10px", 
+                        borderRadius: 16, 
+                        fontSize: 11, 
+                        fontWeight: 700,
+                        whiteSpace: "nowrap"
                       }}>
-                        {isApproved ? "✅ Aprovado" : isPending ? "Pendente de Geração" : "Aguardando Revisão"}
+                        {isApproved ? "✅ Aprovado" : isPending ? "⏳ Pendente" : "📩 Rascunho da Profe"}
                       </span>
-                      <span style={{ color: "#F97316" }}>→</span>
+                      <span style={{ color: "#94A3B8", fontSize: 14 }}>→</span>
                     </div>
                   </button>
                 );
@@ -506,46 +486,43 @@ export default function ShowroomDiretora() {
     <div style={{ minHeight: "100vh", background: "#FAFBFC" }}>
       {/* Header */}
       <header style={{
-        background: "linear-gradient(135deg, #1E293B 0%, #0F172A 100%)",
-        padding: "32px 24px 80px",
-        color: "white", position: "relative", overflow: "hidden",
-        borderRadius: 24, marginBottom: 32
+        padding: "20px 20px 12px", color: "#1E293B", position: "relative",
       }}>
-        <div style={{ maxWidth: 900, position: "relative", zIndex: 1 }}>
+        <div style={{ maxWidth: 900, margin: "0 auto", position: "relative", zIndex: 1 }}>
           <button onClick={() => setSelectedAluno(null)} style={{
-            color: "#94A3B8", fontSize: 13, fontWeight: 600,
-            display: "inline-flex", alignItems: "center", gap: 6, marginBottom: 24,
+            color: "#64748B", fontSize: 13, fontWeight: 600,
+            display: "inline-flex", alignItems: "center", gap: 6, marginBottom: 12,
             background: "none", border: "none", cursor: "pointer", padding: 0
           }}>
-            ← Voltar à Caixa de Entrada
+            ← Voltar para Turmas
           </button>
-
-          <h1 style={{ fontSize: 32, fontWeight: 800, margin: "0 0 8px", letterSpacing: "-0.02em" }}>
-            Revisão de Relatório
+          
+          <h1 style={{ fontSize: 22, fontWeight: 800, margin: "0 0 4px", letterSpacing: "-0.02em" }}>
+            Revisão da Coordenação — {selectedStudentObj?.nome || ""}
           </h1>
-          <p style={{ color: "#94A3B8", margin: 0, fontSize: 15 }}>
-            Aluno: {selectedStudentObj?.nome || ""} • {logs.length} observações analisadas
+          <p style={{ color: "#64748B", margin: 0, fontSize: 13 }}>
+            Revisão e homologação do relatório do {periodoSelecionado}
           </p>
         </div>
       </header>
 
       {/* Content */}
-      <div style={{ maxWidth: 900, margin: "-48px auto 0", padding: "0 24px 64px", position: "relative", zIndex: 2 }}>
+      <div style={{ maxWidth: 900, margin: "8px auto 0", padding: "0 16px 64px", position: "relative", zIndex: 2 }}>
         
         {/* Stat Cards */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 16, marginBottom: 32 }}>
           <div style={{ background: "white", borderRadius: 20, padding: "24px 28px", border: "1px solid #F1F5F9", display: "flex", alignItems: "center", gap: 20, boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
-            <div style={{ width: 52, height: 52, borderRadius: 16, background: "#FFF7ED", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26 }}>📊</div>
+            <div style={{ width: 52, height: 52, borderRadius: 16, background: "#EFF6FF", display: "flex", alignItems: "center", gap: 8, justifyContent: "center", fontSize: 26 }}>📊</div>
             <div>
               <p style={{ margin: 0, fontSize: 13, color: "#64748B", fontWeight: 600 }}>Score Global</p>
-              <p style={{ margin: 0, fontSize: 28, fontWeight: 800, color: "#1E293B" }}>{globalScore}%</p>
+              <p style={{ margin: 0, fontSize: 28, fontWeight: 800, color: "#1D4ED8" }}>{globalScore}%</p>
             </div>
           </div>
           <div style={{ background: "white", borderRadius: 20, padding: "24px 28px", border: "1px solid #F1F5F9", display: "flex", alignItems: "center", gap: 20, boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
             <div style={{ width: 52, height: 52, borderRadius: 16, background: "#F0FDF4", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26 }}>✅</div>
             <div>
               <p style={{ margin: 0, fontSize: 13, color: "#64748B", fontWeight: 600 }}>Positivos</p>
-              <p style={{ margin: 0, fontSize: 28, fontWeight: 800, color: "#22C55E" }}>{positivos}</p>
+              <p style={{ margin: 0, fontSize: 28, fontWeight: 800, color: "#166534" }}>{positivos}</p>
             </div>
           </div>
           <div style={{ background: "white", borderRadius: 20, padding: "24px 28px", border: "1px solid #F1F5F9", display: "flex", alignItems: "center", gap: 20, boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
@@ -568,10 +545,10 @@ export default function ShowroomDiretora() {
               <span style={{ fontSize: 28 }}>✍️</span>
               <div style={{ flex: 1 }}>
                 <h3 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: "#1E293B" }}>
-                  {reportFromProfessor ? "Rascunho da Professora" : "Rascunho Gerado por IA"}
+                  {reportFromProfessor ? "Rascunho da Professora" : "Rascunho Elaborado com a Estrelinha ⭐"}
                 </h3>
                 <p style={{ margin: 0, fontSize: 13, color: "#64748B" }}>
-                  {isEditing ? "Edite livremente o texto abaixo." : "Revise o texto. Você pode editar manualmente ou pedir ajustes à IA."}
+                  {isEditing ? "Edite livremente o texto abaixo." : "Revise o texto. Você pode editar manualmente ou pedir um ajuste para a Estrelinha ⭐."}
                 </p>
               </div>
               <button
@@ -604,31 +581,31 @@ export default function ShowroomDiretora() {
               </div>
             )}
 
-            <div style={{ marginTop: 24, background: "#F8FAFC", borderRadius: 16, padding: 20, border: "1px solid #E2E8F0" }}>
-              <p style={{ margin: "0 0 12px", fontSize: 13, fontWeight: 800, color: "#475569", display: "flex", alignItems: "center", gap: 8 }}>
-                🤖 Ajustar com IA
+            <div style={{ marginTop: 24, background: "#FFF7ED", borderRadius: 16, padding: 20, border: "1px solid #FFEDD5" }}>
+              <p style={{ margin: "0 0 12px", fontSize: 13, fontWeight: 800, color: "#9A3412", display: "flex", alignItems: "center", gap: 8 }}>
+                ⭐ Pedir ajuste para a Estrelinha
               </p>
               <div style={{ display: "flex", gap: 12, alignItems: "flex-end" }}>
                 <input
                   value={adjustPrompt}
                   onChange={(e) => setAdjustPrompt(e.target.value)}
-                  placeholder='Ex: "Dê mais ênfase na autonomia"'
+                  placeholder='Ex: "Dê mais ênfase na autonomia da criança"'
                   onKeyDown={(e) => { if (e.key === "Enter") handleAdjustWithAI(); }}
-                  style={{ flex: 1, padding: "14px 18px", borderRadius: 12, border: "1px solid #CBD5E1", fontSize: 14, outline: "none" }}
+                  style={{ flex: 1, padding: "14px 18px", borderRadius: 12, border: "1px solid #FED7AA", fontSize: 14, outline: "none", background: "white" }}
                 />
                 <button
                   onClick={handleAdjustWithAI}
                   disabled={adjusting || !adjustPrompt.trim()}
-                  style={{ padding: "14px 20px", borderRadius: 12, border: "none", background: adjusting || !adjustPrompt.trim() ? "#CBD5E1" : "#6366F1", color: "white", fontWeight: 800, fontSize: 13, cursor: "pointer" }}
+                  style={{ padding: "14px 20px", borderRadius: 12, border: "none", background: adjusting || !adjustPrompt.trim() ? "#CBD5E1" : "linear-gradient(135deg, #EA580C, #D97706)", color: "white", fontWeight: 800, fontSize: 13, cursor: "pointer" }}
                 >
-                  {adjusting ? "Ajustando..." : "Aplicar"}
+                  {adjusting ? "Estrelinha ajustando..." : "Aplicar Ajuste"}
                 </button>
               </div>
             </div>
 
             <div style={{ display: "flex", gap: 12, borderTop: "1px solid #F1F5F9", paddingTop: 24, marginTop: 24, flexWrap: "wrap" }}>
               <button onClick={handleApproveReport} style={{ padding: "14px 24px", borderRadius: 12, border: "none", background: "#0F172A", color: "white", fontWeight: 800, fontSize: 14, cursor: "pointer" }}>
-                ✅ Aprovar e Finalizar
+                ✅ Aprovar e Finalizar Relatório
               </button>
             </div>
           </div>
@@ -640,9 +617,9 @@ export default function ShowroomDiretora() {
               <p style={{ color: "#64748B" }}>Nenhum rascunho enviado pela professora ainda.</p>
               <button onClick={handleGenerateReport} disabled={generatingReport} style={{
                 padding: "14px 32px", borderRadius: 14, border: "none",
-                background: "#F97316", color: "white", fontWeight: 800, fontSize: 15, cursor: "pointer"
+                background: "linear-gradient(135deg, #EA580C, #D97706)", color: "white", fontWeight: 800, fontSize: 15, cursor: "pointer"
               }}>
-                {generatingReport ? "Gerando..." : "✨ Gerar Rascunho Próprio"}
+                {generatingReport ? "Estrelinha escrevendo..." : "⭐ Gerar Rascunho com a Estrelinha"}
               </button>
            </div>
         )}

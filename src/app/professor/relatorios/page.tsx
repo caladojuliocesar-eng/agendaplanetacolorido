@@ -355,23 +355,25 @@ export default function ShowroomPedagogico() {
     return (
       <div style={{ minHeight: "100vh", background: "#FAFBFC" }}>
         <header style={{
-          padding: "24px 24px 32px", color: "#1E293B", position: "relative",
+          padding: "20px 20px 12px", color: "#1E293B", position: "relative",
         }}>
           <div style={{ maxWidth: 900, margin: "0 auto", position: "relative", zIndex: 1 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap", gap: 12 }}>
-              <h1 style={{ fontSize: 24, fontWeight: 800, margin: "0 0 8px", letterSpacing: "-0.02em" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
+              <h1 style={{ fontSize: 22, fontWeight: 800, margin: 0, letterSpacing: "-0.02em" }}>
                 Fechamento Trimestral
               </h1>
-              <span style={{ fontSize: 12, fontWeight: 800, color: "#4F46E5", background: "#EEF2FF", padding: "4px 10px", borderRadius: 8, border: "1px solid #C7D2FE" }}>
+              <span style={{ fontSize: 11, fontWeight: 800, color: "#4F46E5", background: "#EEF2FF", padding: "4px 10px", borderRadius: 8, border: "1px solid #C7D2FE" }}>
                 Período Ativo: {periodoAtivo === "2026-T1" ? "1º Trimestre / 2026" : periodoAtivo === "2026-T2" ? "2º Trimestre / 2026" : periodoAtivo === "2026-T3" ? "3º Trimestre / 2026" : periodoAtivo === "2026-T4" ? "4º Trimestre / 2026" : periodoAtivo}
               </span>
             </div>
-            <p style={{ color: "#64748B", margin: 0, fontSize: 14 }}>Selecione um aluno para gerar ou editar o relatório pedagógico deste trimestre.</p>
+            <p style={{ color: "#64748B", margin: "6px 0 0", fontSize: 13, lineHeight: "1.4" }}>
+              Selecione um aluno para gerar ou editar o relatório pedagógico deste trimestre.
+            </p>
           </div>
         </header>
 
-        <div style={{ maxWidth: 900, margin: "-48px auto 0", padding: "0 24px 64px", position: "relative", zIndex: 2 }}>
-          <div style={{ background: "white", borderRadius: 20, padding: 24, border: "1px solid #F1F5F9", boxShadow: "0 4px 20px rgba(0,0,0,0.05)", display: "flex", flexDirection: "column", gap: 12 }}>
+        <div style={{ maxWidth: 900, margin: "8px auto 0", padding: "0 16px 64px", position: "relative", zIndex: 2 }}>
+          <div style={{ background: "white", borderRadius: 16, padding: 12, border: "1px solid #F1F5F9", boxShadow: "0 4px 20px rgba(0,0,0,0.05)", display: "flex", flexDirection: "column", gap: 8 }}>
             {students.map(student => {
               const status = reportsStatus[student.id];
               const isSent = status === "rascunho_professor" || status === "aprovado";
@@ -379,11 +381,11 @@ export default function ShowroomPedagogico() {
                 <button 
                   key={student.id} 
                   onClick={() => setSelectedAluno(student.id)} 
-                  style={{ background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: 16, padding: "20px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer", transition: "all 0.2s" }} 
+                  style={{ background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: 12, padding: "10px 14px", display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer", transition: "all 0.2s" }} 
                   className="hover:border-indigo-400 hover:bg-indigo-50"
                 >
-                  <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-                    <div style={{ width: 44, height: 44, background: "#E2E8F0", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, overflow: "hidden", flexShrink: 0 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <div style={{ width: 36, height: 36, background: "#E2E8F0", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, overflow: "hidden", flexShrink: 0 }}>
                       {student.fotoUrl ? (
                         <img src={student.fotoUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                       ) : (
@@ -391,22 +393,23 @@ export default function ShowroomPedagogico() {
                       )}
                     </div>
                     <div style={{ textAlign: "left" }}>
-                      <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: "#1E293B" }}>{student.nome}</h3>
-                      <p style={{ margin: "4px 0 0", fontSize: 13, color: "#64748B" }}>{student.turma}</p>
+                      <h3 style={{ margin: 0, fontSize: 15, fontWeight: 800, color: "#1E293B" }}>{student.nome}</h3>
+                      <p style={{ margin: "1px 0 0", fontSize: 12, color: "#64748B" }}>{student.turma}</p>
                     </div>
                   </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                     <span style={{ 
                       background: isSent ? "#F0FDF4" : "#FEF2F2", 
                       color: isSent ? "#166534" : "#991B1B", 
-                      padding: "6px 12px", 
-                      borderRadius: 20, 
-                      fontSize: 12, 
-                      fontWeight: 700 
+                      padding: "4px 10px", 
+                      borderRadius: 16, 
+                      fontSize: 11, 
+                      fontWeight: 700,
+                      whiteSpace: "nowrap"
                     }}>
                       {status === "aprovado" ? "✅ Aprovado" : status === "rascunho_professor" ? "✅ Enviado" : "Pendente de Geração"}
                     </span>
-                    <span style={{ color: "#94A3B8" }}>→</span>
+                    <span style={{ color: "#94A3B8", fontSize: 14 }}>→</span>
                   </div>
                 </button>
               );
@@ -421,34 +424,34 @@ export default function ShowroomPedagogico() {
     <div style={{ minHeight: "100vh", background: "#FAFBFC" }}>
       {/* Header */}
       <header style={{
-        padding: "24px 24px 32px", color: "#1E293B", position: "relative",
+        padding: "20px 20px 12px", color: "#1E293B", position: "relative",
       }}>
         <div style={{ maxWidth: 900, margin: "0 auto", position: "relative", zIndex: 1 }}>
           <button onClick={() => setSelectedAluno(null)} style={{
             color: "#64748B", fontSize: 13, fontWeight: 600,
-            display: "inline-flex", alignItems: "center", gap: 6, marginBottom: 16,
+            display: "inline-flex", alignItems: "center", gap: 6, marginBottom: 12,
             background: "none", border: "none", cursor: "pointer", padding: 0
           }}>
             ← Voltar para Turma
           </button>
           
-          <h1 style={{ fontSize: 24, fontWeight: 800, margin: "0 0 8px", letterSpacing: "-0.02em" }}>
+          <h1 style={{ fontSize: 22, fontWeight: 800, margin: "0 0 4px", letterSpacing: "-0.02em" }}>
             Fechamento Trimestral — {selectedStudentObj?.nome || ""}
           </h1>
-          <p style={{ color: "#64748B", margin: 0, fontSize: 14 }}>
+          <p style={{ color: "#64748B", margin: 0, fontSize: 13 }}>
             Evolução baseada em {logs.length} observações coletadas no dia a dia • {periodoStr}
           </p>
         </div>
       </header>
 
       {/* Content */}
-      <div style={{ maxWidth: 900, margin: "-48px auto 0", padding: "0 24px 64px", position: "relative", zIndex: 2 }}>
+      <div style={{ maxWidth: 900, margin: "8px auto 0", padding: "0 16px 64px", position: "relative", zIndex: 2 }}>
         {/* Stat Cards */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 16, marginBottom: 32 }}>
           <StatCard icon="📊" label="Score Global" value={`${globalScore}%`} sub="Performance geral" />
           <StatCard icon="📝" label="Observações" value={logs.length} sub={periodoStr} />
-          <StatCard icon="✅" label="Positivos" value={positivos} sub={`${Math.round((positivos / logs.length) * 100)}% do total`} />
-          <StatCard icon="⚠️" label="Pontos de Atenção" value={atencoes} sub={`${Math.round((atencoes / logs.length) * 100)}% do total`} />
+          <StatCard icon="✅" label="Positivos" value={positivos} sub={logs.length ? `${Math.round((positivos / logs.length) * 100)}% do total` : "0% do total"} />
+          <StatCard icon="⚠️" label="Pontos de Atenção" value={atencoes} sub={logs.length ? `${Math.round((atencoes / logs.length) * 100)}% do total` : "0% do total"} />
         </div>
 
         {/* Tabs */}
@@ -495,35 +498,36 @@ export default function ShowroomPedagogico() {
           </div>
         )}
 
-        {/* CTA - Future AI Report */}
+        {/* CTA - Estrelinha AI Assistant */}
         {!reportApproved && (
           <div style={{
-            marginTop: 40,
-            background: "linear-gradient(135deg, #1E293B, #0F172A)",
-            borderRadius: 24, padding: "40px 32px", color: "white",
+            marginTop: 36,
+            background: "linear-gradient(135deg, #FFF7ED 0%, #FFEDD5 60%, #FEF3C7 100%)",
+            borderRadius: 20, padding: "32px 24px", color: "#431407",
             textAlign: "center", position: "relative", overflow: "hidden",
+            border: "1px solid #FDBA74", boxShadow: "0 4px 20px rgba(249,115,22,0.08)"
           }}>
             <div style={{
-              position: "absolute", top: -30, right: -30,
-              width: 180, height: 180, borderRadius: "50%",
-              background: "rgba(249,115,22,0.15)", filter: "blur(50px)",
+              position: "absolute", top: -20, right: -20,
+              width: 140, height: 140, borderRadius: "50%",
+              background: "rgba(249,115,22,0.12)", filter: "blur(40px)",
             }} />
             <div style={{ position: "relative", zIndex: 1 }}>
-              <span style={{ fontSize: 40, display: "block", marginBottom: 16 }}>🤖</span>
-              <h3 style={{ margin: "0 0 12px", fontSize: 22, fontWeight: 800 }}>
-                Gerar Rascunho com IA
+              <span style={{ fontSize: 36, display: "block", marginBottom: 12 }}>⭐</span>
+              <h3 style={{ margin: "0 0 8px", fontSize: 20, fontWeight: 800, color: "#7C2D12" }}>
+                Assistente de Redação — Estrelinha ⭐
               </h3>
-              <p style={{ color: "#94A3B8", margin: "0 auto 24px", maxWidth: 500, lineHeight: 1.6, fontSize: 14 }}>
-                A IA vai transformar suas {logs.length} observações diárias em um relatório contínuo. Você fará a leitura inicial e depois enviará para a Coordenação revisar e aprovar.
+              <p style={{ color: "#9A3412", margin: "0 auto 20px", maxWidth: 520, lineHeight: 1.5, fontSize: 13, fontWeight: 500 }}>
+                A <strong>Estrelinha ⭐</strong> organiza suas {logs.length} observações do dia a dia em um rascunho inicial do relatório. Você lê, ajusta com seu olhar docente e depois envia para a Coordenação.
               </p>
               <button onClick={handleGenerateReport} disabled={generatingReport} style={{
-                padding: "14px 32px", borderRadius: 14, border: "none",
-                background: generatingReport ? "rgba(249,115,22,0.5)" : "#F97316", color: "white",
-                fontWeight: 800, fontSize: 15, cursor: generatingReport ? "not-allowed" : "pointer",
+                padding: "12px 28px", borderRadius: 12, border: "none",
+                background: generatingReport ? "#F97316" : "linear-gradient(135deg, #EA580C, #D97706)", color: "white",
+                fontWeight: 800, fontSize: 14, cursor: generatingReport ? "not-allowed" : "pointer",
                 transition: "all 0.2s",
-                boxShadow: generatingReport ? "none" : "0 4px 12px rgba(249,115,22,0.3)"
+                boxShadow: generatingReport ? "none" : "0 4px 14px rgba(234,88,12,0.3)"
               }}>
-                {generatingReport ? "✨ Escrevendo rascunho..." : "✨ Gerar Rascunho com IA"}
+                {generatingReport ? "✨ Estrelinha escrevendo rascunho..." : "⭐ Gerar Rascunho com a Estrelinha"}
               </button>
             </div>
           </div>
