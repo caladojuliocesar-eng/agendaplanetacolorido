@@ -208,9 +208,9 @@ export default function AdminDiarioClassePage() {
             <div>
               <h2 style={{ margin: "0 0 6px", fontSize: 18, fontWeight: 800, color: "#0F172A" }}>DIÁRIO DE CLASSE — EDUCAÇÃO INFANTIL</h2>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, fontSize: 12, color: "#334155" }}>
-                <p style={{ margin: 0 }}><strong>Entidade:</strong> Associação Planeta Colorido</p>
-                <p style={{ margin: 0 }}><strong>CEI/Creche:</strong> Planeta Colorido</p>
-                <p style={{ margin: 0 }}><strong>Conveniada com a Prefeitura de:</strong> São Paulo</p>
+                <p style={{ margin: 0 }}><strong>Instituição:</strong> Escola Planeta Colorido</p>
+                <p style={{ margin: 0 }}><strong>Cidade/UF:</strong> São Paulo — SP</p>
+                <p style={{ margin: 0 }}><strong>Segmento:</strong> Educação Infantil</p>
                 <p style={{ margin: 0 }}><strong>Ano Letivo:</strong> {selectedYear}</p>
               </div>
             </div>
