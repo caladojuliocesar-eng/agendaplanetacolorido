@@ -173,73 +173,73 @@ export default function EscolaPage() {
 
       {/* Custom Tabs inside the page */}
       <div
-        className="hide-scrollbar"
         style={{
-          display: "flex",
+          display: "grid",
+          gridTemplateColumns: "repeat(4, 1fr)",
           background: "var(--bg-card)",
           borderBottom: "1px solid var(--border)",
           position: "sticky",
           top: 60, // below header
           zIndex: 40,
-          overflowX: "auto",
-          scrollbarWidth: "none",
-          WebkitOverflowScrolling: "touch",
-          paddingRight: 40, // Espaço de respiro para o último item
+          padding: "0 4px",
         }}
       >
         <button
           onClick={() => setActiveTab("mural")}
           style={{
-            flex: "0 0 auto",
-            padding: "16px 20px",
+            padding: "12px 4px",
             background: "none",
             border: "none",
             borderBottom: activeTab === "mural" ? "3px solid var(--primary)" : "3px solid transparent",
             color: activeTab === "mural" ? "var(--primary)" : "var(--text-muted)",
             fontWeight: activeTab === "mural" ? 700 : 500,
-            fontSize: "14px",
+            fontSize: "12px",
             fontFamily: "Quicksand",
             cursor: "pointer",
-            flexShrink: 0,
-            whiteSpace: "nowrap"
+            textAlign: "center",
+            whiteSpace: "nowrap",
+            textOverflow: "ellipsis",
+            overflow: "hidden"
           }}
         >
-          Mural de Avisos
+          Mural
         </button>
         <button
           onClick={() => setActiveTab("calendario")}
           style={{
-            flex: "0 0 auto",
-            padding: "16px 20px",
+            padding: "12px 4px",
             background: "none",
             border: "none",
             borderBottom: activeTab === "calendario" ? "3px solid var(--primary)" : "3px solid transparent",
             color: activeTab === "calendario" ? "var(--primary)" : "var(--text-muted)",
             fontWeight: activeTab === "calendario" ? 700 : 500,
-            fontSize: "14px",
+            fontSize: "12px",
             fontFamily: "Quicksand",
             cursor: "pointer",
-            flexShrink: 0,
-            whiteSpace: "nowrap"
+            textAlign: "center",
+            whiteSpace: "nowrap",
+            textOverflow: "ellipsis",
+            overflow: "hidden"
           }}
         >
-          Calendário Escolar
+          Calendário
         </button>
         <button
           onClick={() => setActiveTab("coordenacao")}
           style={{
-            flex: "0 0 auto",
-            padding: "16px 20px",
+            padding: "12px 4px",
             background: "none",
             border: "none",
             borderBottom: activeTab === "coordenacao" ? "3px solid var(--primary)" : "3px solid transparent",
             color: activeTab === "coordenacao" ? "var(--primary)" : "var(--text-muted)",
             fontWeight: activeTab === "coordenacao" ? 700 : 500,
-            fontSize: "14px",
+            fontSize: "12px",
             fontFamily: "Quicksand",
             cursor: "pointer",
-            flexShrink: 0,
-            whiteSpace: "nowrap"
+            textAlign: "center",
+            whiteSpace: "nowrap",
+            textOverflow: "ellipsis",
+            overflow: "hidden"
           }}
         >
           Coordenação
@@ -250,21 +250,22 @@ export default function EscolaPage() {
             setViewingReport(null);
           }}
           style={{
-            flex: "0 0 auto",
-            padding: "16px 20px",
+            padding: "12px 4px",
             background: "none",
             border: "none",
             borderBottom: activeTab === "relatorios" ? "3px solid var(--primary)" : "3px solid transparent",
             color: activeTab === "relatorios" ? "var(--primary)" : "var(--text-muted)",
             fontWeight: activeTab === "relatorios" ? 700 : 500,
-            fontSize: "14px",
+            fontSize: "12px",
             fontFamily: "Quicksand",
             cursor: "pointer",
-            flexShrink: 0,
-            whiteSpace: "nowrap"
+            textAlign: "center",
+            whiteSpace: "nowrap",
+            textOverflow: "ellipsis",
+            overflow: "hidden"
           }}
         >
-          Relatório de Evolução
+          📊 Relatórios
         </button>
       </div>
 

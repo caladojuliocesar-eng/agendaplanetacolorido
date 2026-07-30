@@ -50,6 +50,13 @@ export default function TurmasAdminPage() {
     loadStudents();
   }, [profile]);
 
+  useEffect(() => {
+    if (students.length > 0 && !selectedTurma) {
+      const turmas = Array.from(new Set(students.map(s => s.turma))).sort();
+      if (turmas.length > 0) setSelectedTurma(turmas[0]);
+    }
+  }, [students, selectedTurma]);
+
   async function loadStudents() {
     setLoading(true);
     try {
@@ -142,7 +149,7 @@ export default function TurmasAdminPage() {
             transition: "all 0.2s"
           }}
         >
-          🖼️ Quadro de Rostos
+          👥 Mural de Alunos
         </button>
         <button
           onClick={() => setActiveTab("remanejamento")}
@@ -162,35 +169,66 @@ export default function TurmasAdminPage() {
         </button>
       </div>
 
-      {/* Conteúdo da Aba 1: Quadro de Rostos */}
+      {/* Conteúdo da Aba 1: Mural de Alunos */}
       {activeTab === "painel" && (
         <div>
-          {/* Seletor de Turma no topo */}
-          <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 24, background: "white", padding: 16, borderRadius: 12, border: "1px solid #E2E8F0" }}>
-            <label style={{ fontSize: 13, fontWeight: 800, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-              Escolha a Turma:
+          {/* Botões Fixos de Seleção de Turma */}
+          <div style={{ marginBottom: 24 }}>
+            <label style={{ display: "block", fontSize: 12, fontWeight: 800, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 12 }}>
+              Selecione a Turma:
             </label>
-            <select 
-              className="text-input" 
-              value={selectedTurma} 
-              onChange={(e) => {
-                setSelectedTurma(e.target.value);
-                setActiveMedicalId(null);
-              }}
-              style={{ width: 220, margin: 0 }}
-            >
-              <option value="">Selecione...</option>
-              {turmasAtuais.map(t => (
-                <option key={t} value={t}>{t}</option>
-              ))}
-            </select>
+            <div style={{ 
+              display: "grid", 
+              gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", 
+              gap: 12,
+              maxWidth: 900
+            }}>
+              {turmasAtuais.map(t => {
+                const isActive = selectedTurma === t;
+                const count = students.filter(s => s.turma === t).length;
+                return (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => {
+                      setSelectedTurma(t);
+                      setActiveMedicalId(null);
+                    }}
+                    style={{
+                      height: 60,
+                      padding: "8px 16px",
+                      borderRadius: 12,
+                      border: isActive ? "2px solid var(--primary-dark)" : "1px solid #CBD5E1",
+                      background: isActive ? "var(--primary)" : "#FFFFFF",
+                      color: isActive ? "white" : "#1E293B",
+                      fontWeight: 800,
+                      fontSize: 14,
+                      cursor: "pointer",
+                      textAlign: "center",
+                      transition: "all 0.2s",
+                      boxShadow: isActive ? "0 4px 14px rgba(234, 88, 12, 0.25)" : "0 1px 3px rgba(0,0,0,0.03)",
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 2
+                    }}
+                  >
+                    <span>{t}</span>
+                    <span style={{ fontSize: 11, fontWeight: 600, opacity: isActive ? 0.95 : 0.65 }}>
+                      {count} {count === 1 ? "aluno" : "alunos"}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           {!selectedTurma ? (
             <div style={{ textAlign: "center", padding: "60px 20px", background: "white", borderRadius: 16, border: "1px dashed #CBD5E1" }}>
               <span style={{ fontSize: 48 }}>🏫</span>
               <h3 style={{ margin: "16px 0 8px 0", color: "#1E293B", fontSize: 18, fontWeight: 700 }}>Selecione uma Turma</h3>
-              <p style={{ color: "#64748B", margin: 0 }}>Escolha uma turma no seletor acima para carregar o mural de alunos.</p>
+              <p style={{ color: "#64748B", margin: 0 }}>Clique em uma das turmas acima para carregar os alunos.</p>
             </div>
           ) : alunosNaTurma.length === 0 ? (
             <div style={{ textAlign: "center", padding: "60px 20px", background: "white", borderRadius: 16, border: "1px dashed #CBD5E1" }}>
