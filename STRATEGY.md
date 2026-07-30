@@ -1,62 +1,73 @@
 # Estratégia de Negócio - Agenda Planeta Colorido
 
 ## 🎯 Visão do Produto
-- **Conceito**: "Boutique Digital" - Uma ferramenta premium, simples e humana para escolas pequenas/médias.
-- **Diferencial**: "Menos é Mais". Foco na redução de fricção administrativa (Financeiro) e excelência na comunicação (Agenda/Mural), sem perder o toque pessoal.
-
-## 💰 Modelo de Receita Sugerido
-- **Taxa de Agenda Digital**: R$ 80,00 por aluno / ano (Substituindo a agenda de papel de R$ 120,00).
-- **Divisão**: 50% Escola / 50% Desenvolvedor (R$ 40,00 para cada por aluno/ano).
-- **Valor para a Escola**: Software de gestão gratuito + lucro direto sobre a taxa.
-
-## 📅 Cronograma de Implantação 2026/2027 (Nova Estratégia de Adoção)
-
-### Fase 1: Conexão e Encantamento (Agosto 2026 - Pós Férias)
-- **Foco**: Professoras e Pais (Adoção inicial).
-- **Uso**: Agenda Digital (Rotina diária) + Mural de Avisos.
-- **Objetivo**: Eliminar a agenda física de papel, engajar 100% dos pais no uso diário do aplicativo e consolidar a confiança na ferramenta sem barreiras transacionais.
-
-### Fase 2: Inteligência Pedagógica (Outubro/Novembro 2026 - Fim de Período)
-- **Foco**: Professoras e Coordenação.
-- **Uso**: Relatório Trimestral Inteligente com IA (Gemini).
-- **Objetivo**: Economizar semanas de trabalho da equipe gerando relatórios de desenvolvimento individuais a partir dos registros diários da agenda. Demonstração explícita de valor e tempo poupado.
-
-### Fase 3: Conveniência e Gestão Administrativa (Matrículas / Início de 2027)
-- **Foco**: Diretoria/Administração (Dona da Escola) e Pais.
-- **Uso**: Módulo Financeiro Lite (Cobranças/Mensalidades, envio de PIX/Boleto, controle de comprovantes).
-- **Objetivo**: Centralizar cobranças e conciliação de comprovantes no canal de comunicação oficial da escola, quando a base de dados já está madura e o app já faz parte do dia a dia da comunidade.
-
-## 💡 Próximas Deliberações Técnicas
-- **Share Target**: Permitir que o pai compartilhe o comprovante direto do app do banco para a Agenda.
-- **Gestão de Comprovantes**: Melhorar o fluxo de "Check" do Admin para conciliação rápida.
-- **Notificações**: Alertas inteligentes para boletos vencendo.
+- **Conceito**: "Boutique Digital" - Uma ferramenta premium, simples e humana para escolas de Educação Infantil.
+- **Diferencial**: "Menos é Mais". Foco na redução de fricção administrativa (Financeiro Lite), conformidade oficial (Diário de Classe), excelência na comunicação (Agenda/Mural) e inteligência pedagógica humanizada (Estrelinha ⭐).
 
 ---
 
-## 🤖 Inteligência Pedagógica (Estratégia de IA)
+## 💰 Modelo Comercial & Investimento 2027
 
-O grande diferencial competitivo e principal argumento de venda do Ottomatic é o módulo pedagógico suportado por inteligência artificial (Gemini). Definimos as seguintes diretrizes para o comportamento e evolução desta funcionalidade:
+### 1. Modelo de Receita
+- **Taxa da Agenda Digital**: **R$ 120,00 por aluno / ano** (financiada 100% pela taxa de material/agenda que a escola já cobra na matrícula/rematrícula dos pais).
+- **Piso Mínimo Garantido da Plataforma**: **R$ 6.000,00 por ano** (calculado com base em até 50 alunos).
+- **Escalabilidade**: Para turmas acima de 50 alunos, a licença acompanha proporcionalmente R$ 120,00 por aluno excedente.
 
-### 1. Integridade do Relatório Enviado (Comportamento de "Foto")
-- **Isolamento de Alterações:** Uma vez que a professora finaliza o rascunho de IA e clica em **"Enviar para Coordenação"**, o relatório é gravado no banco como um documento de texto estático (uma "foto"). 
-- **Estabilidade:** Qualquer nova observação ou diário lançado pela professora após esse envio **não altera** o documento que está sob revisão da coordenação/diretora, garantindo segurança na aprovação.
-- **Geração Forçada:** O texto do relatório só mudará se a professora ou coordenadora escolher explicitamente clicar no botão **"Gerar Novamente (Do Zero)"**.
+### 2. Estudo Financeiro & Reorganização de Custos (Base 50 Alunos)
 
-### 2. Continuidade Pedagógica (Roadmap Futuro)
-- **Histórico Comparativo:** A geração do relatório de um período (ex: T2) passará a receber como contexto no prompt da IA o **relatório aprovado do período anterior (T1)**.
-- **Narrativa de Evolução:** Com isso, a IA não gerará textos isolados, mas sim uma análise comparativa do desenvolvimento do aluno (ex: destacando que o aluno superou um ponto de atenção em autonomia registrado no T1, ou mostrando a evolução contínua da linguagem).
-- **Redução do Retrabalho:** A professora não precisa pesquisar ou redigitar os marcos anteriores do trimestre passado para fazer o contraponto; o motor de IA faz o cruzamento de marcos automaticamente.
+#### 🔴 Cenário Atual da Escola
+- **App Antigo de Mercado:** R$ 380,00 / mês = **R$ 4.560,00 / ano**
+- **Gráfica (Agenda de Papel):** 50 agendas x R$ 90,00 = **R$ 4.500,00 / ano**
+- **Custo Operacional Atual Total:** **R$ 9.060,00 / ano**
+- *Arrecadação dos Pais (R$ 120/aluno):* R$ 6.000,00 / ano.
+- *Situação:* A escola complementava R$ 3.060,00/ano do próprio caixa para manter a gráfica + app antigo.
 
-### 3. Isolamento Temporal de Diários (Produção)
-- **Filtros de Data de Corte:** Para a versão de produção, os logs diários serão segmentados com base nas datas oficiais do calendário letivo (ex: logs de Junho a Agosto entram no T2; logs criados a partir de Setembro caem automaticamente na área de contexto do T3).
+#### 🟡 Ano 1 / 2027 (Modernização & Aquisição de Tablets)
+- **Licença Sistema Ottomatic:** R$ 6.000,00 / ano (paga 100% pela taxa dos pais).
+- **Economia do App Antigo:** **R$ 4.560,00 / ano liberados** no caixa.
+- 📱 **Parque de Hardware da Escola:** A economia de R$ 4.560,00 financia **100% da compra de 5 a 6 Tablets corporativos** (ex: Samsung Galaxy Tab A9 64GB ou Lenovo Tab M9 a ~R$ 750 ~ R$ 800 cada).
+- *Resultado:* A escola equipa 100% das salas de aula com tablets corporativos próprios com investimento mínimo ou nulo da mantenedora.
+
+#### 🟢 Ano 2 em Diante / 2028+ (Lucro Recorrente)
+- **Licença Sistema Ottomatic:** R$ 6.000,00 / ano.
+- **Tablets:** 100% quitados e patrimoniados na escola.
+- **App Antigo:** R$ 0,00 (Mensalidade de R$ 380/mês eliminada permanentemente).
+- *Resultado:* Sobra recorrente no orçamento da mantenedora.
+
+---
+
+## 📱 Estratégia de Hardware & Dispositivos (PWA)
+
+- **Arquitetura PWA:** O sistema é um Progressive Web App leve e responsivo.
+- **Multidispositivo:**
+  - 🏛️ **Diretoria / Coordenação:** Computador (Desktop) para relatórios, controle e diário de classe oficial.
+  - 👨‍👩‍👧 **Famílias (Pais):** Celular (PWA) para acompanhamento diário, avisos, notificações e relatórios.
+  - 👩‍🏫 **Professoras:** Celular ou **Tablet corporativo da sala**, permitindo registros com 1 toque sem usar celulares pessoais.
+
+---
+
+## 🤖 Inteligência Pedagógica — Assistente Estrelinha ⭐
+
+O grande diferencial competitivo do Ottomatic na Educação Infantil:
+
+1. **Humanização da Marca:** A inteligência artificial é personificada como **Estrelinha ⭐ (Assistente de Redação Pedagógica)**, integrada à identidade visual da Planeta Colorido.
+2. **Papel do Docente:** A Estrelinha ⭐ organiza os registros diários em um rascunho inicial do relatório trimestral por pilar da BNCC. A professora faz a leitura, adiciona o olhar afetuoso e envia para a Coordenação aprovar.
+3. **Comportamento de "Foto" (Estabilidade):** Uma vez que a professora envia o rascunho para a Coordenação, o documento é gravado estaticamente. Diários subsequentes não alteram o texto em aprovação a menos que seja solicitada uma nova geração explícita.
+
+---
+
+## 🖼️ Painel de Apresentação da Proposta (`/admin/proposta`)
+
+Criada uma página executiva dedicada no Painel Admin (`/admin/proposta`):
+- **Perfis de Acesso:** Pais, Professoras e Diretoria.
+- **Sequência de Valor:** 1. Comunicação -> 2. Diário Oficial & Gestão -> 3. Financeiro Lite -> 4. **Assistente Estrelinha ⭐ (IA)**.
+- **Tabela Comparativa 2027:** Apresentação visual limpa dos valores fixados em R$ 6.000,00/ano e do plano de tablets.
 
 ---
 
 ## 🔑 Acessos Oficiais de Demonstração (Showroom)
 
-Para fins de pitch comercial e homologação rápida em reuniões, o banco está populado com as seguintes credenciais padrão (Senha: `planeta123`):
-
-- **Administrador (Diretoria):** `diretora@planeta.com`
-- **Professor (Corpo Docente):** `profe@planeta.com` (Vinculada à turma Berçário II)
-- **Pai do Otto:** `paiotto@planeta.com` (Alvo de testes com histórico de relatórios já aprovados)
-- **Pai da Luna:** `pailuna@planeta.com` (Alvo de testes para demonstrar a geração de relatórios de IA do absoluto início)
+- **Administrador (Diretoria):** `diretora@planeta.com` (Senha: `planeta123`)
+- **Professor (Corpo Docente):** `profe@planeta.com` (Turma Berçário II)
+- **Pai do Otto:** `paiotto@planeta.com`
+- **Pai da Luna:** `pailuna@planeta.com`
