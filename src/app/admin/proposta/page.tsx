@@ -324,61 +324,61 @@ export default function AdminPropostaPage() {
               Uma transição segura, gradual e sem ruídos — com foco absoluto na validação da experiência dos pais e suporte pedagógico próximo.
             </p>
 
-            {/* Cronograma em 5 Etapas */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 14, maxWidth: 960, margin: "0 auto 28px", textAlign: "left" }}>
+            {/* Cronograma em 5 Etapas (5 Colunas perfeitamente alinhadas) */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 12, width: "100%", margin: "0 auto 28px", textAlign: "left" }}>
               {/* Etapa 1 */}
-              <div style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 16, padding: 16 }}>
-                <div style={{ fontSize: 11, fontWeight: 800, color: "#FB923C", textTransform: "uppercase", marginBottom: 4 }}>1. AGOSTO</div>
-                <div style={{ fontSize: 14, fontWeight: 800, color: "#F8FAFC", marginBottom: 4 }}>Piloto Controlado</div>
-                <div style={{ fontSize: 12, color: "#94A3B8", lineHeight: 1.4 }}>Contrato + Início da Agenda e Financeiro na Turma Selecionada com treinamento da professora.</div>
+              <div style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 16, padding: 14 }}>
+                <div style={{ fontSize: 10, fontWeight: 800, color: "#FB923C", textTransform: "uppercase", marginBottom: 4 }}>1. AGOSTO</div>
+                <div style={{ fontSize: 13, fontWeight: 800, color: "#F8FAFC", marginBottom: 4 }}>Piloto Controlado</div>
+                <div style={{ fontSize: 11, color: "#94A3B8", lineHeight: 1.4 }}>Contrato + Início da Agenda e Financeiro na Turma Selecionada com treinamento da professora.</div>
               </div>
 
               {/* Etapa 2 */}
-              <div style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 16, padding: 16 }}>
-                <div style={{ fontSize: 11, fontWeight: 800, color: "#FB923C", textTransform: "uppercase", marginBottom: 4 }}>2. SETEMBRO</div>
-                <div style={{ fontSize: 14, fontWeight: 800, color: "#F8FAFC", marginBottom: 4 }}>Ajuste Fino do Piloto</div>
-                <div style={{ fontSize: 12, color: "#94A3B8", lineHeight: 1.4 }}>Aperfeiçoamento da experiência dos pais em ambiente controlado (zero ruído nas demais turmas).</div>
+              <div style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 16, padding: 14 }}>
+                <div style={{ fontSize: 10, fontWeight: 800, color: "#FB923C", textTransform: "uppercase", marginBottom: 4 }}>2. SETEMBRO</div>
+                <div style={{ fontSize: 13, fontWeight: 800, color: "#F8FAFC", marginBottom: 4 }}>Ajuste Fino do Piloto</div>
+                <div style={{ fontSize: 11, color: "#94A3B8", lineHeight: 1.4 }}>Aperfeiçoamento da experiência dos pais em ambiente controlado (zero ruído nas demais turmas).</div>
               </div>
 
               {/* Etapa 3 */}
-              <div style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 16, padding: 16 }}>
-                <div style={{ fontSize: 11, fontWeight: 800, color: "#FB923C", textTransform: "uppercase", marginBottom: 4 }}>3. OUTUBRO</div>
-                <div style={{ fontSize: 14, fontWeight: 800, color: "#F8FAFC", marginBottom: 4 }}>Validação Pedagógica</div>
-                <div style={{ fontSize: 12, color: "#94A3B8", lineHeight: 1.4 }}>Com 60 dias de dados acumulados: homologação do Diário Oficial e relatórios com IA Estrelinha.</div>
+              <div style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 16, padding: 14 }}>
+                <div style={{ fontSize: 10, fontWeight: 800, color: "#FB923C", textTransform: "uppercase", marginBottom: 4 }}>3. OUTUBRO</div>
+                <div style={{ fontSize: 13, fontWeight: 800, color: "#F8FAFC", marginBottom: 4 }}>Validação Pedagógica</div>
+                <div style={{ fontSize: 11, color: "#94A3B8", lineHeight: 1.4 }}>Com 60 dias de dados acumulados: homologação do Diário Oficial e relatórios com IA Estrelinha.</div>
               </div>
 
               {/* Etapa 4 */}
-              <div style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 16, padding: 16 }}>
-                <div style={{ fontSize: 11, fontWeight: 800, color: "#FB923C", textTransform: "uppercase", marginBottom: 4 }}>4. NOV / DEZ</div>
-                <div style={{ fontSize: 14, fontWeight: 800, color: "#F8FAFC", marginBottom: 4 }}>Lançamento Geral</div>
-                <div style={{ fontSize: 12, color: "#94A3B8", lineHeight: 1.4 }}>Liberação do app para 100% das turmas + Módulo de Rematrículas 2027 com cobrança integrada.</div>
+              <div style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 16, padding: 14 }}>
+                <div style={{ fontSize: 10, fontWeight: 800, color: "#FB923C", textTransform: "uppercase", marginBottom: 4 }}>4. NOV / DEZ</div>
+                <div style={{ fontSize: 13, fontWeight: 800, color: "#F8FAFC", marginBottom: 4 }}>Lançamento Geral</div>
+                <div style={{ fontSize: 11, color: "#94A3B8", lineHeight: 1.4 }}>Liberação do app para 100% das turmas + Módulo de Rematrículas 2027 com cobrança integrada.</div>
               </div>
 
               {/* Etapa 5 */}
-              <div style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 16, padding: 16 }}>
-                <div style={{ fontSize: 11, fontWeight: 800, color: "#FB923C", textTransform: "uppercase", marginBottom: 4 }}>5. JANEIRO</div>
-                <div style={{ fontSize: 14, fontWeight: 800, color: "#F8FAFC", marginBottom: 4 }}>Operação Total 2027</div>
-                <div style={{ fontSize: 12, color: "#94A3B8", lineHeight: 1.4 }}>Início do ano letivo com 100% da escola alinhada, equipe treinada e pais engajados.</div>
+              <div style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 16, padding: 14 }}>
+                <div style={{ fontSize: 10, fontWeight: 800, color: "#FB923C", textTransform: "uppercase", marginBottom: 4 }}>5. JANEIRO</div>
+                <div style={{ fontSize: 13, fontWeight: 800, color: "#F8FAFC", marginBottom: 4 }}>Operação Total 2027</div>
+                <div style={{ fontSize: 11, color: "#94A3B8", lineHeight: 1.4 }}>Início do ano letivo com 100% da escola alinhada, equipe treinada e pais engajados.</div>
               </div>
             </div>
 
-            {/* Compromisso Direto do Fundador */}
+            {/* Acompanhamento Direto e Ajuste Fino */}
             <div style={{ background: "rgba(249, 115, 22, 0.1)", border: "1px solid rgba(249, 115, 22, 0.3)", borderRadius: 16, padding: 20, maxWidth: 800, margin: "0 auto 28px", textAlign: "left" }}>
-              <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+              <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
                 <span style={{ fontSize: 24 }}>🛡️</span>
                 <div>
                   <h4 style={{ margin: "0 0 4px", fontSize: 15, fontWeight: 800, color: "#FB923C" }}>
-                    Compromisso & Acompanhamento Direto do Fundador
+                    Acompanhamento Total & Ajuste Fino
                   </h4>
                   <p style={{ margin: 0, fontSize: 13, color: "#CBD5E1", lineHeight: 1.5 }}>
-                    Sem intermediários ou atendimento genérico. Atuação pessoal e direta ao lado da Coordenação para validar cada detalhe do diário, ajustar a rotina das professoras e garantir fricção zero na experiência dos pais.
+                    Durante todo esse período, teremos acompanhamento total e presencial junto à Coordenação para a realização dos testes, validações e ajustes finos da plataforma.
                   </p>
                 </div>
               </div>
             </div>
 
             <div style={{ display: "inline-flex", alignItems: "center", gap: 12, background: "linear-gradient(135deg, #EA580C, #D97706)", color: "white", padding: "14px 28px", borderRadius: 16, fontWeight: 800, fontSize: 15, boxShadow: "0 6px 20px rgba(234, 88, 12, 0.3)" }}>
-              <span>🚀 Vamos Juntos Construir Esse Futuro!</span>
+              <span>🚀 Iniciar Cronograma de Implantação</span>
             </div>
           </div>
         </div>
