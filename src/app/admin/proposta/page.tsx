@@ -287,7 +287,7 @@ export default function AdminPropostaPage() {
         </div>
       </section>
 
-      {/* SEÇÃO 4: APERTO DE MÃOS & PRÓXIMOS PASSOS */}
+      {/* SEÇÃO 4: APERTO DE MÃOS & CRONOGRAMA DE IMPLANTAÇÃO */}
       <section>
         <div style={{
           background: "linear-gradient(135deg, #0F172A 0%, #1E293B 100%)",
@@ -313,34 +313,67 @@ export default function AdminPropostaPage() {
 
           <div style={{ position: "relative", zIndex: 1 }}>
             <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(249, 115, 22, 0.15)", color: "#FB923C", border: "1px solid rgba(249, 115, 22, 0.3)", padding: "6px 16px", borderRadius: 20, fontSize: 12, fontWeight: 800, marginBottom: 16 }}>
-              🤝 APERTO DE MÃOS & PRÓXIMOS PASSOS
+              🤝 APERTO DE MÃOS & CRONOGRAMA DE IMPLANTAÇÃO
             </div>
 
             <h2 style={{ fontSize: 26, fontWeight: 900, margin: "0 0 12px", color: "#F8FAFC" }}>
               Prontos para Transformar a Gestão da Escola Planeta Colorido?
             </h2>
 
-            <p style={{ color: "#94A3B8", fontSize: 15, maxWidth: 640, margin: "0 auto 28px", lineHeight: 1.6 }}>
-              Uma parceria de longo prazo focada na excelência pedagógica, modernização tecnológica e valorização da marca da escola perante as famílias.
+            <p style={{ color: "#94A3B8", fontSize: 15, maxWidth: 680, margin: "0 auto 28px", lineHeight: 1.6 }}>
+              Uma transição segura, gradual e sem ruídos — com foco absoluto na validação da experiência dos pais e suporte pedagógico próximo.
             </p>
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 16, maxWidth: 840, margin: "0 auto 32px", textAlign: "left" }}>
-              <div style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 16, padding: 18 }}>
-                <div style={{ fontSize: 20, marginBottom: 8 }}>1️⃣</div>
-                <div style={{ fontSize: 14, fontWeight: 800, color: "#F8FAFC", marginBottom: 4 }}>Formalização & Setup</div>
-                <div style={{ fontSize: 12, color: "#94A3B8" }}>Ajustes contratuais e importação inicial das turmas e cadastro dos alunos.</div>
+            {/* Cronograma em 5 Etapas */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 14, maxWidth: 960, margin: "0 auto 28px", textAlign: "left" }}>
+              {/* Etapa 1 */}
+              <div style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 16, padding: 16 }}>
+                <div style={{ fontSize: 11, fontWeight: 800, color: "#FB923C", textTransform: "uppercase", marginBottom: 4 }}>1. AGOSTO</div>
+                <div style={{ fontSize: 14, fontWeight: 800, color: "#F8FAFC", marginBottom: 4 }}>Piloto Controlado</div>
+                <div style={{ fontSize: 12, color: "#94A3B8", lineHeight: 1.4 }}>Contrato + Início da Agenda e Financeiro na Turma Selecionada com treinamento da professora.</div>
               </div>
 
-              <div style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 16, padding: 18 }}>
-                <div style={{ fontSize: 20, marginBottom: 8 }}>2️⃣</div>
-                <div style={{ fontSize: 14, fontWeight: 800, color: "#F8FAFC", marginBottom: 4 }}>Treinamento & Suporte</div>
-                <div style={{ fontSize: 12, color: "#94A3B8" }}>Capacitação das professoras e coordenação para uso prático no dia a dia.</div>
+              {/* Etapa 2 */}
+              <div style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 16, padding: 16 }}>
+                <div style={{ fontSize: 11, fontWeight: 800, color: "#FB923C", textTransform: "uppercase", marginBottom: 4 }}>2. SETEMBRO</div>
+                <div style={{ fontSize: 14, fontWeight: 800, color: "#F8FAFC", marginBottom: 4 }}>Ajuste Fino do Piloto</div>
+                <div style={{ fontSize: 12, color: "#94A3B8", lineHeight: 1.4 }}>Aperfeiçoamento da experiência dos pais em ambiente controlado (zero ruído nas demais turmas).</div>
               </div>
 
-              <div style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 16, padding: 18 }}>
-                <div style={{ fontSize: 20, marginBottom: 8 }}>3️⃣</div>
-                <div style={{ fontSize: 14, fontWeight: 800, color: "#F8FAFC", marginBottom: 4 }}>Lançamento às Famílias</div>
-                <div style={{ fontSize: 12, color: "#94A3B8" }}>Comunicado oficial e convite para os pais baixarem o novo aplicativo.</div>
+              {/* Etapa 3 */}
+              <div style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 16, padding: 16 }}>
+                <div style={{ fontSize: 11, fontWeight: 800, color: "#FB923C", textTransform: "uppercase", marginBottom: 4 }}>3. OUTUBRO</div>
+                <div style={{ fontSize: 14, fontWeight: 800, color: "#F8FAFC", marginBottom: 4 }}>Validação Pedagógica</div>
+                <div style={{ fontSize: 12, color: "#94A3B8", lineHeight: 1.4 }}>Com 60 dias de dados acumulados: homologação do Diário Oficial e relatórios com IA Estrelinha.</div>
+              </div>
+
+              {/* Etapa 4 */}
+              <div style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 16, padding: 16 }}>
+                <div style={{ fontSize: 11, fontWeight: 800, color: "#FB923C", textTransform: "uppercase", marginBottom: 4 }}>4. NOV / DEZ</div>
+                <div style={{ fontSize: 14, fontWeight: 800, color: "#F8FAFC", marginBottom: 4 }}>Lançamento Geral</div>
+                <div style={{ fontSize: 12, color: "#94A3B8", lineHeight: 1.4 }}>Liberação do app para 100% das turmas + Módulo de Rematrículas 2027 com cobrança integrada.</div>
+              </div>
+
+              {/* Etapa 5 */}
+              <div style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 16, padding: 16 }}>
+                <div style={{ fontSize: 11, fontWeight: 800, color: "#FB923C", textTransform: "uppercase", marginBottom: 4 }}>5. JANEIRO</div>
+                <div style={{ fontSize: 14, fontWeight: 800, color: "#F8FAFC", marginBottom: 4 }}>Operação Total 2027</div>
+                <div style={{ fontSize: 12, color: "#94A3B8", lineHeight: 1.4 }}>Início do ano letivo com 100% da escola alinhada, equipe treinada e pais engajados.</div>
+              </div>
+            </div>
+
+            {/* Compromisso Direto do Fundador */}
+            <div style={{ background: "rgba(249, 115, 22, 0.1)", border: "1px solid rgba(249, 115, 22, 0.3)", borderRadius: 16, padding: 20, maxWidth: 800, margin: "0 auto 28px", textAlign: "left" }}>
+              <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+                <span style={{ fontSize: 24 }}>🛡️</span>
+                <div>
+                  <h4 style={{ margin: "0 0 4px", fontSize: 15, fontWeight: 800, color: "#FB923C" }}>
+                    Compromisso & Acompanhamento Direto do Fundador
+                  </h4>
+                  <p style={{ margin: 0, fontSize: 13, color: "#CBD5E1", lineHeight: 1.5 }}>
+                    Sem intermediários ou atendimento genérico. Atuação pessoal e direta ao lado da Coordenação para validar cada detalhe do diário, ajustar a rotina das professoras e garantir fricção zero na experiência dos pais.
+                  </p>
+                </div>
               </div>
             </div>
 
