@@ -29,7 +29,7 @@ export default function AdminPropostaPage() {
           background: "rgba(249, 115, 22, 0.18)",
           filter: "blur(50px)"
         }} />
-        
+
         <div style={{ position: "relative", zIndex: 1 }}>
           <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(249, 115, 22, 0.15)", color: "#FB923C", border: "1px solid rgba(249, 115, 22, 0.3)", padding: "6px 14px", borderRadius: 20, fontSize: 12, fontWeight: 800, marginBottom: 16 }}>
             <span>🚀 PROPOSTA COMERCIAL & MODERNIZAÇÃO 2027</span>
@@ -200,7 +200,7 @@ export default function AdminPropostaPage() {
                 R$ 6.000,00 <span style={{ fontSize: 13, fontWeight: 700, color: "#9A3412" }}>/ ano</span>
               </div>
               <p style={{ color: "#64748B", fontSize: 12, margin: 0 }}>
-                Garantia mínima contratual cobrindo até 50 alunos (infraestrutura, servidores, IA Estrelinha ⭐ e suporte).
+                Garantia mínima contratual cobrindo até 70 alunos (infraestrutura, servidores, IA Estrelinha ⭐ e suporte).
               </p>
             </div>
           </div>
@@ -217,7 +217,7 @@ export default function AdminPropostaPage() {
             <div style={{ background: "#F8FAFC", borderRadius: 16, padding: 20, border: "1px solid #E2E8F0" }}>
               <span style={{ fontSize: 11, fontWeight: 800, color: "#64748B", textTransform: "uppercase" }}>1. ESTRUTURA DE CUSTOS ATUAL</span>
               <div style={{ margin: "12px 0", fontSize: 13, color: "#334155", display: "flex", flexDirection: "column", gap: 6 }}>
-                <div>• App antigo de mercado: <strong>R$ 4.560/ano</strong> (R$ 380/mês)</div>
+                <div>• App atual de mercado: <strong>R$ 4.560/ano</strong> (R$ 380/mês)</div>
                 <div>• Gráfica (agenda papel): <strong>R$ 4.500/ano</strong> (50 x R$ 90)</div>
                 <div style={{ borderTop: "1px solid #CBD5E1", paddingTop: 8, marginTop: 4, color: "#0F172A", fontWeight: 800 }}>
                   Gasto Total Atual: R$ 9.060,00 / ano
@@ -233,7 +233,7 @@ export default function AdminPropostaPage() {
               <span style={{ fontSize: 11, fontWeight: 800, color: "#C2410C", textTransform: "uppercase" }}>2. ANO 1 / 2027 (MODERNIZAÇÃO & TABLETS)</span>
               <div style={{ margin: "12px 0", fontSize: 13, color: "#9A3412", display: "flex", flexDirection: "column", gap: 6 }}>
                 <div>• Licença Plataforma: <strong>R$ 6.000/ano</strong> (taxa dos pais)</div>
-                <div>• Economia App Antigo: <strong>R$ 4.560/ano liberados</strong></div>
+                <div>• Economia App Atual: <strong>R$ 4.560/ano liberados</strong></div>
                 <div>📱 <strong>Compra de 5 a 6 Tablets:</strong> ~R$ 3.800 a R$ 4.500</div>
                 <div style={{ borderTop: "1px solid #FED7AA", paddingTop: 8, marginTop: 4, color: "#7C2D12", fontWeight: 900 }}>
                   A própria economia paga 100% dos Tablets!
@@ -248,15 +248,15 @@ export default function AdminPropostaPage() {
             <div style={{ background: "#ECFDF5", borderRadius: 16, padding: 20, border: "1px solid #A7F3D0" }}>
               <span style={{ fontSize: 11, fontWeight: 800, color: "#047857", textTransform: "uppercase" }}>3. ANO 2 EM DIANTE / 2028+ (RECORRÊNCIA)</span>
               <div style={{ margin: "12px 0", fontSize: 13, color: "#065F46", display: "flex", flexDirection: "column", gap: 6 }}>
-                <div>• Licença Plataforma: <strong>R$ 6.000/ano</strong></div>
-                <div>• Custo de App Antigo: <strong>R$ 0,00 (Eliminado)</strong></div>
+                <div>• Licença Plataforma: <strong>R$ 6.000/ano</strong> (100% coberta pelos pais)</div>
+                <div>• Custo do App Atual: <strong>R$ 0,00 (Eliminado)</strong></div>
                 <div>• Custo de Tablets: <strong>R$ 0,00 (Já Quitados)</strong></div>
                 <div style={{ borderTop: "1px solid #A7F3D0", paddingTop: 8, marginTop: 4, color: "#064E3B", fontWeight: 900 }}>
-                  Sobra Recorrente no Orçamento da Escola
+                  Economia Líquida no Caixa: R$ 3.060,00 / ano
                 </div>
               </div>
               <p style={{ fontSize: 12, color: "#047857", margin: 0, lineHeight: 1.4 }}>
-                A mensalidade do app antigo é eliminada permanentemente do orçamento da mantenedora.
+                Economia real e permanente no caixa da mantenedora, pois o custo da nova plataforma é 100% coberto pela taxa anual já cobrada das famílias.
               </p>
             </div>
           </div>
