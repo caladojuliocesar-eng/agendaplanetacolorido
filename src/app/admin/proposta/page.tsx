@@ -207,12 +207,13 @@ export default function AdminPropostaPage() {
         </div>
 
         {/* Quadro Comparativo de Etapas */}
-        <div style={{ background: "white", borderRadius: 20, padding: 28, border: "1px solid #E2E8F0", boxShadow: "0 4px 14px rgba(0,0,0,0.03)" }}>
+        <div style={{ background: "white", borderRadius: 20, padding: 28, border: "1px solid #E2E8F0", boxShadow: "0 4px 14px rgba(0,0,0,0.03)", marginBottom: 40 }}>
           <h3 style={{ margin: "0 0 20px", fontSize: 18, fontWeight: 800, color: "#1E293B" }}>
             📊 Estudo de Reorganização de Recursos (Escola Planeta Colorido)
           </h3>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16 }}>
+          {/* Linha Superior: Etapas 1 e 2 (Lado a Lado) */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 16, marginBottom: 16 }}>
             {/* Etapa 1: Atual */}
             <div style={{ background: "#F8FAFC", borderRadius: 16, padding: 20, border: "1px solid #E2E8F0" }}>
               <span style={{ fontSize: 11, fontWeight: 800, color: "#64748B", textTransform: "uppercase" }}>1. ESTRUTURA DE CUSTOS ATUAL</span>
@@ -243,21 +244,108 @@ export default function AdminPropostaPage() {
                 A escola equipa 100% das salas com tablets corporativos próprios com investimento mínimo ou nulo da mantenedora.
               </p>
             </div>
+          </div>
 
-            {/* Etapa 3: Ano 2 em diante (2028+) */}
-            <div style={{ background: "#ECFDF5", borderRadius: 16, padding: 20, border: "1px solid #A7F3D0" }}>
-              <span style={{ fontSize: 11, fontWeight: 800, color: "#047857", textTransform: "uppercase" }}>3. ANO 2 EM DIANTE / 2028+ (RECORRÊNCIA)</span>
-              <div style={{ margin: "12px 0", fontSize: 13, color: "#065F46", display: "flex", flexDirection: "column", gap: 6 }}>
-                <div>• Licença Plataforma: <strong>R$ 6.000/ano</strong> (100% coberta pelos pais)</div>
-                <div>• Custo do App Atual: <strong>R$ 0,00 (Eliminado)</strong></div>
-                <div>• Custo de Tablets: <strong>R$ 0,00 (Já Quitados)</strong></div>
-                <div style={{ borderTop: "1px solid #A7F3D0", paddingTop: 8, marginTop: 4, color: "#064E3B", fontWeight: 900 }}>
-                  Economia Líquida no Caixa: R$ 3.060,00 / ano
-                </div>
+          {/* Linha Inferior: Etapa 3 (Banner de Destaque - Recorrência e Economia Líquida) */}
+          <div style={{ background: "linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%)", borderRadius: 16, padding: 24, border: "2px solid #A7F3D0" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 16, marginBottom: 12 }}>
+              <div>
+                <span style={{ fontSize: 11, fontWeight: 800, color: "#047857", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                  3. ANO 2 EM DIANTE / 2028+ (RECORRÊNCIA DE LONGO PRAZO)
+                </span>
+                <h4 style={{ margin: "4px 0 0", fontSize: 20, fontWeight: 900, color: "#064E3B" }}>
+                  Resultado Permanente: Zero Custo Extra + Lucro no Orçamento
+                </h4>
               </div>
-              <p style={{ fontSize: 12, color: "#047857", margin: 0, lineHeight: 1.4 }}>
-                Economia real e permanente no caixa da mantenedora, pois o custo da nova plataforma é 100% coberto pela taxa anual já cobrada das famílias.
-              </p>
+              <div style={{ background: "#047857", color: "white", padding: "8px 16px", borderRadius: 12, fontSize: 15, fontWeight: 900 }}>
+                Economia Líquida no Caixa: R$ 3.060,00 / ano
+              </div>
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12, margin: "16px 0", borderTop: "1px solid #A7F3D0", paddingTop: 16 }}>
+              <div>
+                <span style={{ fontSize: 11, color: "#047857", fontWeight: 700 }}>LICENÇA PLATAFORMA</span>
+                <div style={{ fontSize: 14, fontWeight: 800, color: "#065F46" }}>R$ 6.000 / ano</div>
+                <div style={{ fontSize: 11, color: "#059669" }}>100% coberta pela taxa dos pais</div>
+              </div>
+              <div>
+                <span style={{ fontSize: 11, color: "#047857", fontWeight: 700 }}>APP ATUAL DE MERCADO</span>
+                <div style={{ fontSize: 14, fontWeight: 800, color: "#065F46" }}>R$ 0,00 / ano</div>
+                <div style={{ fontSize: 11, color: "#059669" }}>Custo de mensalidade eliminado</div>
+              </div>
+              <div>
+                <span style={{ fontSize: 11, color: "#047857", fontWeight: 700 }}>PARQUE DE TABLETS</span>
+                <div style={{ fontSize: 14, fontWeight: 800, color: "#065F46" }}>R$ 0,00 / ano</div>
+                <div style={{ fontSize: 11, color: "#059669" }}>Equipamentos já quitados</div>
+              </div>
+            </div>
+
+            <p style={{ fontSize: 13, color: "#047857", margin: 0, lineHeight: 1.5, fontWeight: 600 }}>
+              💡 <strong>Impacto no Caixa:</strong> Economia real e permanente no orçamento da mantenedora, pois o custo da nova plataforma é 100% absorvido pela taxa anual já cobrada das famílias.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* SEÇÃO 4: APERTO DE MÃOS & PRÓXIMOS PASSOS */}
+      <section>
+        <div style={{
+          background: "linear-gradient(135deg, #0F172A 0%, #1E293B 100%)",
+          borderRadius: 24,
+          padding: "36px 32px",
+          color: "white",
+          boxShadow: "0 10px 30px rgba(15, 23, 42, 0.15)",
+          textAlign: "center",
+          position: "relative",
+          overflow: "hidden"
+        }}>
+          <div style={{
+            position: "absolute",
+            bottom: -50,
+            left: "50%",
+            transform: "translateX(-50%)",
+            width: 300,
+            height: 150,
+            borderRadius: "50%",
+            background: "rgba(249, 115, 22, 0.15)",
+            filter: "blur(60px)"
+          }} />
+
+          <div style={{ position: "relative", zIndex: 1 }}>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(249, 115, 22, 0.15)", color: "#FB923C", border: "1px solid rgba(249, 115, 22, 0.3)", padding: "6px 16px", borderRadius: 20, fontSize: 12, fontWeight: 800, marginBottom: 16 }}>
+              🤝 APERTO DE MÃOS & PRÓXIMOS PASSOS
+            </div>
+
+            <h2 style={{ fontSize: 26, fontWeight: 900, margin: "0 0 12px", color: "#F8FAFC" }}>
+              Prontos para Transformar a Gestão da Escola Planeta Colorido?
+            </h2>
+
+            <p style={{ color: "#94A3B8", fontSize: 15, maxWidth: 640, margin: "0 auto 28px", lineHeight: 1.6 }}>
+              Uma parceria de longo prazo focada na excelência pedagógica, modernização tecnológica e valorização da marca da escola perante as famílias.
+            </p>
+
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 16, maxWidth: 840, margin: "0 auto 32px", textAlign: "left" }}>
+              <div style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 16, padding: 18 }}>
+                <div style={{ fontSize: 20, marginBottom: 8 }}>1️⃣</div>
+                <div style={{ fontSize: 14, fontWeight: 800, color: "#F8FAFC", marginBottom: 4 }}>Formalização & Setup</div>
+                <div style={{ fontSize: 12, color: "#94A3B8" }}>Ajustes contratuais e importação inicial das turmas e cadastro dos alunos.</div>
+              </div>
+
+              <div style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 16, padding: 18 }}>
+                <div style={{ fontSize: 20, marginBottom: 8 }}>2️⃣</div>
+                <div style={{ fontSize: 14, fontWeight: 800, color: "#F8FAFC", marginBottom: 4 }}>Treinamento & Suporte</div>
+                <div style={{ fontSize: 12, color: "#94A3B8" }}>Capacitação das professoras e coordenação para uso prático no dia a dia.</div>
+              </div>
+
+              <div style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 16, padding: 18 }}>
+                <div style={{ fontSize: 20, marginBottom: 8 }}>3️⃣</div>
+                <div style={{ fontSize: 14, fontWeight: 800, color: "#F8FAFC", marginBottom: 4 }}>Lançamento às Famílias</div>
+                <div style={{ fontSize: 12, color: "#94A3B8" }}>Comunicado oficial e convite para os pais baixarem o novo aplicativo.</div>
+              </div>
+            </div>
+
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 12, background: "linear-gradient(135deg, #EA580C, #D97706)", color: "white", padding: "14px 28px", borderRadius: 16, fontWeight: 800, fontSize: 15, boxShadow: "0 6px 20px rgba(234, 88, 12, 0.3)" }}>
+              <span>🚀 Vamos Juntos Construir Esse Futuro!</span>
             </div>
           </div>
         </div>
@@ -265,3 +353,4 @@ export default function AdminPropostaPage() {
     </div>
   );
 }
+
