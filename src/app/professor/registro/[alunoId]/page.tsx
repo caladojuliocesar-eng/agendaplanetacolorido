@@ -94,70 +94,83 @@ export default function RegistroIndividual() {
     if (typeof window === "undefined") return;
 
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      if (isListening) {
-        alert("O reconhecimento de voz não é suportado neste navegador/dispositivo.");
-        setIsListening(false);
-      }
-      return;
-    }
-
-    let recognition: any = null;
 
     if (isListening) {
-      recognition = new SpeechRecognition();
-      recognition.continuous = true;
-      recognition.interimResults = true;
-      recognition.lang = "pt-BR";
-
-      let finalTranscript = "";
-
-      recognition.onresult = (event: any) => {
-        let interimTranscript = "";
-        for (let i = event.resultIndex; i < event.results.length; ++i) {
-          if (event.results[i].isFinal) {
-            finalTranscript += event.results[i][0].transcript;
-          } else {
-            interimTranscript += event.results[i][0].transcript;
-          }
-        }
-        
-        if (finalTranscript) {
-          const textToAdd = finalTranscript.trim();
-          setIaText(prev => {
-            const base = prev.trim();
-            return base ? `${base} ${textToAdd}` : textToAdd;
-          });
-          finalTranscript = "";
-        }
-      };
-
-      recognition.onerror = (event: any) => {
-        console.error("Speech recognition error:", event.error);
-        if (event.error !== "no-speech") {
-          setIsListening(false);
-        }
-      };
-
-      recognition.onend = () => {
+      if (!SpeechRecognition) {
+        alert("O reconhecimento de voz nativo não é suportado neste navegador. Recomendamos usar o Google Chrome ou Safari atualizado.");
         setIsListening(false);
-      };
+        return;
+      }
 
+      // Web Speech API requires HTTPS unless on localhost
+      const isLocalhost = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+      if (window.location.protocol !== "https:" && !isLocalhost) {
+        alert("O reconhecimento por voz exige uma conexão segura (HTTPS). Se estiver testando pelo IP local no celular, o navegador bloqueia o microfone por segurança.");
+        setIsListening(false);
+        return;
+      }
+
+      let recognition: any = null;
       try {
+        recognition = new SpeechRecognition();
+        // Set continuous to false on mobile for high compatibility (mobile WebSpeech API drops continuous connections)
+        recognition.continuous = false;
+        recognition.interimResults = true;
+        recognition.lang = "pt-BR";
+
+        let finalTranscript = "";
+
+        recognition.onresult = (event: any) => {
+          let interimTranscript = "";
+          for (let i = event.resultIndex; i < event.results.length; ++i) {
+            if (event.results[i].isFinal) {
+              finalTranscript += event.results[i][0].transcript;
+            } else {
+              interimTranscript += event.results[i][0].transcript;
+            }
+          }
+          
+          if (finalTranscript) {
+            const textToAdd = finalTranscript.trim();
+            setIaText(prev => {
+              const base = prev.trim();
+              return base ? `${base} ${textToAdd}` : textToAdd;
+            });
+            finalTranscript = "";
+          }
+        };
+
+        recognition.onerror = (event: any) => {
+          console.error("Speech recognition error:", event.error);
+          if (event.error === "not-allowed") {
+            alert("Permissão de microfone negada. Verifique as permissões de mídia do seu navegador.");
+          } else if (event.error === "service-not-allowed") {
+            alert("O serviço de voz foi bloqueado pelo sistema operacional ou navegador.");
+          } else if (event.error !== "no-speech") {
+            alert(`Erro no reconhecimento de voz: ${event.error}`);
+          }
+          setIsListening(false);
+        };
+
+        recognition.onend = () => {
+          setIsListening(false);
+        };
+
         recognition.start();
       } catch (err) {
         console.error("Failed to start speech recognition:", err);
+        alert("Erro ao iniciar a gravação de áudio no microfone.");
         setIsListening(false);
       }
-    }
 
-    return () => {
-      if (recognition) {
-        try {
-          recognition.stop();
-        } catch (e) {}
-      }
-    };
+      return () => {
+        if (recognition) {
+          try {
+            recognition.stop();
+          } catch (e) {}
+        }
+      };
+    }
   }, [isListening]);
 
   useEffect(() => {
