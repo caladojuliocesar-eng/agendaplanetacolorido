@@ -113,6 +113,7 @@ export interface Student {
   tipoSanguineo?: string;
   convenioMedico?: string;
   contatoPediatra?: string;
+  medicamentosTemporarios?: MedicamentoTemporario[];
   
   // Contatos e Autorizações
   contatosEmergencia?: ContatoEmergencia[];
@@ -120,6 +121,17 @@ export interface Student {
   
   criadoEm: string;
   atualizadoEm?: string;
+}
+
+export interface MedicamentoTemporario {
+  id: string;
+  nome: string;
+  dosagemHorario: string;
+  dataInicio: string; // "YYYY-MM-DD"
+  dataFim: string;    // "YYYY-MM-DD"
+  observacoes?: string;
+  urlReceita?: string;
+  criadoEm?: string;
 }
 
 export interface ContatoEmergencia {
@@ -243,6 +255,7 @@ export interface Cobranca {
   urlDemonstrativo?: string; // URL da imagem do demonstrativo (Storage)
   urlComprovante?: string;   // URL da imagem do comprovante enviado pelo pai
   dataPagamento?: string;    // Data em que o pagamento foi confirmado
+  dataEnvioComprovante?: string; // Data em que a família enviou o comprovante
   visualizado: boolean;
   dataVisualizacao?: string;
   criadoEm: string;
@@ -272,4 +285,18 @@ export interface RelatorioPedagogico {
   criadoEm: string;
   atualizadoEm: string;
   liberado?: boolean;
+}
+
+export interface Momento {
+  id: string;
+  escolaId: string;
+  turma: string;
+  professorId: string;
+  professorNome?: string;
+  titulo: string;
+  descricao?: string;
+  fotos: string[];
+  alunosIds?: string[];
+  curtidas?: string[]; // Array de uids de usuários que curtiram
+  criadoEm: string;
 }

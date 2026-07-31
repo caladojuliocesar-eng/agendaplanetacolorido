@@ -25,6 +25,10 @@ export default function EditChargePage({ params }: { params: Promise<{ id: strin
   });
   const [file, setFile] = useState<File | null>(null);
 
+  const [unlocked, setUnlocked] = useState(false);
+  const isPaid = cobranca?.status === "pago";
+  const isReadOnly = isPaid && !unlocked;
+
   useEffect(() => {
     if (profile?.escolaId && id) {
       loadCobranca();
@@ -67,14 +71,20 @@ export default function EditChargePage({ params }: { params: Promise<{ id: strin
       const valorLimpo = formData.valor.replace(/\./g, '').replace(',', '.');
       const valorNum = parseFloat(valorLimpo);
 
-      await updateCobranca(id, {
+      const payload: Partial<Cobranca> = {
         titulo: formData.titulo,
         valor: valorNum,
         dataVencimento: formData.dataVencimento,
         linkBoleto: formData.linkBoleto.trim() || "",
         urlDemonstrativo: urlDemonstrativo || "",
         status: formData.status,
-      });
+      };
+
+      if (formData.status === 'pago' && !cobranca?.dataPagamento) {
+        payload.dataPagamento = new Date().toISOString();
+      }
+
+      await updateCobranca(id, payload);
 
       router.push("/admin/financeiro");
     } catch (error: any) {
@@ -89,22 +99,63 @@ export default function EditChargePage({ params }: { params: Promise<{ id: strin
 
   return (
     <div style={{ maxWidth: 600 }}>
-      <div style={{ marginBottom: 32 }}>
+      <div style={{ marginBottom: 24 }}>
         <h2 style={{ fontSize: 24, fontWeight: 800, color: "#1E293B", margin: 0 }}>Editar Cobrança</h2>
         <p style={{ color: "#64748B", margin: "4px 0 0 0" }}>
           Alterando cobrança de <strong>{cobranca.alunoNome}</strong>
         </p>
       </div>
 
+      {isPaid && (
+        <div style={{ 
+          background: isReadOnly ? "#F0FDF4" : "#FEF2F2", 
+          border: `1px solid ${isReadOnly ? "#BBF7D0" : "#FECACA"}`, 
+          borderRadius: 12, 
+          padding: 16, 
+          marginBottom: 20,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center"
+        }}>
+          <div>
+            <span style={{ fontSize: 13, fontWeight: 800, color: isReadOnly ? "#166534" : "#991B1B" }}>
+              {isReadOnly ? "🔒 Cobrança Quitada & Trava de Segurança Ativa" : "🔓 Modo de Edição Desbloqueado"}
+            </span>
+            <p style={{ margin: "4px 0 0 0", fontSize: 12, color: isReadOnly ? "#15803D" : "#B91C1C" }}>
+              {isReadOnly 
+                ? `Paga em ${cobranca.dataPagamento ? new Date(cobranca.dataPagamento).toLocaleDateString('pt-BR') : 'data confirmada'}. Os campos principais estão protegidos.`
+                : "Atenção: alterações no valor ou vencimento afetarão o histórico."}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setUnlocked(!unlocked)}
+            style={{
+              padding: "8px 12px",
+              borderRadius: 8,
+              border: "1px solid #CBD5E1",
+              background: "white",
+              fontSize: 12,
+              fontWeight: 700,
+              cursor: "pointer",
+              flexShrink: 0
+            }}
+          >
+            {isReadOnly ? "🔓 Desbloquear" : "🔒 Travar"}
+          </button>
+        </div>
+      )}
+
       <form onSubmit={handleSubmit} style={{ background: "white", padding: 32, borderRadius: 16, border: "1px solid #E2E8F0", display: "flex", flexDirection: "column", gap: 20 }}>
         <div>
           <label style={{ display: "block", fontSize: 14, fontWeight: 700, color: "#334155", marginBottom: 8 }}>Título da Cobrança *</label>
           <input 
             required
+            disabled={isReadOnly}
             type="text"
             value={formData.titulo}
             onChange={(e) => setFormData({...formData, titulo: e.target.value})}
-            style={{ width: "100%", padding: "12px", borderRadius: 10, border: "1px solid #E2E8F0", fontSize: 14 }}
+            style={{ width: "100%", padding: "12px", borderRadius: 10, border: "1px solid #E2E8F0", fontSize: 14, background: isReadOnly ? "#F8FAFC" : "white" }}
           />
         </div>
 
@@ -113,20 +164,22 @@ export default function EditChargePage({ params }: { params: Promise<{ id: strin
             <label style={{ display: "block", fontSize: 14, fontWeight: 700, color: "#334155", marginBottom: 8 }}>Valor (R$) *</label>
             <input 
               required
+              disabled={isReadOnly}
               type="text"
               value={formData.valor}
               onChange={(e) => setFormData({...formData, valor: e.target.value})}
-              style={{ width: "100%", padding: "12px", borderRadius: 10, border: "1px solid #E2E8F0", fontSize: 14 }}
+              style={{ width: "100%", padding: "12px", borderRadius: 10, border: "1px solid #E2E8F0", fontSize: 14, background: isReadOnly ? "#F8FAFC" : "white" }}
             />
           </div>
           <div>
             <label style={{ display: "block", fontSize: 14, fontWeight: 700, color: "#334155", marginBottom: 8 }}>Vencimento *</label>
             <input 
               required
+              disabled={isReadOnly}
               type="date"
               value={formData.dataVencimento}
               onChange={(e) => setFormData({...formData, dataVencimento: e.target.value})}
-              style={{ width: "100%", padding: "12px", borderRadius: 10, border: "1px solid #E2E8F0", fontSize: 14 }}
+              style={{ width: "100%", padding: "12px", borderRadius: 10, border: "1px solid #E2E8F0", fontSize: 14, background: isReadOnly ? "#F8FAFC" : "white" }}
             />
           </div>
         </div>
@@ -134,12 +187,13 @@ export default function EditChargePage({ params }: { params: Promise<{ id: strin
         <div>
           <label style={{ display: "block", fontSize: 14, fontWeight: 700, color: "#334155", marginBottom: 8 }}>Status</label>
           <select 
+            disabled={isReadOnly}
             value={formData.status}
             onChange={(e) => setFormData({...formData, status: e.target.value})}
-            style={{ width: "100%", padding: "12px", borderRadius: 10, border: "1px solid #E2E8F0", fontSize: 14 }}
+            style={{ width: "100%", padding: "12px", borderRadius: 10, border: "1px solid #E2E8F0", fontSize: 14, background: isReadOnly ? "#F8FAFC" : "white" }}
           >
             <option value="pendente">Pendente</option>
-            <option value="pago">Pago</option>
+            <option value="pago">Pago 🔒</option>
             <option value="atrasado">Atrasado</option>
             <option value="cancelado">Cancelado</option>
           </select>

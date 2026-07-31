@@ -4,28 +4,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useState, useEffect } from "react";
 import { getAllStudents, updateStudentTurma } from "@/lib/firestore";
 import { Student } from "@/types";
+import { getStudentMedicalSummary } from "@/lib/medical";
 import Link from "next/link";
 
 const TURMAS_SUGERIDAS = [
   "Berçário I", "Berçário II",
   "Infantil I", "Infantil II", "Infantil III", "Infantil IV", "Infantil V"
 ];
-
-const hasRealMedicalWarning = (val?: string): boolean => {
-  if (!val) return false;
-  const clean = val.trim().toLowerCase();
-  return clean.length > 0 && 
-         clean !== "não" && 
-         clean !== "nao" && 
-         clean !== "nenhum" && 
-         clean !== "nenhuma" && 
-         clean !== "não possui" && 
-         clean !== "nao possui" && 
-         clean !== "não tem" && 
-         clean !== "nao tem" && 
-         clean !== "n/a" && 
-         clean !== "-";
-};
 
 export default function TurmasAdminPage() {
   const { profile } = useAuth();
@@ -238,9 +223,8 @@ export default function TurmasAdminPage() {
             <div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 20 }}>
                 {alunosNaTurma.map(aluno => {
-                  const hasMedicalAlert = hasRealMedicalWarning(aluno.alergias) || 
-                                          hasRealMedicalWarning(aluno.restricoesAlimentares) || 
-                                          hasRealMedicalWarning(aluno.medicamentosContinuos);
+                  const summary = getStudentMedicalSummary(aluno);
+                  const showIcon = summary.hasAnyCritical || summary.hasActiveTempMeds;
                   const nameParts = aluno.nome.trim().split(" ");
                   const displayName = nameParts.length > 1 ? `${nameParts[0]} ${nameParts[nameParts.length - 1]}` : aluno.nome;
 
@@ -261,7 +245,7 @@ export default function TurmasAdminPage() {
                       }}
                     >
                       {/* Health Alert Icon */}
-                      {hasMedicalAlert && (
+                      {showIcon && (
                         <div style={{ position: "absolute", top: 12, right: 12, zIndex: 10 }}>
                           <button
                             type="button"
@@ -270,9 +254,9 @@ export default function TurmasAdminPage() {
                               setActiveMedicalId(activeMedicalId === aluno.id ? null : aluno.id);
                             }}
                             style={{
-                              background: "#FEE2E2",
-                              border: "1px solid #FCA5A5",
-                              color: "#DC2626",
+                              background: summary.hasAnyCritical ? "#FEE2E2" : "#FEF3C7",
+                              border: `1px solid ${summary.hasAnyCritical ? "#FCA5A5" : "#FDE68A"}`,
+                              color: summary.hasAnyCritical ? "#DC2626" : "#D97706",
                               width: 26,
                               height: 26,
                               borderRadius: "50%",
@@ -286,19 +270,38 @@ export default function TurmasAdminPage() {
                             }}
                             title="Ver Ficha Médica"
                           >
-                            🩺
+                            {summary.hasAnyCritical ? "🩺" : "💊"}
                           </button>
                           
                           {/* Medical Tooltip Popover */}
                           {activeMedicalId === aluno.id && (
-                            <div style={{ position: "absolute", top: 32, right: 0, width: 220, background: "#1E293B", color: "white", padding: 12, borderRadius: 8, boxShadow: "0 10px 15px -3px rgba(0,0,0,0.3)", zIndex: 50, textAlign: "left", fontSize: 12 }}>
+                            <div style={{ position: "absolute", top: 32, right: 0, width: 240, background: "#1E293B", color: "white", padding: 12, borderRadius: 8, boxShadow: "0 10px 15px -3px rgba(0,0,0,0.3)", zIndex: 50, textAlign: "left", fontSize: 12 }}>
                               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6, borderBottom: "1px solid rgba(255,255,255,0.1)", paddingBottom: 4 }}>
-                                <strong style={{ color: "#FCA5A5" }}>⚠️ Alerta de Saúde</strong>
+                                <strong style={{ color: summary.hasAnyCritical ? "#FCA5A5" : "#FDE68A" }}>
+                                  {summary.hasAnyCritical ? "⚠️ Alerta Médico Crítico" : "💊 Medicação Ativa Hoje"}
+                                </strong>
                                 <span style={{ cursor: "pointer", fontWeight: "bold" }} onClick={() => setActiveMedicalId(null)}>✕</span>
                               </div>
-                              {hasRealMedicalWarning(aluno.alergias) && <div style={{ marginBottom: 4 }}><strong>Alergias:</strong> {aluno.alergias}</div>}
-                              {hasRealMedicalWarning(aluno.restricoesAlimentares) && <div style={{ marginBottom: 4 }}><strong>Restrições:</strong> {aluno.restricoesAlimentares}</div>}
-                              {hasRealMedicalWarning(aluno.medicamentosContinuos) && <div><strong>Medicamentos:</strong> {aluno.medicamentosContinuos}</div>}
+                              {summary.alergias && <div style={{ marginBottom: 4 }}><strong>Alergias:</strong> {summary.alergias}</div>}
+                              {summary.restricoes && <div style={{ marginBottom: 4 }}><strong>Restrições:</strong> {summary.restricoes}</div>}
+                              {summary.medicamentosContinuos && <div style={{ marginBottom: 4 }}><strong>Med. Contínuos:</strong> {summary.medicamentosContinuos}</div>}
+                              
+                              {summary.hasActiveTempMeds && (
+                                <div style={{ marginTop: 6, paddingTop: 6, borderTop: "1px solid rgba(255,255,255,0.1)" }}>
+                                  <strong style={{ color: "#FDE68A" }}>💊 Tratamento em Andamento:</strong>
+                                  {summary.activeTempMeds.map((m, idx) => (
+                                    <div key={idx} style={{ marginTop: 4, fontSize: 11, background: "rgba(255,255,255,0.05)", padding: 6, borderRadius: 6 }}>
+                                      <div><strong>{m.nome}</strong> ({m.dosagemHorario})</div>
+                                      <div style={{ color: "#94A3B8" }}>Até: {new Date(m.dataFim + 'T12:00:00').toLocaleDateString('pt-BR')}</div>
+                                      {m.urlReceita && (
+                                        <a href={m.urlReceita} target="_blank" rel="noopener noreferrer" style={{ color: "#60A5FA", textDecoration: "underline", fontSize: 10, display: "inline-block", marginTop: 2 }}>
+                                          📄 Ver Receita
+                                        </a>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
                             </div>
                           )}
                         </div>

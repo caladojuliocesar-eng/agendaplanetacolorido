@@ -18,7 +18,7 @@ import {
   rejectMatriculaSolicitude,
   updateMatriculaSolicitude
 } from "@/lib/firestore";
-import { Student, UserProfile } from "@/types";
+import { Student, UserProfile, MedicamentoTemporario } from "@/types";
 
 const TURMAS_SUGERIDAS = [
   "Berçário I", "Berçário II",
@@ -102,8 +102,19 @@ export default function AlunosAdminPage() {
     tipoSanguineo: "",
     convenioMedico: "",
     contatoPediatra: "",
+    medicamentosTemporarios: [] as MedicamentoTemporario[]
   });
   const [saving, setSaving] = useState(false);
+
+  // Temporary medication input state
+  const [newTempMed, setNewTempMed] = useState({
+    nome: "",
+    dosagemHorario: "",
+    dataInicio: "",
+    dataFim: "",
+    observacoes: "",
+    urlReceita: ""
+  });
 
   // Parent Linking State
   const [parentSearchEmail, setParentSearchEmail] = useState("");
@@ -218,6 +229,7 @@ export default function AlunosAdminPage() {
         tipoSanguineo: student.tipoSanguineo || "",
         convenioMedico: student.convenioMedico || "",
         contatoPediatra: student.contatoPediatra || "",
+        medicamentosTemporarios: student.medicamentosTemporarios || []
       });
       setActiveTab("geral");
     } else {
@@ -235,6 +247,7 @@ export default function AlunosAdminPage() {
         tipoSanguineo: "",
         convenioMedico: "",
         contatoPediatra: "",
+        medicamentosTemporarios: []
       });
       setActiveTab("geral");
     }
@@ -680,6 +693,125 @@ export default function AlunosAdminPage() {
                     <div>
                       <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#64748B", marginBottom: 6 }}>CONTATO PEDIATRA</label>
                       <input type="text" className="text-input" value={formData.contatoPediatra} onChange={e => setFormData({...formData, contatoPediatra: e.target.value})} placeholder="Nome e telefone" />
+                    </div>
+                  </div>
+
+                  {/* ===== MEDICAMENTOS TEMPORÁRIOS / TRATAMENTOS ===== */}
+                  <div style={{ borderTop: "1px dashed #CBD5E1", paddingTop: 16, marginTop: 8 }}>
+                    <label style={{ display: "block", fontSize: 13, fontWeight: 800, color: "#1E293B", marginBottom: 8 }}>
+                      💊 MEDICAMENTOS TEMPORÁRIOS (COM PRAZO DE TRATAMENTO)
+                    </label>
+
+                    {formData.medicamentosTemporarios && formData.medicamentosTemporarios.length > 0 && (
+                      <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
+                        {formData.medicamentosTemporarios.map((med, idx) => (
+                          <div key={idx} style={{ padding: 12, background: "#FEF3C7", border: "1px solid #FDE68A", borderRadius: 10, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <div>
+                              <strong style={{ fontSize: 13, color: "#78350F" }}>{med.nome}</strong> ({med.dosagemHorario})
+                              <div style={{ fontSize: 11, color: "#92400E", marginTop: 2 }}>
+                                Período: {med.dataInicio} até {med.dataFim} {med.observacoes ? `• Obs: ${med.observacoes}` : ''}
+                              </div>
+                              {med.urlReceita && (
+                                <a href={med.urlReceita} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: "#2563EB", textDecoration: "underline", display: "inline-block", marginTop: 4 }}>
+                                  📄 Receita Médica Anexa
+                                </a>
+                              )}
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setFormData(prev => ({
+                                  ...prev,
+                                  medicamentosTemporarios: prev.medicamentosTemporarios.filter((_, i) => i !== idx)
+                                }));
+                              }}
+                              style={{ background: "#FEE2E2", color: "#EF4444", border: "none", borderRadius: 6, padding: "4px 8px", fontSize: 11, fontWeight: 700, cursor: "pointer" }}
+                            >
+                              Remover
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Formulário para adicionar novo medicamento temporário */}
+                    <div style={{ background: "#F8FAFC", padding: 14, borderRadius: 12, border: "1px solid #E2E8F0", display: "flex", flexDirection: "column", gap: 10 }}>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: "#475569" }}>+ Adicionar Novo Tratamento Temporário</span>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                        <input 
+                          type="text" 
+                          placeholder="Nome (ex: Amoxicilina 250mg)" 
+                          className="text-input" 
+                          style={{ fontSize: 12 }} 
+                          value={newTempMed.nome} 
+                          onChange={e => setNewTempMed({...newTempMed, nome: e.target.value})} 
+                        />
+                        <input 
+                          type="text" 
+                          placeholder="Dosagem/Horário (ex: 5ml às 14h)" 
+                          className="text-input" 
+                          style={{ fontSize: 12 }} 
+                          value={newTempMed.dosagemHorario} 
+                          onChange={e => setNewTempMed({...newTempMed, dosagemHorario: e.target.value})} 
+                        />
+                      </div>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                        <div>
+                          <label style={{ fontSize: 10, fontWeight: 700, color: "#64748B" }}>DATA INÍCIO</label>
+                          <input 
+                            type="date" 
+                            className="text-input" 
+                            style={{ fontSize: 12 }} 
+                            value={newTempMed.dataInicio} 
+                            onChange={e => setNewTempMed({...newTempMed, dataInicio: e.target.value})} 
+                          />
+                        </div>
+                        <div>
+                          <label style={{ fontSize: 10, fontWeight: 700, color: "#64748B" }}>DATA FIM</label>
+                          <input 
+                            type="date" 
+                            className="text-input" 
+                            style={{ fontSize: 12 }} 
+                            value={newTempMed.dataFim} 
+                            onChange={e => setNewTempMed({...newTempMed, dataFim: e.target.value})} 
+                          />
+                        </div>
+                      </div>
+                      <input 
+                        type="text" 
+                        placeholder="Observações (opcional: 'dar após o lanche')" 
+                        className="text-input" 
+                        style={{ fontSize: 12 }} 
+                        value={newTempMed.observacoes} 
+                        onChange={e => setNewTempMed({...newTempMed, observacoes: e.target.value})} 
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!newTempMed.nome || !newTempMed.dataInicio || !newTempMed.dataFim) {
+                            alert("Preencha o Nome, Data de Início e Data de Fim do tratamento.");
+                            return;
+                          }
+                          const medItem: MedicamentoTemporario = {
+                            id: Date.now().toString(),
+                            nome: newTempMed.nome,
+                            dosagemHorario: newTempMed.dosagemHorario || "Conforme receita",
+                            dataInicio: newTempMed.dataInicio,
+                            dataFim: newTempMed.dataFim,
+                            observacoes: newTempMed.observacoes,
+                            urlReceita: newTempMed.urlReceita,
+                            criadoEm: new Date().toISOString()
+                          };
+                          setFormData(prev => ({
+                            ...prev,
+                            medicamentosTemporarios: [...prev.medicamentosTemporarios, medItem]
+                          }));
+                          setNewTempMed({ nome: "", dosagemHorario: "", dataInicio: "", dataFim: "", observacoes: "", urlReceita: "" });
+                        }}
+                        style={{ background: "#0284C7", color: "white", border: "none", borderRadius: 8, padding: "8px", fontSize: 12, fontWeight: 700, cursor: "pointer", alignSelf: "flex-end" }}
+                      >
+                        + Adicionar Medicamento à Ficha
+                      </button>
                     </div>
                   </div>
                   <div style={{ display: "flex", gap: 12, marginTop: 16 }}>

@@ -95,11 +95,13 @@ export default function BottomNav({ role }: BottomNavProps) {
     role === "pai"
       ? [
           { href: "/pais/agenda", label: "Agenda", icon: "📅", badge: notifications.agenda },
+          { href: "/pais/momentos", label: "Fotos", icon: "📸", badge: false },
           { href: "/pais/financeiro", label: "Financeiro", icon: "💰", badge: notifications.financeiro },
           { href: "/pais/escola", label: "Escola", icon: "🏫", badge: notifications.escola },
         ]
       : [
           { href: "/professor/dashboard", label: "Turma", icon: "👥", badge: false },
+          { href: "/professor/momentos", label: "Fotos", icon: "📸", badge: false },
           { href: "/professor/relatorios", label: "Relatórios", icon: "🧠", badge: false },
         ];
 

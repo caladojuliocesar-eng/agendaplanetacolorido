@@ -1,6 +1,7 @@
 "use client";
 
 import { useAuth } from "@/contexts/AuthContext";
+import { getStudentMedicalSummary } from "@/lib/medical";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { doc, getDoc } from "firebase/firestore";
@@ -409,7 +410,7 @@ export default function RegistroIndividual() {
           display: "flex",
           alignItems: "center",
           gap: 12,
-          marginBottom: 20,
+          marginBottom: 16,
         }}
       >
         <button
@@ -435,6 +436,53 @@ export default function RegistroIndividual() {
           </p>
         </div>
       </div>
+
+      {/* ====== FICHA MÉDICA / ALERTAS DE SAÚDE ====== */}
+      {student && (() => {
+        const summary = getStudentMedicalSummary(student);
+        if (!summary.hasAnyCritical && !summary.hasActiveTempMeds) return null;
+
+        return (
+          <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 16 }}>
+            {summary.hasAnyCritical && (
+              <div style={{ padding: "12px 16px", background: "#FEF2F2", border: "1px solid #FECACA", borderRadius: 12 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 800, color: "#991B1B", fontSize: 13, marginBottom: 4 }}>
+                  <span>🚨 ATENÇÃO MÉDICA / ALERGIA</span>
+                </div>
+                <div style={{ fontSize: 12, color: "#B91C1C", display: "flex", flexDirection: "column", gap: 2 }}>
+                  {summary.alergias && <div>• <strong>Alergia:</strong> {summary.alergias}</div>}
+                  {summary.restricoes && <div>• <strong>Restrição Alimentar:</strong> {summary.restricoes}</div>}
+                  {summary.medicamentosContinuos && <div>• <strong>Medicação Contínua:</strong> {summary.medicamentosContinuos}</div>}
+                </div>
+              </div>
+            )}
+
+            {summary.hasActiveTempMeds && (
+              <div style={{ padding: "12px 16px", background: "#FEF3C7", border: "1px solid #FDE68A", borderRadius: 12 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 800, color: "#92400E", fontSize: 13, marginBottom: 4 }}>
+                  <span>💊 MEDICAÇÃO TEMPORÁRIA (MINISTRAR HOJE)</span>
+                </div>
+                <div style={{ fontSize: 12, color: "#B45309", display: "flex", flexDirection: "column", gap: 6 }}>
+                  {summary.activeTempMeds.map((med, idx) => (
+                    <div key={idx} style={{ background: "white", padding: 8, borderRadius: 8, border: "1px solid #FCD34D" }}>
+                      <div style={{ fontWeight: 700, color: "#78350F" }}>{med.nome} — {med.dosagemHorario}</div>
+                      {med.observacoes && <div style={{ fontSize: 11, color: "#92400E" }}>Obs: {med.observacoes}</div>}
+                      <div style={{ fontSize: 10, color: "#D97706", marginTop: 2 }}>
+                        Período: {new Date(med.dataInicio + 'T12:00:00').toLocaleDateString('pt-BR')} a {new Date(med.dataFim + 'T12:00:00').toLocaleDateString('pt-BR')}
+                      </div>
+                      {med.urlReceita && (
+                        <a href={med.urlReceita} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: "#2563EB", fontWeight: 700, textDecoration: "underline", display: "inline-block", marginTop: 4 }}>
+                          📄 Ver Receita Anexa
+                        </a>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       {/* ====== STATUS DE PRESENÇA ====== */}
       <div className="card" style={{ padding: "12px 16px", marginBottom: 16, display: "flex", alignItems: "center", justifyContent: "space-between", border: ausente ? "1px solid var(--text-muted)" : "1px solid var(--success-light)" }}>

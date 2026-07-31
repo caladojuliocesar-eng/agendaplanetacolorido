@@ -6,7 +6,8 @@ Documento de registro de funcionalidades a testar, melhorias operacionais e nova
 
 ## 🧪 1. Funcionalidades a Testar
 
-### 🎙️ Input por Voz da Professora
+### 🎙️ Input por Voz da Professora [CONCLUÍDO ✅]
+- **Status:** Testado e Aprovado no Celular/Desktop.
 - **Objetivo:** Permitir que as professoras ditem observações pedagógicas e registros de rotina por voz durante a rotina na sala de aula.
 - **Detalhamento:**
   - Testar uso da Web Speech API nativa e/ou transcrição por voz.
@@ -17,25 +18,24 @@ Documento de registro de funcionalidades a testar, melhorias operacionais e nova
 
 ## 🛠️ 2. Melhorias Operacionais & Regras de Negócio
 
-### 🔒 1. Trava de Edição em Cobranças Finalizadas
-- **Problema:** O aplicativo atualmente permite editar cobranças mesmo após serem quitadas/finalizadas.
-- **Ação:** Implementar regra de bloqueio (*read-only*) para cobranças com status `PAGA` ou `FINALIZADA`, permitindo edição apenas por perfil Administrador com registro de justificativa.
+### 🔒 1. Trava de Edição em Cobranças Finalizadas [CONCLUÍDO ✅]
+- **Status:** Implementado. Cobranças com status `PAGO` possuem campos protegidos e aviso de segurança com opção de desbloqueio manual.
+- **Ação:** Implementar regra de bloqueio (*read-only*) para cobranças com status `PAGA` ou `FINALIZADA`.
 
-### 📅 2. Registro de Data de Pagamento & Recebimento de Comprovante
-- **Objetivo:** Dar precisão ao fluxo de caixa e conciliação bancária da secretaria.
+### 📅 2. Registro de Data de Pagamento & Recebimento de Comprovante [CONCLUÍDO ✅]
+- **Status:** Implementado. Exibição de timestamps `dataPagamento` e `dataEnvioComprovante` nas telas Admin e Pais.
 - **Ação:**
-  - Adicionar campo `data_pagamento` (data real da transação no banco).
-  - Adicionar campo `data_recebimento_comprovante` (data/hora em que a família enviou o comprovante no app).
+  - Adicionar campo `dataPagamento` (registrado na quitação).
+  - Adicionar campo `dataEnvioComprovante` (registrado no upload do anexo pelos pais).
 
-### 💬 3. Gestão de Mensagens entre Coordenação e Pais
-- **Objetivo:** Manter o canal de atendimento limpo e organizado.
-- **Questão/Evolução:** Definir regra para encerramento de atendimentos.
-  - *Opção Recomendada:* Botão "Arquivar Conversa Encerada" (mantém histórico seguro para auditoria, mas limpa a caixa de entrada ativa da coordenação).
+### 💬 3. Gestão de Mensagens entre Coordenação e Pais [CONCLUÍDO ✅]
+- **Status:** Implementado. Abas "Ativas" e "Arquivadas" no painel da coordenação, botão "📦 Arquivar Atendimento" e reativação automática quando o pai envia uma nova mensagem.
+- **Objetivo:** Manter o canal de atendimento limpo e organizado sem perder o histórico de auditoria.
 
-### 🩺 4. Sistema de Alertas de Ficha Médica
-- **Objetivo:** Destacar restrições de saúde críticas logo na abertura do perfil do aluno.
+### 🩺 4. Sistema de Alertas de Ficha Médica [CONCLUÍDO ✅]
+- **Status:** Implementado. Filtro inteligente de alertas críticos (isenta permissões de febre SOS tipo Dipirona), alertas destacados para o corpo docente e suporte a **Medicamentos Temporários** com validade automática (início/fim) e receita anexa.
 - **Ação:**
-  - Badges em vermelho e alertas em topo de tela para **Alergias Graves**, **Medicamentos Contínuos** e **Condições Especiais** nas telas da professora e no Diário de Classe Oficial.
+  - Badges e banners destacados para **Alergias Reais**, **Restrições Alimentares** e **Medicações Ativas no Dia** nas telas da professora, turmas e dashboard admin.
 
 ### 🔍 5. Validação Inteligente de Cadastro de Novos Alunos
 - **Objetivo:** Evitar duplicidades e erros de digitação na ficha cadastral.
@@ -43,11 +43,11 @@ Documento de registro de funcionalidades a testar, melhorias operacionais e nova
   - Checagem automática de dados de novos alunos contra cadastros pré-existentes (cruzamento por CPF do responsável, Data de Nascimento e Nome Completo).
   - Alertas para a secretaria caso detectada correspondência.
 
-### 🏫 6. Definição de Permissões de Preenchimento do Cadastro de Alunos
-- **Objetivo:** Estabelecer quais campos são estritamente administrativos vs editáveis pelas famílias.
+### 🏫 6. Definição de Permissões de Preenchimento do Cadastro de Alunos [CONCLUÍDO ✅]
+- **Status:** Implementado. Aba "👤 Perfil" no app dos pais para alteração de foto, endereço e **Pessoas Autorizadas a Retirar o Aluno** com auditoria e **notificação automática para a coordenação** a cada alteração.
 - **Matriz de Permissões:**
-  - *Apenas a Escola (Administrativo):* Turma, Matrícula, Status Financeiro, Histórico Escolar, Restrições Especiais.
-  - *Editável pelas Famílias:* Foto do Aluno, Telefone de Contato, Pessoas Autorizadas para Retirada, Endereço de Correspondência.
+  - *Apenas a Escola (Administrativo):* Turma, Matrícula, Status Financeiro, Ficha Médica Crítica.
+  - *Editável pelas Famílias:* Foto do Aluno, Pessoas Autorizadas para Retirada, Endereço de Correspondência.
 
 ---
 
@@ -78,8 +78,8 @@ Documento de registro de funcionalidades a testar, melhorias operacionais e nova
 
 ### 📦 Módulos Futuros (Próxima Fase)
 
-#### 📊 4. Relatórios Financeiros Avançados
-- Dashboard com DRE simplificado, taxa de inadimplência por turma, total arrecadado por mês e projeções de receita.
+#### 📊 4. Relatórios Financeiros Avançados [CONCLUÍDO ✅]
+- **Status:** Implementado. Painel executivo ([/admin/financeiro/relatorio](file:///c:/OTTOMATIC%20HUB/03_LAB%20%28Testes%20&%20IA%20Studio%20Free%29/agenda-ottomatic/src/app/admin/financeiro/relatorio/page.tsx)) com KPIs de Receita Realizada vs Pendente vs Atrasada, agrupamento inteligente de receita por categorias (Mensalidades, Uniformes, Lanches, Horas Extra/Banho/Diárias) e cálculo automático de taxa de inadimplência por turma com botão de impressão/PDF.
 
-#### 📸 5. Módulo de Publicação de Fotos & Momentos
-- Galeria de fotos das turmas com privacidade por perfil, marcação de alunos e download permitido apenas aos responsáveis autorizados.
+#### 📸 5. Módulo de Publicação de Fotos & Momentos [CONCLUÍDO ✅]
+- **Status:** Implementado. Painel da professora ([/professor/momentos](file:///c:/OTTOMATIC%20HUB/03_LAB%20%28Testes%20&%20IA%20Studio%20Free%29/agenda-ottomatic/src/app/professor/momentos/page.tsx)) para publicação de atividades/fotos com upload direto, feed interativo para as famílias ([/pais/momentos](file:///c:/OTTOMATIC%20HUB/03_LAB%20%28Testes%20&%20IA%20Studio%20Free%29/agenda-ottomatic/src/app/pais/momentos/page.tsx)) com reações ("❤️ Amei!") e download de imagens HD.

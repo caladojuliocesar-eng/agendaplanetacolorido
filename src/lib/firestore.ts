@@ -25,6 +25,7 @@ import {
   Cobranca,
   CobrancaStatus,
   UniformItem,
+  Momento
 } from "@/types";
 
 // ============================================
@@ -453,6 +454,36 @@ export async function updateStudent(studentId: string, data: Partial<Student>): 
   await updateDoc(ref, data);
 }
 
+export async function updateStudentFamilyProfile(
+  studentId: string,
+  data: Partial<Student>,
+  parentName: string,
+  studentName: string,
+  escolaId: string,
+  updateSummaryText: string
+): Promise<void> {
+  const ref = doc(db(), "alunos", studentId);
+  await updateDoc(ref, {
+    ...data,
+    atualizadoEm: new Date().toISOString()
+  });
+
+  // Automatically log an audit notification message in conversas_coordenacao
+  if (updateSummaryText) {
+    try {
+      await saveCoordinationMessage(
+        studentId,
+        `ℹ️ [ATUALIZAÇÃO CADASTRAL]: ${parentName} atualizou as informações do aluno (${updateSummaryText}).`,
+        'pai',
+        escolaId,
+        studentName
+      );
+    } catch (e) {
+      console.error("Erro ao registrar notificação de atualização cadastral:", e);
+    }
+  }
+}
+
 export async function addUser(userData: Omit<UserProfile, "uid">): Promise<void> {
   await addDoc(collection(db(), "usuarios"), {
     ...userData,
@@ -649,12 +680,17 @@ export async function saveCoordinationMessage(
   };
 
   if (snap.exists()) {
-    await updateDoc(ref, {
+    const updatePayload: any = {
       mensagens: arrayUnion(newMessage),
       ultimaMensagemEm: now,
       lidaCoordenacao: role === 'pai' ? false : true,
       lidaPai: role === 'coordenacao' ? false : true
-    });
+    };
+    // Reactivate chat if parent sends a new message to an archived chat
+    if (role === 'pai') {
+      updatePayload.arquivada = false;
+    }
+    await updateDoc(ref, updatePayload);
   } else {
     await setDoc(ref, {
       alunoId,
@@ -663,9 +699,18 @@ export async function saveCoordinationMessage(
       mensagens: [newMessage],
       ultimaMensagemEm: now,
       lidaCoordenacao: role === 'pai' ? false : true,
-      lidaPai: role === 'coordenacao' ? false : true
+      lidaPai: role === 'coordenacao' ? false : true,
+      arquivada: false
     });
   }
+}
+
+export async function archiveCoordinationChat(alunoId: string, arquivada: boolean): Promise<void> {
+  const ref = doc(db(), "conversas_coordenacao", alunoId);
+  await updateDoc(ref, {
+    arquivada,
+    atualizadoEm: new Date().toISOString()
+  });
 }
 
 export async function markCoordinationChatRead(alunoId: string, role: 'pai' | 'coordenacao'): Promise<void> {
@@ -941,5 +986,53 @@ export async function setActivePeriod(escolaId: string, periodo: string): Promis
   await setDoc(ref, {
     periodoAtual: periodo
   }, { merge: true });
+}
+
+// ============================================
+// Módulo de Fotos & Momentos da Turma
+// ============================================
+
+export async function saveMomento(momentoData: Omit<Momento, "id" | "criadoEm">): Promise<void> {
+  await addDoc(collection(db(), "momentos_turma"), {
+    ...momentoData,
+    curtidas: momentoData.curtidas || [],
+    criadoEm: new Date().toISOString()
+  });
+}
+
+export async function getMomentosByTurma(escolaId: string, turma: string): Promise<Momento[]> {
+  const q = query(
+    collection(db(), "momentos_turma"),
+    where("escolaId", "==", escolaId),
+    where("turma", "==", turma)
+  );
+  const snap = await getDocs(q);
+  return snap.docs
+    .map(d => ({ id: d.id, ...d.data() } as Momento))
+    .sort((a, b) => b.criadoEm.localeCompare(a.criadoEm));
+}
+
+export async function toggleCurtiMomento(momentoId: string, userId: string): Promise<void> {
+  const ref = doc(db(), "momentos_turma", momentoId);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) return;
+
+  const data = snap.data();
+  const curtidas: string[] = data.curtidas || [];
+
+  if (curtidas.includes(userId)) {
+    await updateDoc(ref, {
+      curtidas: arrayRemove(userId)
+    });
+  } else {
+    await updateDoc(ref, {
+      curtidas: arrayUnion(userId)
+    });
+  }
+}
+
+export async function deleteMomento(momentoId: string): Promise<void> {
+  const { deleteDoc } = await import("firebase/firestore");
+  await deleteDoc(doc(db(), "momentos_turma", momentoId));
 }
 

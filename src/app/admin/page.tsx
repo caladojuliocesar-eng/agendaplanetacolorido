@@ -15,6 +15,7 @@ import {
   getTodayDateString
 } from "@/lib/firestore";
 import { Student, UserProfile, Aviso, Evento, DailyRecord } from "@/types";
+import { getStudentMedicalSummary } from "@/lib/medical";
 import Link from "next/link";
 
 export default function AdminDashboard() {
@@ -100,13 +101,12 @@ export default function AdminDashboard() {
               ausentes++;
             } else {
               presentes++;
-              // If present, check for health alerts
-              if (student.alergias?.trim() || student.restricoesAlimentares?.trim() || student.medicamentosContinuos?.trim()) {
+              // If present, check for medical summary using refined rules
+              const medSummary = getStudentMedicalSummary(student);
+              if (medSummary.hasAnyCritical || medSummary.hasActiveTempMeds) {
                 alerts.push({
                   student,
-                  alergias: student.alergias,
-                  restricoes: student.restricoesAlimentares,
-                  medicamentos: student.medicamentosContinuos
+                  summary: medSummary
                 });
               }
             }
@@ -267,18 +267,28 @@ export default function AdminDashboard() {
             {healthAlerts.length === 0 ? (
               <p style={{ color: "#64748B", fontSize: 14, margin: 0 }}>Nenhum aluno com alergias ou restrições alimentares registrado como presente hoje.</p>
             ) : (
-              healthAlerts.map(({ student, alergias, restricoes, medicamentos }) => (
-                <div key={student.id} style={{ padding: 12, background: "#FFF7ED", border: "1px solid #FFEDD5", borderRadius: 10 }}>
+              healthAlerts.map(({ student, summary }) => (
+                <div key={student.id} style={{ padding: 12, background: summary.hasAnyCritical ? "#FFF7ED" : "#FEF3C7", border: `1px solid ${summary.hasAnyCritical ? "#FFEDD5" : "#FDE68A"}`, borderRadius: 10 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-                    <strong style={{ fontSize: 13, color: "#431407" }}>{student.nome}</strong>
-                    <span style={{ fontSize: 11, background: "#FFEDD5", padding: "2px 6px", borderRadius: 6, fontWeight: 700, color: "#B45309" }}>
+                    <strong style={{ fontSize: 13, color: summary.hasAnyCritical ? "#431407" : "#78350F" }}>{student.nome}</strong>
+                    <span style={{ fontSize: 11, background: summary.hasAnyCritical ? "#FFEDD5" : "#FDE68A", padding: "2px 6px", borderRadius: 6, fontWeight: 700, color: summary.hasAnyCritical ? "#B45309" : "#92400E" }}>
                       {student.turma}
                     </span>
                   </div>
                   <div style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12, color: "#7C2D12" }}>
-                    {alergias?.trim() && <div>• <strong>Alergia:</strong> {alergias}</div>}
-                    {restricoes?.trim() && <div>• <strong>Restrição:</strong> {restricoes}</div>}
-                    {medicamentos?.trim() && <div>• <strong>Med. Contínuo:</strong> {medicamentos}</div>}
+                    {summary.alergias && <div>• <strong>Alergia:</strong> {summary.alergias}</div>}
+                    {summary.restricoes && <div>• <strong>Restrição:</strong> {summary.restricoes}</div>}
+                    {summary.medicamentosContinuos && <div>• <strong>Med. Contínuo:</strong> {summary.medicamentosContinuos}</div>}
+                    {summary.hasActiveTempMeds && (
+                      <div style={{ marginTop: 2, paddingTop: 4, borderTop: "1px dashed #FDE68A", color: "#92400E" }}>
+                        • <strong>💊 Medicação Temporária Hoje:</strong>
+                        {summary.activeTempMeds.map((m: any, idx: number) => (
+                          <div key={idx} style={{ marginLeft: 12, fontSize: 11 }}>
+                            - {m.nome} ({m.dosagemHorario}) - até {new Date(m.dataFim + 'T12:00:00').toLocaleDateString('pt-BR')}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               ))

@@ -66,16 +66,17 @@ export default function ParentFinanceiroPage() {
       await uploadBytes(fileRef, file);
       const url = await getDownloadURL(fileRef);
       
-      await updateCobranca(c.id, { urlComprovante: url });
+      const now = new Date().toISOString();
+      await updateCobranca(c.id, { urlComprovante: url, dataEnvioComprovante: now });
       
       // Update local state
       setCobrancas(prev => {
         const studentCharges = prev[c.alunoId].map(item => 
-          item.id === c.id ? { ...item, urlComprovante: url } : item
+          item.id === c.id ? { ...item, urlComprovante: url, dataEnvioComprovante: now } : item
         );
         return { ...prev, [c.alunoId]: studentCharges };
       });
-      setSelectedCobranca(prev => prev && prev.id === c.id ? { ...prev, urlComprovante: url } : prev);
+      setSelectedCobranca(prev => prev && prev.id === c.id ? { ...prev, urlComprovante: url, dataEnvioComprovante: now } : prev);
       alert("Comprovante enviado com sucesso! A escola irá conferir o pagamento.");
     } catch (error) {
       console.error("Erro no upload:", error);
@@ -376,20 +377,32 @@ export default function ParentFinanceiroPage() {
             <div style={{ borderTop: "1px dashed #E2E8F0", paddingTop: 20 }}>
               <h4 style={{ fontSize: 11, fontWeight: 800, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 12 }}>Comprovante</h4>
               {selectedCobranca.status === 'pago' ? (
-                <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#22C55E", fontSize: 14, fontWeight: 700 }}>
-                  ✅ Pago e validado pela escola
+                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#22C55E", fontSize: 14, fontWeight: 700 }}>
+                    ✅ Pago e validado pela escola
+                  </div>
+                  {selectedCobranca.dataPagamento && (
+                    <span style={{ fontSize: 12, color: "#64748B" }}>
+                      Data da quitação: {new Date(selectedCobranca.dataPagamento).toLocaleDateString('pt-BR')}
+                    </span>
+                  )}
                 </div>
               ) : selectedCobranca.urlComprovante ? (
-                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#22C55E", fontSize: 13, fontWeight: 600 }}>
-                    <span>✓ Comprovante enviado para análise</span>
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#2563EB", fontSize: 13, fontWeight: 600 }}>
+                    <span>📥 Comprovante enviado para análise</span>
                     <button 
                       onClick={() => setSelectedImage(selectedCobranca.urlComprovante!)}
-                      style={{ background: "none", border: "none", color: "#64748B", fontSize: 12, textDecoration: "underline", cursor: "pointer" }}
+                      style={{ background: "none", border: "none", color: "#2563EB", fontSize: 12, textDecoration: "underline", cursor: "pointer", fontWeight: 700 }}
                     >
-                      Ver
+                      Ver Anexo
                     </button>
                   </div>
+                  {selectedCobranca.dataEnvioComprovante && (
+                    <span style={{ fontSize: 11, color: "#64748B" }}>
+                      Enviado em: {new Date(selectedCobranca.dataEnvioComprovante).toLocaleDateString('pt-BR')} às {new Date(selectedCobranca.dataEnvioComprovante).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  )}
                 </div>
               ) : (
                 <div>

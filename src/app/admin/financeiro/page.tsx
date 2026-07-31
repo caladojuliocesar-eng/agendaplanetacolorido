@@ -77,11 +77,12 @@ export default function AdminFinanceiroPage() {
   async function handleConfirmPayment(id: string) {
     if (confirm("Confirmar que o pagamento foi recebido? O status passará para PAGO.")) {
       try {
+        const now = new Date().toISOString();
         await updateCobranca(id, { 
           status: 'pago',
-          dataPagamento: new Date().toISOString()
+          dataPagamento: now
         });
-        setCobrancas(prev => prev.map(c => c.id === id ? { ...c, status: 'pago' as CobrancaStatus } : c));
+        setCobrancas(prev => prev.map(c => c.id === id ? { ...c, status: 'pago' as CobrancaStatus, dataPagamento: now } : c));
       } catch (error) {
         alert("Erro ao confirmar");
       }
@@ -90,15 +91,27 @@ export default function AdminFinanceiroPage() {
 
   async function handleStatusChange(id: string, newStatus: CobrancaStatus) {
     try {
-      await updateCobrancaStatus(id, newStatus);
-      setCobrancas(prev => prev.map(c => c.id === id ? { ...c, status: newStatus } : c));
+      if (newStatus === 'pago') {
+        const now = new Date().toISOString();
+        await updateCobranca(id, { status: newStatus, dataPagamento: now });
+        setCobrancas(prev => prev.map(c => c.id === id ? { ...c, status: newStatus, dataPagamento: now } : c));
+      } else {
+        await updateCobrancaStatus(id, newStatus);
+        setCobrancas(prev => prev.map(c => c.id === id ? { ...c, status: newStatus } : c));
+      }
     } catch (error) {
       alert("Erro ao atualizar status");
     }
   }
 
   async function handleDelete(id: string) {
-    if (confirm("Tem certeza que deseja excluir esta cobrança?")) {
+    const item = cobrancas.find(c => c.id === id);
+    const isPaid = item?.status === 'pago';
+    const message = isPaid 
+      ? "⚠️ ATENÇÃO: Esta cobrança está marcada como PAGA e CONCILIADA!\n\nTem certeza de que deseja excluí-la? Essa ação pode afetar os relatórios contábeis."
+      : "Tem certeza que deseja excluir esta cobrança?";
+
+    if (confirm(message)) {
       try {
         await (await import("@/lib/firestore")).deleteCobranca(id);
         setCobrancas(prev => prev.filter(c => c.id !== id));
@@ -126,21 +139,41 @@ export default function AdminFinanceiroPage() {
           <h2 style={{ fontSize: 24, fontWeight: 800, color: "#1E293B", margin: 0 }}>Financeiro</h2>
           <p style={{ color: "#64748B", margin: "4px 0 0 0" }}>Gerencie as cobranças e mensalidades da escola</p>
         </div>
-        <Link 
-          href="/admin/financeiro/nova"
-          style={{
-            background: "var(--primary)",
-            color: "white",
-            padding: "12px 24px",
-            borderRadius: 12,
-            textDecoration: "none",
-            fontWeight: 700,
-            fontSize: 14,
-            boxShadow: "0 4px 12px rgba(249, 115, 22, 0.2)"
-          }}
-        >
-          + Nova Cobrança
-        </Link>
+        <div style={{ display: "flex", gap: 12 }}>
+          <Link 
+            href="/admin/financeiro/relatorio"
+            style={{
+              background: "#F1F5F9",
+              color: "#334155",
+              border: "1px solid #CBD5E1",
+              padding: "12px 20px",
+              borderRadius: 12,
+              textDecoration: "none",
+              fontWeight: 700,
+              fontSize: 14,
+              display: "flex",
+              alignItems: "center",
+              gap: 6
+            }}
+          >
+            📊 Relatório Executivo
+          </Link>
+          <Link 
+            href="/admin/financeiro/nova"
+            style={{
+              background: "var(--primary)",
+              color: "white",
+              padding: "12px 24px",
+              borderRadius: 12,
+              textDecoration: "none",
+              fontWeight: 700,
+              fontSize: 14,
+              boxShadow: "0 4px 12px rgba(249, 115, 22, 0.2)"
+            }}
+          >
+            + Nova Cobrança
+          </Link>
+        </div>
       </div>
 
       {/* Tabs para Filtrar Cobranças */}
@@ -274,20 +307,28 @@ export default function AdminFinanceiroPage() {
                       {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(c.valor)}
                     </td>
                     <td style={{ padding: "16px" }}>
-                      <span style={{ 
-                        padding: "4px 12px", 
-                        borderRadius: 20, 
-                        fontSize: 11, 
-                        fontWeight: 700, 
-                        background: getStatusColor(c.status) + '15',
-                        color: getStatusColor(c.status),
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: 4
-                      }}>
-                        {isOverdue && "⚠️ "}
-                        {c.status.toUpperCase()}
-                      </span>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "flex-start" }}>
+                        <span style={{ 
+                          padding: "4px 12px", 
+                          borderRadius: 20, 
+                          fontSize: 11, 
+                          fontWeight: 700, 
+                          background: getStatusColor(c.status) + '15',
+                          color: getStatusColor(c.status),
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 4
+                        }}>
+                          {isOverdue && "⚠️ "}
+                          {c.status === 'pago' && "🔒 "}
+                          {c.status.toUpperCase()}
+                        </span>
+                        {c.status === 'pago' && c.dataPagamento && (
+                          <span style={{ fontSize: 11, color: "#166534", fontWeight: 600 }}>
+                            Pago: {new Date(c.dataPagamento).toLocaleDateString('pt-BR')}
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td style={{ padding: "16px" }}>
                       {c.urlComprovante ? (
@@ -310,6 +351,11 @@ export default function AdminFinanceiroPage() {
                           >
                             📄 Ver Anexo
                           </a>
+                          {c.dataEnvioComprovante && (
+                            <span style={{ fontSize: 10, color: "#64748B" }}>
+                              Enviado em: {new Date(c.dataEnvioComprovante).toLocaleDateString('pt-BR')} {new Date(c.dataEnvioComprovante).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          )}
                           {hasVoucherToValidate && (
                             <span style={{ fontSize: 10, color: "#2563EB", fontWeight: 700 }}>
                               📥 Aguardando Validação
@@ -336,19 +382,21 @@ export default function AdminFinanceiroPage() {
                         style={{ padding: "6px", borderRadius: 8, border: "1px solid #E2E8F0", fontSize: 12 }}
                       >
                         <option value="pendente">Pendente</option>
-                        <option value="pago">Pago</option>
+                        <option value="pago">Pago 🔒</option>
                         <option value="atrasado">Atrasado</option>
                         <option value="cancelado">Cancelado</option>
                       </select>
                       <Link 
                         href={`/admin/financeiro/editar/${c.id}`}
                         style={{ padding: "6px 12px", background: "#F1F5F9", borderRadius: 8, color: "#475569", fontSize: 12, fontWeight: 700, textDecoration: "none" }}
+                        title={c.status === 'pago' ? "Visualizar / Editar cobrança (Protegida)" : "Editar cobrança"}
                       >
-                        ✏️
+                        {c.status === 'pago' ? "🔒 Visualizar" : "✏️"}
                       </Link>
                       <button 
                         onClick={() => handleDelete(c.id)}
                         style={{ padding: "6px", background: "#FEE2E2", borderRadius: 8, color: "#EF4444", border: "none", cursor: "pointer" }}
+                        title="Excluir cobrança"
                       >
                         🗑️
                       </button>

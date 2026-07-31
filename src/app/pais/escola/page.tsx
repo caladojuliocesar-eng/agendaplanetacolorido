@@ -10,16 +10,19 @@ import {
   saveCoordinationMessage, 
   markCoordinationChatRead,
   getTodayDateString,
-  getRelatoriosByAluno
+  getRelatoriosByAluno,
+  updateStudentFamilyProfile
 } from "@/lib/firestore";
-import { Aviso, Evento, Student, RelatorioPedagogico } from "@/types";
+import { storage } from "@/lib/firebase";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { Aviso, Evento, Student, RelatorioPedagogico, AutorizadoRetirada } from "@/types";
 
 export default function EscolaPage() {
   const { profile } = useAuth();
   const [avisos, setAvisos] = useState<Aviso[]>([]);
   const [eventos, setEventos] = useState<Evento[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"mural" | "calendario" | "coordenacao" | "relatorios">("mural");
+  const [activeTab, setActiveTab] = useState<"mural" | "calendario" | "coordenacao" | "relatorios" | "perfil">("mural");
 
   // Coordination Chat States
   const [students, setStudents] = useState<Student[]>([]);
@@ -35,11 +38,23 @@ export default function EscolaPage() {
   const [reports, setReports] = useState<RelatorioPedagogico[]>([]);
   const [viewingReport, setViewingReport] = useState<RelatorioPedagogico | null>(null);
 
+  // Profile editing states
+  const [profileAddress, setProfileAddress] = useState("");
+  const [profileAutorizados, setProfileAutorizados] = useState<AutorizadoRetirada[]>([]);
+  const [profileFotoUrl, setProfileFotoUrl] = useState<string | null>(null);
+  const [uploadingFoto, setUploadingFoto] = useState(false);
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [newAutorizado, setNewAutorizado] = useState({ nome: "", parentesco: "", documento: "" });
+
   useEffect(() => {
     if (!selectedStudent) return;
     getRelatoriosByAluno(selectedStudent.id)
       .then(setReports)
       .catch(console.error);
+
+    setProfileAddress(selectedStudent.endereco || "");
+    setProfileAutorizados(selectedStudent.autorizadosRetirada || []);
+    setProfileFotoUrl(selectedStudent.fotoUrl || null);
   }, [selectedStudent]);
 
   useEffect(() => {
@@ -144,6 +159,88 @@ export default function EscolaPage() {
     }
   };
 
+  const handleStudentPhotoUpload = async (file: File) => {
+    if (!selectedStudent || !profile?.escolaId) return;
+    setUploadingFoto(true);
+    try {
+      const fileRef = ref(storage(), `alunos/${profile.escolaId}/${selectedStudent.id}/${Date.now()}_${file.name}`);
+      await uploadBytes(fileRef, file);
+      const url = await getDownloadURL(fileRef);
+      setProfileFotoUrl(url);
+    } catch (err) {
+      console.error("Erro no upload da foto do aluno:", err);
+      alert("Erro ao enviar foto do aluno.");
+    } finally {
+      setUploadingFoto(false);
+    }
+  };
+
+  const handleAddAutorizado = () => {
+    if (!newAutorizado.nome.trim()) {
+      alert("Preencha o nome da pessoa autorizada.");
+      return;
+    }
+    setProfileAutorizados(prev => [
+      ...prev,
+      {
+        nome: newAutorizado.nome.trim(),
+        parentesco: newAutorizado.parentesco.trim() || "Autorizado",
+        documento: newAutorizado.documento.trim() || ""
+      }
+    ]);
+    setNewAutorizado({ nome: "", parentesco: "", documento: "" });
+  };
+
+  const handleRemoveAutorizado = (index: number) => {
+    setProfileAutorizados(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleSaveFamilyProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedStudent || !profile?.escolaId) return;
+    setSavingProfile(true);
+
+    try {
+      // Build summary text for audit notification
+      const changes: string[] = [];
+      if (profileFotoUrl !== selectedStudent.fotoUrl) changes.push("Nova Foto de Perfil");
+      if (profileAddress !== (selectedStudent.endereco || "")) changes.push("Endereço Atualizado");
+      if (JSON.stringify(profileAutorizados) !== JSON.stringify(selectedStudent.autorizadosRetirada || [])) {
+        changes.push(`Lista de Autorizados (${profileAutorizados.length} autorizados)`);
+      }
+
+      const summaryText = changes.length > 0 ? changes.join(", ") : "Dados Cadastrais";
+
+      await updateStudentFamilyProfile(
+        selectedStudent.id,
+        {
+          fotoUrl: profileFotoUrl,
+          endereco: profileAddress,
+          autorizadosRetirada: profileAutorizados
+        },
+        profile.nome || "Família",
+        selectedStudent.nome,
+        profile.escolaId,
+        summaryText
+      );
+
+      // Update local state
+      setSelectedStudent(prev => prev ? {
+        ...prev,
+        fotoUrl: profileFotoUrl,
+        endereco: profileAddress,
+        autorizadosRetirada: profileAutorizados
+      } : null);
+
+      alert("Perfil cadastral atualizado com sucesso! A coordenação foi notificada.");
+    } catch (err) {
+      console.error("Erro ao salvar perfil da família:", err);
+      alert("Erro ao salvar alterações no perfil.");
+    } finally {
+      setSavingProfile(false);
+    }
+  };
+
   const todayStr = getTodayDateString();
   const visibleEventos = eventos.filter(evento => evento.data >= todayStr);
 
@@ -175,7 +272,7 @@ export default function EscolaPage() {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(4, 1fr)",
+          gridTemplateColumns: "repeat(5, 1fr)",
           background: "var(--bg-card)",
           borderBottom: "1px solid var(--border)",
           position: "sticky",
@@ -193,7 +290,7 @@ export default function EscolaPage() {
             borderBottom: activeTab === "mural" ? "3px solid var(--primary)" : "3px solid transparent",
             color: activeTab === "mural" ? "var(--primary)" : "var(--text-muted)",
             fontWeight: activeTab === "mural" ? 700 : 500,
-            fontSize: "12px",
+            fontSize: "11px",
             fontFamily: "Quicksand",
             cursor: "pointer",
             textAlign: "center",
@@ -213,7 +310,7 @@ export default function EscolaPage() {
             borderBottom: activeTab === "calendario" ? "3px solid var(--primary)" : "3px solid transparent",
             color: activeTab === "calendario" ? "var(--primary)" : "var(--text-muted)",
             fontWeight: activeTab === "calendario" ? 700 : 500,
-            fontSize: "12px",
+            fontSize: "11px",
             fontFamily: "Quicksand",
             cursor: "pointer",
             textAlign: "center",
@@ -233,7 +330,7 @@ export default function EscolaPage() {
             borderBottom: activeTab === "coordenacao" ? "3px solid var(--primary)" : "3px solid transparent",
             color: activeTab === "coordenacao" ? "var(--primary)" : "var(--text-muted)",
             fontWeight: activeTab === "coordenacao" ? 700 : 500,
-            fontSize: "12px",
+            fontSize: "11px",
             fontFamily: "Quicksand",
             cursor: "pointer",
             textAlign: "center",
@@ -256,7 +353,7 @@ export default function EscolaPage() {
             borderBottom: activeTab === "relatorios" ? "3px solid var(--primary)" : "3px solid transparent",
             color: activeTab === "relatorios" ? "var(--primary)" : "var(--text-muted)",
             fontWeight: activeTab === "relatorios" ? 700 : 500,
-            fontSize: "12px",
+            fontSize: "11px",
             fontFamily: "Quicksand",
             cursor: "pointer",
             textAlign: "center",
@@ -266,6 +363,26 @@ export default function EscolaPage() {
           }}
         >
           📊 Relatórios
+        </button>
+        <button
+          onClick={() => setActiveTab("perfil")}
+          style={{
+            padding: "12px 4px",
+            background: "none",
+            border: "none",
+            borderBottom: activeTab === "perfil" ? "3px solid var(--primary)" : "3px solid transparent",
+            color: activeTab === "perfil" ? "var(--primary)" : "var(--text-muted)",
+            fontWeight: activeTab === "perfil" ? 700 : 500,
+            fontSize: "11px",
+            fontFamily: "Quicksand",
+            cursor: "pointer",
+            textAlign: "center",
+            whiteSpace: "nowrap",
+            textOverflow: "ellipsis",
+            overflow: "hidden"
+          }}
+        >
+          👤 Perfil
         </button>
       </div>
 
@@ -594,6 +711,183 @@ export default function EscolaPage() {
               </div>
             )}
           </div>
+        )}
+
+        {activeTab === "perfil" && selectedStudent && (
+          <form onSubmit={handleSaveFamilyProfile} style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+            {/* Student selector if multiple children */}
+            {students.length > 1 && (
+              <div style={{ display: "flex", gap: 8, marginBottom: 8, overflowX: "auto" }}>
+                {students.map((s) => (
+                  <button
+                    key={s.id}
+                    type="button"
+                    className={`btn ${selectedStudent?.id === s.id ? "btn--primary" : "btn--secondary"}`}
+                    style={{ fontSize: 13, padding: "8px 16px", whiteSpace: "nowrap" }}
+                    onClick={() => setSelectedStudent(s)}
+                  >
+                    {s.nome}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Photo Section */}
+            <div className="card" style={{ padding: 20, textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center" }}>
+              <div style={{ width: 88, height: 88, borderRadius: "50%", background: "#F1F5F9", border: "3px solid var(--primary)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 36, marginBottom: 12 }}>
+                {profileFotoUrl ? (
+                  <img src={profileFotoUrl} alt={selectedStudent.nome} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                ) : (
+                  "👶"
+                )}
+              </div>
+              <input
+                type="file"
+                id="parent-student-photo"
+                accept="image/*"
+                style={{ display: "none" }}
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (file) await handleStudentPhotoUpload(file);
+                }}
+              />
+              <label
+                htmlFor="parent-student-photo"
+                style={{
+                  background: "#FFF7ED",
+                  color: "#C2410C",
+                  border: "1px solid #FFEDD5",
+                  padding: "8px 16px",
+                  borderRadius: 12,
+                  fontSize: 13,
+                  fontWeight: 700,
+                  cursor: "pointer"
+                }}
+              >
+                {uploadingFoto ? "Enviando Foto..." : "📷 Alterar Foto do Aluno"}
+              </label>
+            </div>
+
+            {/* Read-Only Administrative Info */}
+            <div className="card" style={{ padding: 20, background: "#F8FAFC", border: "1px solid #E2E8F0" }}>
+              <span style={{ fontSize: 11, fontWeight: 800, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                🔒 Informações Escolares (Apenas Secretaria)
+              </span>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginTop: 12, fontSize: 13 }}>
+                <div>
+                  <span style={{ color: "#64748B", fontSize: 11, display: "block" }}>TURMA</span>
+                  <strong style={{ color: "#1E293B" }}>{selectedStudent.turma}</strong>
+                </div>
+                <div>
+                  <span style={{ color: "#64748B", fontSize: 11, display: "block" }}>MATRÍCULA / ID</span>
+                  <strong style={{ color: "#1E293B", fontFamily: "monospace" }}>{selectedStudent.id.substring(0, 8)}</strong>
+                </div>
+              </div>
+            </div>
+
+            {/* Address Editable */}
+            <div className="card" style={{ padding: 20 }}>
+              <label style={{ display: "block", fontSize: 13, fontWeight: 800, color: "#1E293B", marginBottom: 8 }}>
+                🏠 Endereço Residencial
+              </label>
+              <input
+                type="text"
+                className="text-input"
+                placeholder="Rua, número, bairro, CEP..."
+                value={profileAddress}
+                onChange={e => setProfileAddress(e.target.value)}
+                style={{ fontSize: 13 }}
+              />
+            </div>
+
+            {/* Authorized Pickup List */}
+            <div className="card" style={{ padding: 20 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: 14, fontWeight: 800, color: "#1E293B" }}>
+                    🚗 Pessoas Autorizadas a Retirar o Aluno
+                  </h3>
+                  <p style={{ margin: "2px 0 0", fontSize: 11, color: "#64748B" }}>
+                    A escola exige autorização formal para entregar a criança.
+                  </p>
+                </div>
+              </div>
+
+              {profileAutorizados.length === 0 ? (
+                <div style={{ padding: 16, background: "#F8FAFC", borderRadius: 12, textAlign: "center", color: "#94A3B8", fontSize: 12, marginBottom: 16 }}>
+                  Nenhum autorizado cadastrado além dos pais.
+                </div>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 16 }}>
+                  {profileAutorizados.map((aut, idx) => (
+                    <div key={idx} style={{ padding: 12, background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <div>
+                        <strong style={{ fontSize: 13, color: "#1E293B" }}>{aut.nome}</strong>
+                        <div style={{ fontSize: 11, color: "#64748B" }}>
+                          {aut.parentesco} {aut.documento ? `• Doc: ${aut.documento}` : ''}
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveAutorizado(idx)}
+                        style={{ background: "#FEE2E2", color: "#EF4444", border: "none", borderRadius: 8, padding: "6px 10px", fontSize: 11, fontWeight: 700, cursor: "pointer" }}
+                      >
+                        Remover
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Form to add authorized person */}
+              <div style={{ background: "#F1F5F9", padding: 14, borderRadius: 12, display: "flex", flexDirection: "column", gap: 10 }}>
+                <span style={{ fontSize: 12, fontWeight: 700, color: "#475569" }}>+ Adicionar Nova Pessoa Autorizada</span>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                  <input
+                    type="text"
+                    placeholder="Nome Completo *"
+                    className="text-input"
+                    style={{ fontSize: 12 }}
+                    value={newAutorizado.nome}
+                    onChange={e => setNewAutorizado({...newAutorizado, nome: e.target.value})}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Parentesco (ex: Tio, Avó, Perua)"
+                    className="text-input"
+                    style={{ fontSize: 12 }}
+                    value={newAutorizado.parentesco}
+                    onChange={e => setNewAutorizado({...newAutorizado, parentesco: e.target.value})}
+                  />
+                </div>
+                <input
+                  type="text"
+                  placeholder="CPF ou RG para identificação na portaria"
+                  className="text-input"
+                  style={{ fontSize: 12 }}
+                  value={newAutorizado.documento}
+                  onChange={e => setNewAutorizado({...newAutorizado, documento: e.target.value})}
+                />
+                <button
+                  type="button"
+                  onClick={handleAddAutorizado}
+                  style={{ background: "#0284C7", color: "white", border: "none", borderRadius: 8, padding: "8px 14px", fontSize: 12, fontWeight: 700, cursor: "pointer", alignSelf: "flex-end" }}
+                >
+                  + Incluir Autorizado
+                </button>
+              </div>
+            </div>
+
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={savingProfile}
+              className="btn btn--primary btn--lg btn--block"
+              style={{ padding: "14px", fontSize: 14, fontWeight: 700 }}
+            >
+              {savingProfile ? "Salvação em andamento..." : "💾 Salvar Alterações e Notificar Secretaria"}
+            </button>
+          </form>
         )}
       </div>
     </div>

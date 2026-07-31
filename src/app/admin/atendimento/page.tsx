@@ -5,13 +5,15 @@ import { useState, useEffect } from "react";
 import { 
   getCoordinationChatsByEscola, 
   saveCoordinationMessage, 
-  markCoordinationChatRead 
+  markCoordinationChatRead,
+  archiveCoordinationChat
 } from "@/lib/firestore";
 
 export default function AdminAtendimentoPage() {
   const { profile } = useAuth();
   const [chats, setChats] = useState<any[]>([]);
   const [selectedChat, setSelectedChat] = useState<any | null>(null);
+  const [activeTab, setActiveTab] = useState<"ativas" | "arquivadas">("ativas");
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
@@ -67,6 +69,19 @@ export default function AdminAtendimentoPage() {
     }
   };
 
+  const handleToggleArchive = async () => {
+    if (!selectedChat) return;
+    const targetState = !selectedChat.arquivada;
+    try {
+      await archiveCoordinationChat(selectedChat.id, targetState);
+      setSelectedChat((prev: any) => prev ? { ...prev, arquivada: targetState } : null);
+      await loadChats();
+    } catch (err) {
+      console.error("Error archiving chat:", err);
+      alert("Erro ao alterar status de arquivamento.");
+    }
+  };
+
   const handleSendReply = async () => {
     if (!selectedChat || !newMessage.trim() || sending) return;
     setSending(true);
@@ -89,6 +104,10 @@ export default function AdminAtendimentoPage() {
     }
   };
 
+  const activeChatsList = chats.filter(c => !c.arquivada);
+  const archivedChatsList = chats.filter(c => Boolean(c.arquivada));
+  const currentVisibleChats = activeTab === "ativas" ? activeChatsList : archivedChatsList;
+
   if (loading && chats.length === 0) return <div className="spinner" />;
 
   return (
@@ -98,20 +117,54 @@ export default function AdminAtendimentoPage() {
         <p style={{ color: "#64748B", margin: 0 }}>Fale diretamente com os pais de forma rápida e centralizada.</p>
       </header>
 
-      <div style={{ display: "grid", gridTemplateColumns: "300px 1fr", gap: 24, minHeight: 500 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "320px 1fr", gap: 24, minHeight: 500 }}>
         {/* Chats Sidebar List */}
         <div className="card" style={{ padding: 0, overflow: "hidden", display: "flex", flexDirection: "column", background: "white" }}>
-          <div style={{ padding: "16px 20px", borderBottom: "1px solid #E2E8F0", background: "#F8FAFC" }}>
-            <h3 style={{ margin: 0, fontSize: 14, fontWeight: 800, color: "#475569" }}>CONVERSAS ATIVAS</h3>
+          {/* Tabs header */}
+          <div style={{ display: "flex", borderBottom: "1px solid #E2E8F0", background: "#F8FAFC" }}>
+            <button
+              onClick={() => setActiveTab("ativas")}
+              style={{
+                flex: 1,
+                padding: "14px 12px",
+                border: "none",
+                background: activeTab === "ativas" ? "white" : "transparent",
+                borderBottom: activeTab === "ativas" ? "2px solid var(--primary)" : "none",
+                fontWeight: 800,
+                fontSize: 12,
+                color: activeTab === "ativas" ? "var(--primary-dark)" : "#64748B",
+                cursor: "pointer"
+              }}
+            >
+              💬 Ativas ({activeChatsList.length})
+            </button>
+            <button
+              onClick={() => setActiveTab("arquivadas")}
+              style={{
+                flex: 1,
+                padding: "14px 12px",
+                border: "none",
+                background: activeTab === "arquivadas" ? "white" : "transparent",
+                borderBottom: activeTab === "arquivadas" ? "2px solid var(--primary)" : "none",
+                fontWeight: 800,
+                fontSize: 12,
+                color: activeTab === "arquivadas" ? "var(--primary-dark)" : "#64748B",
+                cursor: "pointer"
+              }}
+            >
+              📦 Arquivadas ({archivedChatsList.length})
+            </button>
           </div>
           
           <div style={{ overflowY: "auto", flex: 1 }}>
-            {chats.length === 0 ? (
-              <div style={{ padding: 24, textAlign: "center", color: "#94A3B8", fontSize: 13 }}>
-                Nenhum atendimento em aberto.
+            {currentVisibleChats.length === 0 ? (
+              <div style={{ padding: 32, textAlign: "center", color: "#94A3B8", fontSize: 13 }}>
+                {activeTab === "ativas" 
+                  ? "Tudo em dia! Nenhuma conversa ativa no momento." 
+                  : "Nenhuma conversa arquivada."}
               </div>
             ) : (
-              chats.map(chat => {
+              currentVisibleChats.map(chat => {
                 const isSelected = selectedChat?.id === chat.id;
                 const hasUnread = !chat.lidaCoordenacao;
                 const lastMsg = chat.mensagens?.[chat.mensagens.length - 1];
@@ -168,13 +221,34 @@ export default function AdminAtendimentoPage() {
           {selectedChat ? (
             <>
               {/* Chat Header */}
-              <div style={{ background: "#F8FAFC", borderBottom: "1px solid #E2E8F0", padding: "16px 24px" }}>
-                <h2 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: "#1E293B" }}>
-                  Responsáveis de {selectedChat.nomeAluno}
-                </h2>
-                <p style={{ margin: "2px 0 0", fontSize: 12, color: "#64748B" }}>
-                  Canal de comunicação direta escola ↔ família.
-                </p>
+              <div style={{ background: "#F8FAFC", borderBottom: "1px solid #E2E8F0", padding: "16px 24px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div>
+                  <h2 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: "#1E293B" }}>
+                    Responsáveis de {selectedChat.nomeAluno}
+                  </h2>
+                  <p style={{ margin: "2px 0 0", fontSize: 12, color: "#64748B" }}>
+                    Canal de comunicação direta escola ↔ família.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleToggleArchive}
+                  style={{
+                    padding: "8px 14px",
+                    borderRadius: 10,
+                    border: "1px solid #CBD5E1",
+                    background: "white",
+                    color: selectedChat.arquivada ? "#0284C7" : "#475569",
+                    fontSize: 12,
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6
+                  }}
+                >
+                  {selectedChat.arquivada ? "📂 Reabrir Conversa" : "📦 Arquivar Atendimento"}
+                </button>
               </div>
 
               {/* Chat Body Thread */}
