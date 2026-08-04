@@ -8,6 +8,17 @@ export default function AdminPropostaPage() {
 
   return (
     <div style={{ maxWidth: 1000, margin: "0 auto", paddingBottom: 64 }}>
+      {/* Link de Acesso Público */}
+      <div style={{ background: "#EFF6FF", border: "1px solid #BFDBFE", borderRadius: 16, padding: "14px 20px", marginBottom: 24, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
+        <div>
+          <span style={{ fontSize: 13, fontWeight: 800, color: "#1E40AF" }}>🌐 Página de Apresentação Isolada (Pública):</span>
+          <p style={{ margin: 0, fontSize: 12, color: "#3B82F6" }}>Link público de alta performance sem necessidade de login para envio à diretoria/escola.</p>
+        </div>
+        <Link href="/apresentacao-edtech" target="_blank" style={{ background: "#2563EB", color: "white", padding: "8px 16px", borderRadius: 10, fontSize: 12, fontWeight: 800, textDecoration: "none" }}>
+          🔗 Abrir Link Público
+        </Link>
+      </div>
+
       {/* Header Banner */}
       <header style={{
         background: "linear-gradient(135deg, #0F172A 0%, #1E293B 100%)",
