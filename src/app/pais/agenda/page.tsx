@@ -214,6 +214,19 @@ export default function ParentAgenda() {
     );
   }
 
+  const isTeacherRecord = Boolean(
+    todayRecord &&
+    !todayRecord.ausente &&
+    (
+      Boolean(todayRecord.professorId) ||
+      Boolean(todayRecord.atividadeTexto) ||
+      Boolean(todayRecord.observacoes) ||
+      Boolean(todayRecord.soninho || todayRecord.xixi || todayRecord.coco) ||
+      Object.values(todayRecord.alimentacao || {}).some(status => (status as number) > 0) ||
+      Object.values(todayRecord.atividades || {}).some(Boolean)
+    )
+  );
+
   return (
     <div>
       {/* Student selector (if multiple children) */}
@@ -256,8 +269,27 @@ export default function ParentAgenda() {
         </p>
       </div>
 
-      {/* Botão de Ausência */}
-      {!todayRecord?.ausente && !showAusenciaForm && (
+      {/* Botão de Ausência ou Status de Presença */}
+      {isTeacherRecord ? (
+        <div 
+          style={{ 
+            display: "flex", 
+            alignItems: "center", 
+            gap: 8, 
+            padding: "10px 14px", 
+            background: "#F0FDF4", 
+            border: "1px solid #BBF7D0", 
+            borderRadius: "12px", 
+            marginBottom: 16,
+            fontSize: 12,
+            color: "#166534",
+            fontWeight: 600
+          }}
+        >
+          <span>🏫</span>
+          <span>{selectedStudent?.nome || "Seu filho(a)"} está presente na escola hoje. Rotina em andamento!</span>
+        </div>
+      ) : !todayRecord?.ausente && !showAusenciaForm ? (
         <div style={{ marginBottom: 16 }}>
           <button 
             className="btn btn--outline btn--block" 
@@ -267,7 +299,7 @@ export default function ParentAgenda() {
             🏠 Avisar que meu filho não vai hoje
           </button>
         </div>
-      )}
+      ) : null}
 
       {showAusenciaForm && (
         <div className="card" style={{ padding: 16, marginBottom: 16, border: "1px solid var(--accent)" }}>
