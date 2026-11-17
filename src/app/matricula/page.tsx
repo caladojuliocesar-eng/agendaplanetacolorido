@@ -153,7 +153,7 @@ export default function PublicMatriculaPage() {
           <div style={{ fontSize: 64, marginBottom: 20 }}>🎉</div>
           <h2 style={{ fontSize: 24, fontWeight: 800, color: "var(--primary-dark)", margin: "0 0 12px" }}>Ficha Cadastrada!</h2>
           <p style={{ color: "#475569", fontSize: 15, lineHeight: 1.6, margin: "0 0 24px" }}>
-            A ficha de matrícula de <strong>{formData.aluno.nome}</strong> foi enviada com sucesso para a administração da escola <strong>Planeta Colorido</strong>.
+            A ficha de matrícula de <strong>{formData.aluno.nome}</strong> foi enviada com sucesso para a administração da escola <strong>Creche do Papai</strong>.
           </p>
           <div style={{ background: "#FFF7ED", border: "1px dashed var(--primary)", padding: 16, borderRadius: 12, fontSize: 13, color: "var(--primary-dark)", marginBottom: 24 }}>
             💡 <strong>Próximo Passo:</strong> A coordenação irá validar os dados e realizar a liberação do seu acesso. Você receberá um aviso e poderá acessar o app usando seu CPF e criando uma senha.
@@ -178,7 +178,7 @@ export default function PublicMatriculaPage() {
       <div style={{ width: "100%", maxWidth: 650 }}>
         {/* School Logo & Title */}
         <div style={{ textAlign: "center", marginBottom: 24 }}>
-          <h1 style={{ fontSize: 28, fontWeight: 800, color: "var(--primary-dark)", margin: "0 0 4px" }}>Planeta Colorido</h1>
+          <h1 style={{ fontSize: 28, fontWeight: 800, color: "var(--primary-dark)", margin: "0 0 4px" }}>Creche do Papai</h1>
           <p style={{ color: "#64748B", margin: 0, fontSize: 14 }}>Ficha Individual de Matrícula e Cadastro Externo</p>
         </div>
 

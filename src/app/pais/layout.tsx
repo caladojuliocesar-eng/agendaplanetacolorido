@@ -61,7 +61,7 @@ export default function ParentLayout({
                 onError={(e) => (e.currentTarget.style.display = 'none')}
               />
               <h1 style={{ fontSize: 16, color: "white", margin: 0, fontWeight: 700 }}>
-                Planeta Colorido
+                Creche do Papai
               </h1>
             </div>
             

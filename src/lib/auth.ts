@@ -55,6 +55,61 @@ export async function signInWithCPF(
   return await signInWithEmail(virtualEmail, password);
 }
 
+// Student Name normalization & mapping for pilot test
+export function normalizeStudentName(name: string): string {
+  return name
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+export const PILOT_STUDENT_ACCOUNTS: Record<string, string> = {
+  otto: "00000000010@planeta.com",
+  andre: "00000000020@planeta.com",
+  leo: "00000000030@planeta.com",
+  mariana: "00000000040@planeta.com",
+  helena: "00000000050@planeta.com",
+  luna: "00000000004@planeta.com",
+};
+
+// Sign in with flexible identifier (Child Name, CPF, or Email)
+export async function signInWithIdentifier(
+  identifier: string,
+  password: string
+): Promise<UserProfile | null> {
+  const clean = identifier.trim();
+  if (!clean) {
+    throw new Error("Por favor, digite o nome do seu filho(a) ou o CPF.");
+  }
+
+  // 1. E-mail direto
+  if (clean.includes("@")) {
+    return await signInWithEmail(clean, password);
+  }
+
+  // 2. CPF (apenas números ou formatado com 11 dígitos)
+  const onlyDigits = clean.replace(/\D/g, "");
+  if (onlyDigits.length === 11) {
+    return await signInWithCPF(onlyDigits, password);
+  }
+
+  // 3. Nome do Aluno (suporta acentos, maiúsculas e primeiro nome)
+  const normalized = normalizeStudentName(clean);
+  const firstName = normalized.split(/\s+/)[0];
+  const mappedEmail = PILOT_STUDENT_ACCOUNTS[normalized] || PILOT_STUDENT_ACCOUNTS[firstName];
+
+  if (mappedEmail) {
+    return await signInWithEmail(mappedEmail, password);
+  }
+
+  if (/^\d+$/.test(clean)) {
+    throw new Error("CPF incompleto. O CPF deve conter 11 dígitos.");
+  }
+
+  throw new Error("Aluno não encontrado. Digite o primeiro nome do seu filho(a) (ex: Otto, André, Leo, Mariana, Helena) ou seu CPF.");
+}
+
 // Sign out
 export async function signOut(): Promise<void> {
   await firebaseSignOut(auth());
@@ -83,8 +138,8 @@ export async function resolveUserProfile(
       if (cleanEmail === 'diretora@planeta.com' || isCpf(cleanEmail, '00000000001')) {
         return { uid: 'demo_diretora', email: 'diretora@planeta.com', cpf: '00000000001', role: 'admin', escolaId: 'planeta-colorido', nome: 'Helena (Diretora)' } as UserProfile;
       }
-      if (cleanEmail === 'profe@planeta.com' || isCpf(cleanEmail, '00000000002')) {
-        return { uid: 'demo_professora', email: 'profe@planeta.com', cpf: '00000000002', role: 'professor', escolaId: 'planeta-colorido', nome: 'Ana Cláudia (Profe)', turma: 'Berçário II' } as UserProfile;
+      if (cleanEmail === 'profe@planeta.com' || isCpf(cleanEmail, '00000000002') || isCpf(cleanEmail, '00000000060')) {
+        return { uid: 'demo_professora', email: 'profe@planeta.com', cpf: isCpf(cleanEmail, '00000000060') ? '00000000060' : '00000000002', role: 'professor', escolaId: 'planeta-colorido', nome: 'Professora (Infantil II)', turma: 'Infantil II' } as UserProfile;
       }
       if (cleanEmail === 'paiotto@planeta.com' || isCpf(cleanEmail, '00000000003')) {
         return { uid: 'demo_pai', email: 'paiotto@planeta.com', cpf: '00000000003', role: 'pai', escolaId: 'planeta-colorido', nome: 'Ricardo (Pai do Otto)', filhos: ['aluno_otto'] } as UserProfile;

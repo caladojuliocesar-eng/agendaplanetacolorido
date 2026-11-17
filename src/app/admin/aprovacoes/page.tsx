@@ -685,7 +685,7 @@ export default function ShowroomDiretora() {
               fontFamily: "'Inter', system-ui, sans-serif"
             }}>
               <div style={{ textAlign: "center", borderBottom: "2px solid #F1F5F9", paddingBottom: 24, marginBottom: 40 }}>
-                <h2 style={{ margin: 0, fontSize: 24, fontWeight: 900, color: "#0F172A" }}>Escola Planeta Colorido</h2>
+                <h2 style={{ margin: 0, fontSize: 24, fontWeight: 900, color: "#0F172A" }}>Creche do Papai</h2>
                 <p style={{ margin: "4px 0 0", fontSize: 13, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 700 }}>
                   Relatório Pedagógico Trimestral
                 </p>

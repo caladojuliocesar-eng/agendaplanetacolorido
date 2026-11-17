@@ -3,8 +3,8 @@ import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
 
 export const metadata: Metadata = {
-  title: "Agenda Planeta Colorido",
-  description: "Agenda digital escolar para pais e professores",
+  title: "Agenda Creche do Papai",
+  description: "Agenda digital escolar para pais e professores - Creche do Papai",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,

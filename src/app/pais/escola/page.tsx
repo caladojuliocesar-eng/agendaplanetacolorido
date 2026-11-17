@@ -519,7 +519,7 @@ export default function EscolaPage() {
             <div className="card" style={{ padding: 0, overflow: "hidden", display: "flex", flexDirection: "column", minHeight: 400 }}>
               <div style={{ background: "#F8FAFC", borderBottom: "1px solid #E2E8F0", padding: "16px 20px" }}>
                 <h4 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: "#1E293B" }}>
-                  Canal de Atendimento — Coordenação Planeta Colorido
+                  Canal de Atendimento — Coordenação Creche do Papai
                 </h4>
                 <p style={{ margin: "2px 0 0", fontSize: 11, color: "#64748B" }}>
                   Fale com a diretoria para assuntos administrativos, financeiros ou dúvidas gerais.
@@ -618,7 +618,7 @@ export default function EscolaPage() {
                   ← Voltar aos Relatórios
                 </button>
                 <div style={{ textAlign: "center", borderBottom: "2px solid #F1F5F9", paddingBottom: 16, marginBottom: 24 }}>
-                  <h3 style={{ margin: 0, fontSize: 20, fontWeight: 900, color: "#0F172A" }}>Escola Planeta Colorido</h3>
+                  <h3 style={{ margin: 0, fontSize: 20, fontWeight: 900, color: "#0F172A" }}>Creche do Papai</h3>
                   <p style={{ margin: "4px 0 0", fontSize: 12, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 700 }}>
                     Relatório Pedagógico Trimestral — {viewingReport.periodo.replace("-T", "º Trimestre ")}
                   </p>
