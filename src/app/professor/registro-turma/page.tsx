@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, Suspense } from "react";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { saveBatchRecords, getTodayDateString } from "@/lib/firestore";
+import { saveBatchRecords, getTodayDateString, updateAISummary } from "@/lib/firestore";
 import {
   Student,
   Activities,
@@ -79,6 +79,31 @@ function RegistroTurmaContent() {
         profile.turma || ""
       );
       setSaved(true);
+
+      // Dispara geração do resumo de IA em segundo plano para cada aluno da turma
+      for (const student of students) {
+        const fullRecord = {
+          alunoId: student.id,
+          escolaId: profile.escolaId,
+          turma: student.turma || profile.turma || "",
+          data: today,
+          atividades: activities,
+          atividadeTexto: atividadeTexto,
+        };
+
+        fetch("/api/gerar-resumo", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ record: fullRecord, nomeAluno: student.nome })
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.summary) {
+            updateAISummary(`${student.id}_${today}`, data.summary);
+          }
+        })
+        .catch(console.error);
+      }
     } catch (err) {
       console.error("Error saving batch:", err);
     }

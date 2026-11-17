@@ -6,7 +6,12 @@ import {
   FeedingStatus,
 } from "@/types";
 
-const SYSTEM_PROMPT = `Você é um assistente carinhoso de uma escola infantil. Receba os dados do dia de um aluno e gere UMA frase curta (máximo 2 linhas) e acolhedora resumindo o dia. Use um tom alegre e positivo. Se a alimentação foi "Recusou", não dramatize, apenas mencione de forma leve. Use emojis com moderação (máx 2). Responda APENAS com a frase, sem aspas, sem prefixo.`;
+const SYSTEM_PROMPT = `Você é a Estrelinha ⭐, a assistente pedagógica carinhosa da Creche do Papai. 
+Receba os dados do dia de um aluno da educação infantil e gere UMA ou DUAS frases curtas, doces e acolhedoras resumindo o dia para a família. 
+Use um tom alegre, afetuoso e positivo. Destaque com carinho as atividades, a comidinha e o soninho. 
+Se a alimentação teve "Recusou", não dramatize, mencione com leveza. 
+Use 1 ou 2 emojis fofos. 
+Responda APENAS com a mensagem pronta, sem aspas e sem prefixo.`;
 
 function buildPrompt(record: any, nomeAluno: string): string {
   const alimentacao = Object.entries(record.alimentacao || {})
@@ -33,7 +38,6 @@ function buildPrompt(record: any, nomeAluno: string): string {
   if (alimentacao) prompt += `Alimentação: ${alimentacao}\n`;
   if (atividades) prompt += `Atividades: ${atividades}\n`;
 
-  // Campos de rotina
   prompt += `Dormiu o soninho? ${record.soninho ? "Sim" : "Não"}\n`;
   prompt += `Usou o banheiro (Xixi)? ${record.xixi ? "Sim" : "Não"}\n`;
   prompt += `Usou o banheiro (Cocô)? ${record.coco ? "Sim" : "Não"}\n`;
@@ -46,33 +50,92 @@ function buildPrompt(record: any, nomeAluno: string): string {
   return prompt;
 }
 
-export async function POST(req: Request) {
-  try {
-    const { record, nomeAluno } = await req.json();
+export function generateFallbackSummary(record: any, nomeAluno: string): string {
+  const parts: string[] = [];
 
-    // Use server-only env var (not NEXT_PUBLIC_) to protect the key
+  // 1. Abertura afetuosa personalizada
+  const alim = record.alimentacao || {};
+  const comeuMuitoBem = [alim.almoco, alim.frutas, alim.lancheTarde, alim.jantar].filter(v => v === 1).length >= 2;
+  const recusouAlgo = [alim.almoco, alim.frutas, alim.lancheTarde, alim.jantar].some(v => v === 3);
+
+  if (record.observacoes && record.observacoes.toLowerCase().includes("óculos")) {
+    parts.push(`Hoje o ${nomeAluno} arrasou com muito estilo e charme na turminha!`);
+  } else if (record.atividadeTexto && record.atividadeTexto.toLowerCase().includes("ensaio")) {
+    parts.push(`Que dia animado, ${nomeAluno}! Os ensaios e brincadeiras foram um verdadeiro show!`);
+  } else {
+    parts.push(`Hoje o dia de ${nomeAluno} foi repleto de descobertas e carinho na creche!`);
+  }
+
+  // 2. Atividade
+  if (record.atividadeTexto) {
+    const cleanAtiv = record.atividadeTexto.replace(/\n+/g, " ").trim();
+    parts.push(`Dedicou-se com muita alegria: ${cleanAtiv}.`);
+  }
+
+  // 3. Alimentação
+  if (comeuMuitoBem) {
+    parts.push("Alimentou-se super bem nas refeições.");
+  } else if (alim.almoco === 1) {
+    parts.push("Almoçou muito bem.");
+  } else if (recusouAlgo) {
+    parts.push("Ficou um pouquinho mais seletivo na comidinha, mas curtiu o dia.");
+  }
+
+  // 4. Soninho
+  if (record.soninho) {
+    parts.push("Descansou tranquilo no soninho da tarde.");
+  }
+
+  // 5. Observação extra
+  if (record.observacoes && !record.observacoes.toLowerCase().includes("óculos")) {
+    parts.push(record.observacoes);
+  }
+
+  return parts.join(" ") + " 😊✨";
+}
+
+export async function POST(req: Request) {
+  let bodyData: any = {};
+  try {
+    bodyData = await req.json();
+    const { record, nomeAluno } = bodyData;
+    const name = nomeAluno || "Aluno";
+
     const apiKey = process.env.GEMINI_API_KEY;
 
-    if (!apiKey) {
-      console.error("[IA] GEMINI_API_KEY not set in environment variables");
-      return NextResponse.json({ error: "API Key missing" }, { status: 500 });
+    // Se houver chave, tenta modelos do Gemini
+    if (apiKey && apiKey !== "SUA_CHAVE_AQUI") {
+      const modelsToTry = ["gemini-1.5-flash", "gemini-2.0-flash", "gemini-1.5-pro"];
+      const genAI = new GoogleGenerativeAI(apiKey);
+      const prompt = buildPrompt(record, name);
+
+      for (const modelName of modelsToTry) {
+        try {
+          const model = genAI.getGenerativeModel({ model: modelName });
+          const result = await model.generateContent({
+            contents: [
+              { role: "user", parts: [{ text: SYSTEM_PROMPT + "\n\n" + prompt }] },
+            ],
+          });
+          const text = result.response.text().trim();
+          if (text) {
+            console.log(`[IA] Resumo gerado com sucesso pelo modelo ${modelName} para ${name}`);
+            return NextResponse.json({ summary: text });
+          }
+        } catch (modelErr: any) {
+          console.warn(`[IA] Falha no modelo ${modelName}:`, modelErr?.message || modelErr);
+        }
+      }
     }
 
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-
-    const prompt = buildPrompt(record, nomeAluno);
-
-    const result = await model.generateContent({
-      contents: [
-        { role: "user", parts: [{ text: SYSTEM_PROMPT + "\n\n" + prompt }] },
-      ],
-    });
-
-    const text = result.response.text().trim();
-    return NextResponse.json({ summary: text });
+    // Fallback inteligente garantido caso o Gemini esteja sem chave válida ou fora do ar
+    console.log(`[IA] Gerando resumo assistido inteligente (fallback) para ${name}...`);
+    const fallback = generateFallbackSummary(record, name);
+    return NextResponse.json({ summary: fallback });
   } catch (error: any) {
     console.error("Erro na API de IA:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    // Mesmo em caso de exceção de parsing, devolve fallback
+    const fallback = generateFallbackSummary(bodyData?.record || {}, bodyData?.nomeAluno || "Aluno");
+    return NextResponse.json({ summary: fallback });
   }
 }

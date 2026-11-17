@@ -373,6 +373,7 @@ export default function RegistroIndividual() {
       
       fetch("/api/gerar-resumo", {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ record: fullRecord, nomeAluno: student?.nome || "Aluno" })
       })
       .then(res => res.json())
