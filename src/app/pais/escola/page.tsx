@@ -45,6 +45,7 @@ export default function EscolaPage() {
   const [uploadingFoto, setUploadingFoto] = useState(false);
   const [savingProfile, setSavingProfile] = useState(false);
   const [newAutorizado, setNewAutorizado] = useState({ nome: "", parentesco: "", documento: "" });
+  const [showDetailedInfo, setShowDetailedInfo] = useState(false);
 
   useEffect(() => {
     if (!selectedStudent) return;
@@ -279,6 +280,69 @@ export default function EscolaPage() {
     }
   };
 
+  const handlePrintReport = (report: RelatorioPedagogico, studentName: string) => {
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) {
+      window.print();
+      return;
+    }
+    const periodLabel = report.periodo === "2026-Anual" 
+      ? "Consolidado Anual de Evolução" 
+      : `${report.periodo.split("-")[1].replace("T", "")}º Trimestre de ${report.periodo.split("-")[0]}`;
+
+    const formattedContent = report.conteudo
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/### (.*?)\n/g, '<h3 style="color:#1E293B;margin-top:16px;font-size:16px;">$1</h3>')
+      .replace(/## (.*?)\n/g, '<h2 style="color:#0F172A;margin-top:20px;font-size:18px;">$1</h2>')
+      .replace(/# (.*?)\n/g, '<h1 style="color:#0F172A;margin-top:24px;font-size:20px;">$1</h1>')
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\n\n/g, '<br/><br/>')
+      .replace(/\n/g, '<br/>');
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Relatório Pedagógico - ${studentName} (${periodLabel})</title>
+          <meta charset="utf-8" />
+          <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+          <style>
+            body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; padding: 40px; color: #1E293B; line-height: 1.6; max-width: 800px; margin: 0 auto; }
+            .header { text-align: center; border-bottom: 2px solid #E2E8F0; padding-bottom: 20px; margin-bottom: 24px; }
+            .logo-title { font-size: 26px; font-weight: 800; color: #EA580C; margin: 0; }
+            .subtitle { font-size: 13px; text-transform: uppercase; color: #64748B; font-weight: 700; margin-top: 6px; letter-spacing: 0.05em; }
+            .student-badge { display: inline-block; background: #FFF7ED; color: #C2410C; border: 1px solid #FFEDD5; padding: 6px 16px; border-radius: 20px; font-size: 14px; font-weight: 700; margin-top: 10px; }
+            .content { font-size: 14px; color: #334155; margin-top: 20px; text-align: justify; }
+            .footer { margin-top: 50px; border-top: 1px solid #E2E8F0; padding-top: 16px; font-size: 11px; color: #94A3B8; text-align: center; }
+            @media print {
+              body { padding: 15px; }
+              @page { margin: 15mm; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1 class="logo-title">Creche do Papai</h1>
+            <div class="subtitle">Relatório Pedagógico — ${periodLabel}</div>
+            <div class="student-badge">Aluno(a): ${studentName}</div>
+          </div>
+          <div class="content">${formattedContent}</div>
+          <div class="footer">Documento Oficial de Registro Pedagógico — Creche do Papai</div>
+          <script>
+            window.onload = function() {
+              setTimeout(function() { window.print(); }, 300);
+            };
+          </script>
+        </body>
+      </html>
+    `;
+    printWindow.document.open();
+    printWindow.document.write(htmlContent);
+    printWindow.document.close();
+  };
+
   const todayStr = getTodayDateString();
   const visibleEventos = eventos.filter(evento => evento.data >= todayStr);
 
@@ -304,178 +368,152 @@ export default function EscolaPage() {
         .hide-scrollbar::-webkit-scrollbar {
           display: none;
         }
+        .hide-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
       `}} />
 
-      {/* Custom Tabs inside the page */}
+      {/* Modern Pill Tabs Navigation */}
       <div
+        className="hide-scrollbar"
         style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(5, 1fr)",
-          background: "var(--bg-card)",
-          borderBottom: "1px solid var(--border)",
+          display: "flex",
+          gap: 8,
+          overflowX: "auto",
+          background: "white",
+          borderBottom: "1px solid #E2E8F0",
           position: "sticky",
           top: 60, // below header
           zIndex: 40,
-          padding: "0 4px",
+          padding: "10px 16px",
+          scrollbarWidth: "none"
         }}
       >
-        <button
-          onClick={() => setActiveTab("mural")}
-          style={{
-            padding: "12px 4px",
-            background: "none",
-            border: "none",
-            borderBottom: activeTab === "mural" ? "3px solid var(--primary)" : "3px solid transparent",
-            color: activeTab === "mural" ? "var(--primary)" : "var(--text-muted)",
-            fontWeight: activeTab === "mural" ? 700 : 500,
-            fontSize: "11px",
-            fontFamily: "Quicksand",
-            cursor: "pointer",
-            textAlign: "center",
-            whiteSpace: "nowrap",
-            textOverflow: "ellipsis",
-            overflow: "hidden"
-          }}
-        >
-          Mural
-        </button>
-        <button
-          onClick={() => setActiveTab("calendario")}
-          style={{
-            padding: "12px 4px",
-            background: "none",
-            border: "none",
-            borderBottom: activeTab === "calendario" ? "3px solid var(--primary)" : "3px solid transparent",
-            color: activeTab === "calendario" ? "var(--primary)" : "var(--text-muted)",
-            fontWeight: activeTab === "calendario" ? 700 : 500,
-            fontSize: "11px",
-            fontFamily: "Quicksand",
-            cursor: "pointer",
-            textAlign: "center",
-            whiteSpace: "nowrap",
-            textOverflow: "ellipsis",
-            overflow: "hidden"
-          }}
-        >
-          Calendário
-        </button>
-        <button
-          onClick={() => setActiveTab("coordenacao")}
-          style={{
-            padding: "12px 4px",
-            background: "none",
-            border: "none",
-            borderBottom: activeTab === "coordenacao" ? "3px solid var(--primary)" : "3px solid transparent",
-            color: activeTab === "coordenacao" ? "var(--primary)" : "var(--text-muted)",
-            fontWeight: activeTab === "coordenacao" ? 700 : 500,
-            fontSize: "11px",
-            fontFamily: "Quicksand",
-            cursor: "pointer",
-            textAlign: "center",
-            whiteSpace: "nowrap",
-            textOverflow: "ellipsis",
-            overflow: "hidden"
-          }}
-        >
-          Coordenação
-        </button>
-        <button
-          onClick={() => {
-            setActiveTab("relatorios");
-            setViewingReport(null);
-          }}
-          style={{
-            padding: "12px 4px",
-            background: "none",
-            border: "none",
-            borderBottom: activeTab === "relatorios" ? "3px solid var(--primary)" : "3px solid transparent",
-            color: activeTab === "relatorios" ? "var(--primary)" : "var(--text-muted)",
-            fontWeight: activeTab === "relatorios" ? 700 : 500,
-            fontSize: "11px",
-            fontFamily: "Quicksand",
-            cursor: "pointer",
-            textAlign: "center",
-            whiteSpace: "nowrap",
-            textOverflow: "ellipsis",
-            overflow: "hidden"
-          }}
-        >
-          📊 Relatórios
-        </button>
-        <button
-          onClick={() => setActiveTab("perfil")}
-          style={{
-            padding: "12px 4px",
-            background: "none",
-            border: "none",
-            borderBottom: activeTab === "perfil" ? "3px solid var(--primary)" : "3px solid transparent",
-            color: activeTab === "perfil" ? "var(--primary)" : "var(--text-muted)",
-            fontWeight: activeTab === "perfil" ? 700 : 500,
-            fontSize: "11px",
-            fontFamily: "Quicksand",
-            cursor: "pointer",
-            textAlign: "center",
-            whiteSpace: "nowrap",
-            textOverflow: "ellipsis",
-            overflow: "hidden"
-          }}
-        >
-          👤 Perfil
-        </button>
+        {[
+          { id: "mural", label: "Mural", icon: "📢", badge: visibleAvisos.length > 0 ? visibleAvisos.length : null },
+          { id: "calendario", label: "Calendário", icon: "📅", badge: null },
+          { id: "coordenacao", label: "Coordenação", icon: "💬", badge: null },
+          { id: "relatorios", label: "Relatórios", icon: "📊", badge: null },
+          { id: "perfil", label: "Meu Filho(a)", icon: "👶", badge: null }
+        ].map((tab) => {
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => {
+                setActiveTab(tab.id as any);
+                if (tab.id === "relatorios") setViewingReport(null);
+              }}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                padding: "8px 14px",
+                borderRadius: 24,
+                border: "none",
+                background: isActive ? "linear-gradient(135deg, #F97316, #EA580C)" : "#F1F5F9",
+                color: isActive ? "white" : "#475569",
+                fontWeight: isActive ? 700 : 600,
+                fontSize: 13,
+                cursor: "pointer",
+                whiteSpace: "nowrap",
+                flexShrink: 0,
+                boxShadow: isActive ? "0 2px 8px rgba(234, 88, 12, 0.25)" : "none",
+                transition: "all 0.15s ease"
+              }}
+            >
+              <span>{tab.icon}</span>
+              <span>{tab.label}</span>
+              {tab.badge && (
+                <span style={{
+                  background: isActive ? "white" : "#EA580C",
+                  color: isActive ? "#EA580C" : "white",
+                  fontSize: 10,
+                  fontWeight: 800,
+                  borderRadius: "50%",
+                  width: 18,
+                  height: 18,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginLeft: 2
+                }}>
+                  {tab.badge}
+                </span>
+              )}
+            </button>
+          );
+        })}
       </div>
 
       <div style={{ padding: 16 }}>
+        {/* ================= ABA: MURAL ================= */}
         {activeTab === "mural" && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
             {visibleAvisos.length === 0 ? (
-              <p style={{ textAlign: "center", color: "var(--text-muted)", padding: 40 }}>
-                Nenhum aviso no momento.
-              </p>
+              <div style={{ textAlign: "center", padding: "48px 24px", background: "white", borderRadius: 16, border: "1px solid #E2E8F0", boxShadow: "0 1px 3px rgba(0,0,0,0.03)" }}>
+                <div style={{ fontSize: 40, marginBottom: 12 }}>✨</div>
+                <h3 style={{ margin: "0 0 6px 0", fontSize: 16, fontWeight: 800, color: "#1E293B" }}>
+                  Tudo tranquilo por aqui!
+                </h3>
+                <p style={{ margin: 0, color: "#64748B", fontSize: 13, lineHeight: 1.5 }}>
+                  Nenhum novo aviso no mural no momento. Quando a direção publicar recados, eles aparecerão aqui.
+                </p>
+              </div>
             ) : (
               visibleAvisos.map((aviso) => (
                 <div
                   key={aviso.id}
-                  className="card"
                   style={{
-                    borderLeft: `4px solid ${aviso.tipo === "urgente" ? "var(--danger)" : aviso.tipo === "alerta" ? "var(--warning)" : "var(--primary)"}`,
+                    background: "white",
+                    borderRadius: 16,
+                    border: "1px solid #E2E8F0",
+                    borderLeft: `5px solid ${aviso.tipo === "urgente" ? "var(--danger)" : aviso.tipo === "alerta" ? "var(--warning)" : "var(--primary)"}`,
+                    boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
+                    overflow: "hidden"
                   }}
                 >
-                  {aviso.tipo === "urgente" && (
-                    <div
-                      style={{
-                        background: "var(--danger-light)",
-                        color: "var(--danger)",
-                        padding: "4px 12px",
-                        fontSize: "12px",
-                        fontWeight: 700,
-                        textTransform: "uppercase",
-                      }}
-                    >
-                      Urgente
+                  <div style={{ padding: "16px 20px", position: "relative" }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8, paddingRight: 50 }}>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: "#94A3B8" }}>
+                        {new Date(aviso.criadoEm).toLocaleDateString("pt-BR")}
+                      </span>
+                      {aviso.tipo === "urgente" && (
+                        <span style={{ background: "#FEE2E2", color: "#B91C1C", padding: "2px 8px", borderRadius: 12, fontSize: 10, fontWeight: 800, textTransform: "uppercase" }}>
+                          🚨 Urgente
+                        </span>
+                      )}
+                      {aviso.tipo === "alerta" && (
+                        <span style={{ background: "#FEF3C7", color: "#92400E", padding: "2px 8px", borderRadius: 12, fontSize: 10, fontWeight: 800, textTransform: "uppercase" }}>
+                          ⚠️ Alerta
+                        </span>
+                      )}
                     </div>
-                  )}
-                  <div style={{ padding: 16, position: "relative" }}>
+
                     <button
                       onClick={() => handleDismissAviso(aviso.id)}
                       style={{
                         position: "absolute",
-                        right: 12,
-                        top: 12,
-                        background: "none",
+                        right: 14,
+                        top: 14,
+                        background: "#F1F5F9",
                         border: "none",
+                        borderRadius: 12,
+                        padding: "4px 8px",
                         fontSize: 11,
-                        color: "var(--text-muted)",
+                        color: "#64748B",
                         cursor: "pointer",
                         fontWeight: 600
                       }}
                     >
                       ✕ Ocultar
                     </button>
-                    <div style={{ fontSize: "12px", color: "var(--text-muted)", marginBottom: 4 }}>
-                      {new Date(aviso.criadoEm).toLocaleDateString("pt-BR")}
-                    </div>
-                    <h3 style={{ margin: "0 0 8px 0", color: "var(--text-primary)", paddingRight: 60 }}>{aviso.titulo}</h3>
-                    <p style={{ margin: 0, color: "var(--text-secondary)", fontSize: "14px", whiteSpace: "pre-wrap" }}>
+
+                    <h3 style={{ margin: "0 0 8px 0", color: "#1E293B", fontSize: 15, fontWeight: 800, paddingRight: 40 }}>
+                      {aviso.titulo}
+                    </h3>
+                    <p style={{ margin: 0, color: "#475569", fontSize: 13, lineHeight: 1.5, whiteSpace: "pre-wrap" }}>
                       {aviso.mensagem}
                     </p>
                   </div>
@@ -485,46 +523,58 @@ export default function EscolaPage() {
           </div>
         )}
 
+        {/* ================= ABA: CALENDÁRIO ================= */}
         {activeTab === "calendario" && (
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {visibleEventos.length === 0 ? (
-              <p style={{ textAlign: "center", color: "var(--text-muted)", padding: 40 }}>
-                Nenhum evento agendado.
-              </p>
+              <div style={{ textAlign: "center", padding: "48px 24px", background: "white", borderRadius: 16, border: "1px solid #E2E8F0", boxShadow: "0 1px 3px rgba(0,0,0,0.03)" }}>
+                <div style={{ fontSize: 40, marginBottom: 12 }}>📅</div>
+                <h3 style={{ margin: "0 0 6px 0", fontSize: 16, fontWeight: 800, color: "#1E293B" }}>
+                  Nenhum evento próximo
+                </h3>
+                <p style={{ margin: 0, color: "#64748B", fontSize: 13, lineHeight: 1.5 }}>
+                  O calendário escolar está em dia. Novas reuniões, festividades e datas comemorativas serão listadas aqui.
+                </p>
+              </div>
             ) : (
               visibleEventos.map((evento) => {
                 const dateObj = new Date(evento.data + "T12:00:00");
                 const day = dateObj.getDate().toString().padStart(2, "0");
-                const month = dateObj.toLocaleDateString("pt-BR", { month: "short" }).toUpperCase();
+                const month = dateObj.toLocaleDateString("pt-BR", { month: "short" }).toUpperCase().replace(".", "");
+                const weekday = dateObj.toLocaleDateString("pt-BR", { weekday: "short" }).toUpperCase().replace(".", "");
                 
                 return (
                   <div
                     key={evento.id}
-                    className="card"
                     style={{
                       display: "flex",
                       alignItems: "center",
-                      padding: 0,
+                      background: "white",
+                      borderRadius: 16,
+                      border: "1px solid #E2E8F0",
+                      boxShadow: "0 1px 3px rgba(0,0,0,0.03)",
+                      overflow: "hidden"
                     }}
                   >
                     <div
                       style={{
-                        background: "var(--primary-light)",
-                        color: "var(--primary-dark)",
-                        padding: "16px",
+                        background: "linear-gradient(135deg, #FFF7ED, #FFEDD5)",
+                        color: "#C2410C",
+                        padding: "14px 16px",
                         display: "flex",
                         flexDirection: "column",
                         alignItems: "center",
                         justifyContent: "center",
                         minWidth: 70,
-                        borderRight: "1px solid var(--border)",
+                        borderRight: "1px dashed #FDBA74",
                       }}
                     >
-                      <span style={{ fontSize: 24, fontWeight: 700 }}>{day}</span>
-                      <span style={{ fontSize: 12, fontWeight: 600 }}>{month}</span>
+                      <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: 0.5 }}>{weekday}</span>
+                      <span style={{ fontSize: 24, fontWeight: 900, lineHeight: 1.1 }}>{day}</span>
+                      <span style={{ fontSize: 11, fontWeight: 700 }}>{month}</span>
                     </div>
-                    <div style={{ padding: "16px", flex: 1 }}>
-                      <h4 style={{ margin: 0, fontSize: 15, color: "var(--text-primary)" }}>
+                    <div style={{ padding: "14px 18px", flex: 1 }}>
+                      <h4 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "#1E293B" }}>
                         {evento.titulo}
                       </h4>
                     </div>
@@ -535,16 +585,18 @@ export default function EscolaPage() {
           </div>
         )}
 
+        {/* ================= ABA: COORDENAÇÃO ================= */}
         {activeTab === "coordenacao" && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {/* Child Selector if more than 1 child */}
             {students.length > 1 && (
-              <div style={{ display: "flex", gap: 8, marginBottom: 8, overflowX: "auto" }}>
+              <div style={{ display: "flex", gap: 8, paddingBottom: 4, overflowX: "auto" }} className="hide-scrollbar">
                 {students.map((s) => (
                   <button
                     key={s.id}
+                    type="button"
                     className={`btn ${selectedStudent?.id === s.id ? "btn--primary" : "btn--secondary"}`}
-                    style={{ fontSize: 13, padding: "8px 16px", whiteSpace: "nowrap" }}
+                    style={{ fontSize: 12, padding: "6px 14px", borderRadius: 20, whiteSpace: "nowrap" }}
                     onClick={() => setSelectedStudent(s)}
                   >
                     {s.nome}
@@ -553,22 +605,29 @@ export default function EscolaPage() {
               </div>
             )}
 
-            {/* Chat Body */}
-            <div className="card" style={{ padding: 0, overflow: "hidden", display: "flex", flexDirection: "column", minHeight: 400 }}>
-              <div style={{ background: "#F8FAFC", borderBottom: "1px solid #E2E8F0", padding: "16px 20px" }}>
-                <h4 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: "#1E293B" }}>
-                  Canal de Atendimento — Coordenação Creche do Papai
-                </h4>
-                <p style={{ margin: "2px 0 0", fontSize: 11, color: "#64748B" }}>
-                  Fale com a diretoria para assuntos administrativos, financeiros ou dúvidas gerais.
-                </p>
+            {/* Chat Container */}
+            <div style={{ background: "white", borderRadius: 16, border: "1px solid #E2E8F0", overflow: "hidden", display: "flex", flexDirection: "column", minHeight: 460, boxShadow: "0 1px 3px rgba(0,0,0,0.03)" }}>
+              <div style={{ background: "#F8FAFC", borderBottom: "1px solid #E2E8F0", padding: "14px 18px", display: "flex", alignItems: "center", gap: 12 }}>
+                <div style={{ width: 40, height: 40, borderRadius: "50%", background: "#EA580C", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, fontWeight: 800 }}>
+                  🏫
+                </div>
+                <div>
+                  <h4 style={{ margin: 0, fontSize: 14, fontWeight: 800, color: "#1E293B" }}>
+                    Atendimento com a Coordenação
+                  </h4>
+                  <p style={{ margin: "2px 0 0", fontSize: 11, color: "#16A34A", fontWeight: 600 }}>
+                    ● Canal direto com a direção da Creche do Papai
+                  </p>
+                </div>
               </div>
 
               {/* Message thread */}
-              <div style={{ padding: 20, flex: 1, overflowY: "auto", background: "#FFFBF7", display: "flex", flexDirection: "column", gap: 12, minHeight: 300, maxHeight: 400 }}>
+              <div style={{ padding: 18, flex: 1, overflowY: "auto", background: "#FAF7F2", display: "flex", flexDirection: "column", gap: 10, minHeight: 320, maxHeight: 460 }}>
                 {chatMessages.length === 0 ? (
-                  <div style={{ textAlign: "center", padding: "40px 0", color: "#94A3B8", fontSize: 13 }}>
-                    Nenhuma mensagem enviada. Escreva abaixo para iniciar seu atendimento.
+                  <div style={{ textAlign: "center", padding: "40px 16px", color: "#94A3B8" }}>
+                    <span style={{ fontSize: 32, display: "block", marginBottom: 8 }}>💬</span>
+                    <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: "#64748B" }}>Nenhuma mensagem enviada ainda.</p>
+                    <p style={{ margin: "4px 0 0", fontSize: 11, color: "#94A3B8" }}>Tire dúvidas com a direção ou envie comunicados administrativos abaixo.</p>
                   </div>
                 ) : (
                   chatMessages.map((msg, idx) => {
@@ -586,18 +645,19 @@ export default function EscolaPage() {
                       >
                         <div style={{
                           padding: "10px 14px",
-                          borderRadius: isPai ? "16px 16px 4px 16px" : "16px 16px 16px 4px",
-                          background: isPai ? "var(--primary-light)" : "white",
-                          color: isPai ? "var(--primary-dark)" : "#334155",
-                          border: isPai ? "1px solid var(--primary)" : "1px solid #E2E8F0",
+                          borderRadius: isPai ? "16px 16px 2px 16px" : "16px 16px 16px 2px",
+                          background: isPai ? "linear-gradient(135deg, #F97316, #EA580C)" : "white",
+                          color: isPai ? "white" : "#1E293B",
+                          boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
+                          border: isPai ? "none" : "1px solid #E2E8F0",
                           fontSize: 13,
-                          lineHeight: 1.4,
+                          lineHeight: 1.45,
                           wordBreak: "break-word"
                         }}>
                           {msg.texto}
                         </div>
-                        <span style={{ fontSize: 9, color: "#94A3B8", marginTop: 4, paddingLeft: 4, paddingRight: 4 }}>
-                          {msg.horario} {isPai && (msg.lida ? "✓ Lida" : "✓ Enviada")}
+                        <span style={{ fontSize: 10, color: "#94A3B8", marginTop: 3, padding: "0 4px" }}>
+                          {msg.horario} {isPai && (msg.lida ? "• ✓✓ Lida" : "• ✓ Enviada")}
                         </span>
                       </div>
                     );
@@ -606,11 +666,11 @@ export default function EscolaPage() {
               </div>
 
               {/* Message Input Footer */}
-              <div style={{ padding: 16, background: "white", borderTop: "1px solid #E2E8F0", display: "flex", gap: 8 }}>
+              <div style={{ padding: 12, background: "white", borderTop: "1px solid #E2E8F0", display: "flex", gap: 8 }}>
                 <input
                   type="text"
                   className="text-input"
-                  placeholder="Escreva sua mensagem..."
+                  placeholder="Escreva sua mensagem para a coordenação..."
                   value={newMessage}
                   onChange={e => setNewMessage(e.target.value)}
                   onKeyDown={e => {
@@ -618,57 +678,92 @@ export default function EscolaPage() {
                       handleSendChat();
                     }
                   }}
-                  style={{ flex: 1, padding: "10px 14px", fontSize: 13, height: "auto" }}
+                  style={{ flex: 1, padding: "10px 16px", fontSize: 13, borderRadius: 20, height: "auto" }}
                 />
                 <button
                   onClick={handleSendChat}
                   disabled={sendingChat || !newMessage.trim() || !selectedStudent}
-                  className="btn btn--primary"
-                  style={{ fontSize: 13, padding: "8px 16px" }}
+                  style={{
+                    background: "linear-gradient(135deg, #F97316, #EA580C)",
+                    color: "white",
+                    border: "none",
+                    borderRadius: 20,
+                    padding: "8px 16px",
+                    fontSize: 13,
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 4
+                  }}
                 >
-                  {sendingChat ? "..." : "Enviar"}
+                  {sendingChat ? "..." : "Enviar ➤"}
                 </button>
               </div>
             </div>
           </div>
         )}
 
+        {/* ================= ABA: RELATÓRIOS ================= */}
         {activeTab === "relatorios" && selectedStudent && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
             {viewingReport ? (
-              <div style={{ background: "white", padding: "32px 24px", borderRadius: 16, border: "1px solid var(--border)", boxShadow: "0 4px 20px rgba(0,0,0,0.05)" }}>
-                <button 
-                  onClick={() => setViewingReport(null)}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    color: "var(--primary)",
-                    fontWeight: 700,
-                    cursor: "pointer",
-                    fontSize: 14,
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 6,
-                    marginBottom: 20,
-                    padding: 0
-                  }}
-                >
-                  ← Voltar aos Relatórios
-                </button>
-                <div style={{ textAlign: "center", borderBottom: "2px solid #F1F5F9", paddingBottom: 16, marginBottom: 24 }}>
-                  <h3 style={{ margin: 0, fontSize: 20, fontWeight: 900, color: "#0F172A" }}>Creche do Papai</h3>
-                  <p style={{ margin: "4px 0 0", fontSize: 12, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 700 }}>
-                    Relatório Pedagógico Trimestral — {viewingReport.periodo.replace("-T", "º Trimestre ")}
+              <div style={{ background: "white", padding: "28px 20px", borderRadius: 16, border: "1px solid #E2E8F0", boxShadow: "0 2px 10px rgba(0,0,0,0.04)" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, flexWrap: "wrap", gap: 10 }}>
+                  <button 
+                    onClick={() => setViewingReport(null)}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      color: "#EA580C",
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      fontSize: 13,
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 6,
+                      padding: 0
+                    }}
+                  >
+                    ← Voltar aos Relatórios
+                  </button>
+
+                  <button
+                    onClick={() => handlePrintReport(viewingReport, selectedStudent.nome)}
+                    style={{
+                      background: "linear-gradient(135deg, #F97316, #EA580C)",
+                      color: "white",
+                      border: "none",
+                      borderRadius: 10,
+                      padding: "8px 14px",
+                      fontSize: 12,
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 6,
+                      boxShadow: "0 2px 6px rgba(234, 88, 12, 0.25)"
+                    }}
+                  >
+                    📥 Baixar / Imprimir PDF
+                  </button>
+                </div>
+
+                <div style={{ textAlign: "center", borderBottom: "2px solid #F1F5F9", paddingBottom: 16, marginBottom: 20 }}>
+                  <h3 style={{ margin: 0, fontSize: 18, fontWeight: 900, color: "#0F172A" }}>Creche do Papai</h3>
+                  <p style={{ margin: "4px 0 0", fontSize: 11, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 700 }}>
+                    Relatório Pedagógico — {viewingReport.periodo.replace("-T", "º Trimestre ")}
                   </p>
-                  <p style={{ margin: "4px 0 0", fontSize: 13, color: "#64748B" }}>
+                  <p style={{ margin: "4px 0 0", fontSize: 13, color: "#334155" }}>
                     Aluno(a): <strong>{selectedStudent.nome}</strong>
                   </p>
                 </div>
+
                 <div style={{ fontSize: 14, lineHeight: 1.7, color: "#334155" }}>
                   {viewingReport.conteudo.split('\n').map((line, i) => {
-                    if (line.startsWith('## ')) return <h2 key={i} style={{ fontSize: 18, color: "#1E293B", marginTop: 20, fontWeight: 800 }}>{line.replace('## ', '')}</h2>;
-                    if (line.startsWith('### ')) return <h3 key={i} style={{ fontSize: 16, color: "#1E293B", marginTop: 16, fontWeight: 700 }}>{line.replace('### ', '')}</h3>;
-                    if (line.startsWith('# ')) return <h2 key={i} style={{ fontSize: 20, color: "#1E293B", marginTop: 24, fontWeight: 800 }}>{line.replace('# ', '')}</h2>;
+                    if (line.startsWith('## ')) return <h2 key={i} style={{ fontSize: 16, color: "#1E293B", marginTop: 20, fontWeight: 800 }}>{line.replace('## ', '')}</h2>;
+                    if (line.startsWith('### ')) return <h3 key={i} style={{ fontSize: 14, color: "#1E293B", marginTop: 14, fontWeight: 700 }}>{line.replace('### ', '')}</h3>;
+                    if (line.startsWith('# ')) return <h2 key={i} style={{ fontSize: 18, color: "#1E293B", marginTop: 22, fontWeight: 800 }}>{line.replace('# ', '')}</h2>;
                     
                     const parts = line.split(/(\*\*.*?\*\*)/g);
                     return (
@@ -685,15 +780,15 @@ export default function EscolaPage() {
                 </div>
               </div>
             ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                 {/* Selector of multiple kids if exists */}
                 {students.length > 1 && (
-                  <div style={{ display: "flex", gap: 8, marginBottom: 8, overflowX: "auto" }}>
+                  <div style={{ display: "flex", gap: 8, paddingBottom: 4, overflowX: "auto" }} className="hide-scrollbar">
                     {students.map((s) => (
                       <button
                         key={s.id}
                         className={`btn ${selectedStudent?.id === s.id ? "btn--primary" : "btn--secondary"}`}
-                        style={{ fontSize: 13, padding: "8px 16px", whiteSpace: "nowrap" }}
+                        style={{ fontSize: 12, padding: "6px 14px", borderRadius: 20, whiteSpace: "nowrap" }}
                         onClick={() => setSelectedStudent(s)}
                       >
                         {s.nome}
@@ -712,34 +807,51 @@ export default function EscolaPage() {
 
                   if (isApproved && isReleased) {
                     return (
-                      <div key={period} className="card" style={{ padding: 20, display: "flex", justifyContent: "space-between", alignItems: "center", borderLeft: "4px solid var(--success)" }}>
+                      <div key={period} style={{ background: "white", padding: 18, borderRadius: 16, border: "1px solid #E2E8F0", borderLeft: "5px solid #16A34A", display: "flex", justifyContent: "space-between", alignItems: "center", boxShadow: "0 1px 3px rgba(0,0,0,0.03)" }}>
                         <div>
-                          <h4 style={{ margin: 0, fontSize: 15, color: "#1E293B", fontWeight: 700 }}>{labelPeriod}</h4>
-                          <span style={{ fontSize: 11, color: "#059669", fontWeight: 600, display: "inline-block", marginTop: 4 }}>🔓 Disponível para Visualização</span>
+                          <h4 style={{ margin: 0, fontSize: 14, color: "#1E293B", fontWeight: 800 }}>{labelPeriod}</h4>
+                          <span style={{ fontSize: 11, color: "#15803D", fontWeight: 700, display: "inline-block", marginTop: 4 }}>🔓 Disponível para Visualização</span>
                         </div>
-                        <button 
-                          onClick={() => setViewingReport(rep)}
-                          className="btn btn--primary" 
-                          style={{ padding: "8px 16px", fontSize: 12 }}
-                        >
-                          📄 Abrir Relatório
-                        </button>
+                        <div style={{ display: "flex", gap: 8 }}>
+                          <button 
+                            onClick={() => setViewingReport(rep)}
+                            className="btn btn--primary" 
+                            style={{ padding: "8px 12px", fontSize: 12, borderRadius: 8 }}
+                          >
+                            📄 Abrir
+                          </button>
+                          <button
+                            onClick={() => handlePrintReport(rep, selectedStudent.nome)}
+                            style={{
+                              background: "#FFF7ED",
+                              color: "#C2410C",
+                              border: "1px solid #FFEDD5",
+                              borderRadius: 8,
+                              padding: "8px 12px",
+                              fontSize: 12,
+                              fontWeight: 700,
+                              cursor: "pointer"
+                            }}
+                          >
+                            📥 PDF
+                          </button>
+                        </div>
                       </div>
                     );
                   } else if (rep && !isReleased) {
                     return (
-                      <div key={period} className="card" style={{ padding: 20, borderLeft: "4px solid var(--danger)", background: "#FFFBFB" }}>
-                        <h4 style={{ margin: 0, fontSize: 15, color: "#9F1239", fontWeight: 700 }}>🔒 {labelPeriod}</h4>
-                        <p style={{ margin: "8px 0 0 0", fontSize: 13, lineHeight: 1.5, color: "#9F1239" }}>
-                          Relatório Indisponível. Documento liberado mediante presença na Reunião de Pais presencial de alinhamento pedagógico. Para orientações, entre em contato com a secretaria.
+                      <div key={period} style={{ background: "#FFFBFB", padding: 18, borderRadius: 16, border: "1px solid #FECACA", borderLeft: "5px solid #DC2626" }}>
+                        <h4 style={{ margin: 0, fontSize: 14, color: "#9F1239", fontWeight: 800 }}>🔒 {labelPeriod}</h4>
+                        <p style={{ margin: "6px 0 0 0", fontSize: 12, lineHeight: 1.5, color: "#9F1239" }}>
+                          Relatório Indisponível. Documento liberado mediante presença na Reunião de Pais presencial de alinhamento pedagógico.
                         </p>
                       </div>
                     );
                   } else {
                     return (
-                      <div key={period} className="card" style={{ padding: 20, borderLeft: "4px solid var(--border)", opacity: 0.7 }}>
-                        <h4 style={{ margin: 0, fontSize: 15, color: "var(--text-muted)", fontWeight: 700 }}>⏳ {labelPeriod}</h4>
-                        <p style={{ margin: "4px 0 0 0", fontSize: 12, color: "var(--text-muted)" }}>
+                      <div key={period} style={{ background: "white", padding: 18, borderRadius: 16, border: "1px solid #E2E8F0", borderLeft: "5px solid #CBD5E1", opacity: 0.8 }}>
+                        <h4 style={{ margin: 0, fontSize: 14, color: "#64748B", fontWeight: 700 }}>⏳ {labelPeriod}</h4>
+                        <p style={{ margin: "4px 0 0 0", fontSize: 12, color: "#94A3B8" }}>
                           Relatório em processamento ou aguardando preenchimento pela equipe pedagógica.
                         </p>
                       </div>
@@ -751,17 +863,18 @@ export default function EscolaPage() {
           </div>
         )}
 
+        {/* ================= ABA: MEU FILHO(A) / PERFIL ================= */}
         {activeTab === "perfil" && selectedStudent && (
-          <form onSubmit={handleSaveFamilyProfile} style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+          <form onSubmit={handleSaveFamilyProfile} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
             {/* Student selector if multiple children */}
             {students.length > 1 && (
-              <div style={{ display: "flex", gap: 8, marginBottom: 8, overflowX: "auto" }}>
+              <div style={{ display: "flex", gap: 8, paddingBottom: 4, overflowX: "auto" }} className="hide-scrollbar">
                 {students.map((s) => (
                   <button
                     key={s.id}
                     type="button"
                     className={`btn ${selectedStudent?.id === s.id ? "btn--primary" : "btn--secondary"}`}
-                    style={{ fontSize: 13, padding: "8px 16px", whiteSpace: "nowrap" }}
+                    style={{ fontSize: 12, padding: "6px 14px", borderRadius: 20, whiteSpace: "nowrap" }}
                     onClick={() => setSelectedStudent(s)}
                   >
                     {s.nome}
@@ -770,105 +883,60 @@ export default function EscolaPage() {
               </div>
             )}
 
-            {/* Photo Section */}
-            <div className="card" style={{ padding: 20, textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center" }}>
-              <div style={{ width: 88, height: 88, borderRadius: "50%", background: "#F1F5F9", border: "3px solid var(--primary)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 36, marginBottom: 12 }}>
+            {/* Child Profile Presentation Card */}
+            <div style={{ background: "white", padding: "18px 20px", borderRadius: 16, border: "1px solid #E2E8F0", display: "flex", alignItems: "center", gap: 16, boxShadow: "0 1px 3px rgba(0,0,0,0.03)" }}>
+              <div style={{ width: 64, height: 64, borderRadius: "50%", background: "#FFF7ED", border: "2px solid #FDBA74", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, flexShrink: 0 }}>
                 {profileFotoUrl ? (
                   <img src={profileFotoUrl} alt={selectedStudent.nome} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                 ) : (
                   "👶"
                 )}
               </div>
-              <input
-                type="file"
-                id="parent-student-photo"
-                accept="image/*"
-                style={{ display: "none" }}
-                onChange={async (e) => {
-                  const file = e.target.files?.[0];
-                  if (file) await handleStudentPhotoUpload(file);
-                }}
-              />
-              <label
-                htmlFor="parent-student-photo"
-                style={{
-                  background: "#FFF7ED",
-                  color: "#C2410C",
-                  border: "1px solid #FFEDD5",
-                  padding: "8px 16px",
-                  borderRadius: 12,
-                  fontSize: 13,
-                  fontWeight: 700,
-                  cursor: "pointer"
-                }}
-              >
-                {uploadingFoto ? "Enviando Foto..." : "📷 Alterar Foto do Aluno"}
-              </label>
-            </div>
-
-            {/* Read-Only Administrative Info */}
-            <div className="card" style={{ padding: 20, background: "#F8FAFC", border: "1px solid #E2E8F0" }}>
-              <span style={{ fontSize: 11, fontWeight: 800, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                🔒 Informações Escolares (Apenas Secretaria)
-              </span>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginTop: 12, fontSize: 13 }}>
-                <div>
-                  <span style={{ color: "#64748B", fontSize: 11, display: "block" }}>TURMA</span>
-                  <strong style={{ color: "#1E293B" }}>{selectedStudent.turma}</strong>
-                </div>
-                <div>
-                  <span style={{ color: "#64748B", fontSize: 11, display: "block" }}>MATRÍCULA / ID</span>
-                  <strong style={{ color: "#1E293B", fontFamily: "monospace" }}>{selectedStudent.id.substring(0, 8)}</strong>
+              <div style={{ flex: 1 }}>
+                <h3 style={{ margin: 0, fontSize: 17, fontWeight: 800, color: "#1E293B" }}>
+                  {selectedStudent.nome}
+                </h3>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4 }}>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: "#0369A1", background: "#E0F2FE", padding: "2px 8px", borderRadius: 6 }}>
+                    🎒 {selectedStudent.turma}
+                  </span>
+                  <span style={{ fontSize: 12, color: "#64748B" }}>
+                    Creche do Papai
+                  </span>
                 </div>
               </div>
             </div>
 
-            {/* Address Editable */}
-            <div className="card" style={{ padding: 20 }}>
-              <label style={{ display: "block", fontSize: 13, fontWeight: 800, color: "#1E293B", marginBottom: 8 }}>
-                🏠 Endereço Residencial
-              </label>
-              <input
-                type="text"
-                className="text-input"
-                placeholder="Rua, número, bairro, CEP..."
-                value={profileAddress}
-                onChange={e => setProfileAddress(e.target.value)}
-                style={{ fontSize: 13 }}
-              />
-            </div>
-
-            {/* Authorized Pickup List */}
-            <div className="card" style={{ padding: 20 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                <div>
-                  <h3 style={{ margin: 0, fontSize: 14, fontWeight: 800, color: "#1E293B" }}>
-                    🚗 Pessoas Autorizadas a Retirar (Cadastro Permanente)
-                  </h3>
-                  <p style={{ margin: "2px 0 0", fontSize: 11, color: "#64748B" }}>
-                    Familiares ou pessoas autorizadas rotineiramente a buscar seu filho. Casos eventuais e exceções devem ser alinhados por telefone direto com a coordenação.
-                  </p>
-                </div>
+            {/* Authorized Pickup List (Primary Focus) */}
+            <div style={{ background: "white", padding: 20, borderRadius: 16, border: "1px solid #E2E8F0", boxShadow: "0 1px 3px rgba(0,0,0,0.03)" }}>
+              <div style={{ marginBottom: 14 }}>
+                <h3 style={{ margin: 0, fontSize: 15, fontWeight: 800, color: "#1E293B", display: "flex", alignItems: "center", gap: 6 }}>
+                  🚗 Pessoas Autorizadas a Retirar
+                </h3>
+                <p style={{ margin: "3px 0 0", fontSize: 12, color: "#64748B", lineHeight: 1.4 }}>
+                  Familiares ou pessoas de confiança com autorização permanente. Exceções eventuais devem ser tratadas direto por telefone com a coordenação.
+                </p>
               </div>
 
               {profileAutorizados.length === 0 ? (
-                <div style={{ padding: 16, background: "#F8FAFC", borderRadius: 12, textAlign: "center", color: "#94A3B8", fontSize: 12, marginBottom: 16 }}>
-                  Nenhum autorizado cadastrado além dos pais.
+                <div style={{ padding: 14, background: "#F8FAFC", borderRadius: 12, textAlign: "center", color: "#94A3B8", fontSize: 12, border: "1px dashed #CBD5E1", marginBottom: 14 }}>
+                  Nenhum terceiro cadastrado. Somente os pais vinculados podem retirar.
                 </div>
               ) : (
-                <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 16 }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 14 }}>
                   {profileAutorizados.map((aut, idx) => (
-                    <div key={idx} style={{ padding: 12, background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div key={idx} style={{ padding: "10px 14px", background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                       <div>
                         <strong style={{ fontSize: 13, color: "#1E293B" }}>{aut.nome}</strong>
-                        <div style={{ fontSize: 11, color: "#64748B" }}>
-                          {aut.parentesco} {aut.documento ? `• Doc: ${aut.documento}` : ''}
+                        <div style={{ fontSize: 11, color: "#64748B", marginTop: 2 }}>
+                          <span style={{ fontWeight: 600, color: "#0369A1" }}>{aut.parentesco}</span>
+                          {aut.documento && ` • Doc: ${aut.documento}`}
                         </div>
                       </div>
                       <button
                         type="button"
                         onClick={() => handleRemoveAutorizado(idx)}
-                        style={{ background: "#FEE2E2", color: "#EF4444", border: "none", borderRadius: 8, padding: "6px 10px", fontSize: 11, fontWeight: 700, cursor: "pointer" }}
+                        style={{ background: "#FEE2E2", color: "#DC2626", border: "none", borderRadius: 8, padding: "5px 10px", fontSize: 11, fontWeight: 700, cursor: "pointer" }}
                       >
                         Remover
                       </button>
@@ -878,53 +946,155 @@ export default function EscolaPage() {
               )}
 
               {/* Form to add authorized person */}
-              <div style={{ background: "#F1F5F9", padding: 14, borderRadius: 12, display: "flex", flexDirection: "column", gap: 10 }}>
-                <span style={{ fontSize: 12, fontWeight: 700, color: "#475569" }}>+ Adicionar Nova Pessoa Autorizada</span>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+              <div style={{ background: "#F8FAFC", padding: 14, borderRadius: 12, border: "1px dashed #CBD5E1", display: "flex", flexDirection: "column", gap: 10 }}>
+                <span style={{ fontSize: 12, fontWeight: 700, color: "#334155" }}>+ Incluir Nova Pessoa Autorizada</span>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
                   <input
                     type="text"
                     placeholder="Nome Completo *"
                     className="text-input"
-                    style={{ fontSize: 12 }}
+                    style={{ fontSize: 12, background: "white", padding: "8px 10px", height: "auto" }}
                     value={newAutorizado.nome}
                     onChange={e => setNewAutorizado({...newAutorizado, nome: e.target.value})}
                   />
                   <input
                     type="text"
-                    placeholder="Parentesco (ex: Tio, Avó, Perua)"
+                    placeholder="Parentesco (ex: Vovó, Tio)"
                     className="text-input"
-                    style={{ fontSize: 12 }}
+                    style={{ fontSize: 12, background: "white", padding: "8px 10px", height: "auto" }}
                     value={newAutorizado.parentesco}
                     onChange={e => setNewAutorizado({...newAutorizado, parentesco: e.target.value})}
                   />
                 </div>
                 <input
                   type="text"
-                  placeholder="CPF ou RG para identificação na portaria"
+                  placeholder="CPF ou RG para identificação na portaria (opcional)"
                   className="text-input"
-                  style={{ fontSize: 12 }}
+                  style={{ fontSize: 12, background: "white", padding: "8px 10px", height: "auto" }}
                   value={newAutorizado.documento}
                   onChange={e => setNewAutorizado({...newAutorizado, documento: e.target.value})}
                 />
                 <button
                   type="button"
                   onClick={handleAddAutorizado}
-                  style={{ background: "#0284C7", color: "white", border: "none", borderRadius: 8, padding: "8px 14px", fontSize: 12, fontWeight: 700, cursor: "pointer", alignSelf: "flex-end" }}
+                  style={{ background: "#16A34A", color: "white", border: "none", borderRadius: 8, padding: "8px 14px", fontSize: 12, fontWeight: 700, cursor: "pointer", alignSelf: "flex-end" }}
                 >
                   + Incluir Autorizado
                 </button>
               </div>
             </div>
 
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={savingProfile}
-              className="btn btn--primary btn--lg btn--block"
-              style={{ padding: "14px", fontSize: 14, fontWeight: 700 }}
-            >
-              {savingProfile ? "Salvação em andamento..." : "💾 Salvar Alterações e Notificar Secretaria"}
-            </button>
+            {/* Collapsible Discreet Data (Address & Administrative info) */}
+            <div style={{ background: "white", borderRadius: 16, border: "1px solid #E2E8F0", overflow: "hidden", boxShadow: "0 1px 3px rgba(0,0,0,0.03)" }}>
+              <button
+                type="button"
+                onClick={() => setShowDetailedInfo(!showDetailedInfo)}
+                style={{
+                  width: "100%",
+                  padding: "16px 20px",
+                  background: "none",
+                  border: "none",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  cursor: "pointer",
+                  textAlign: "left"
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <span style={{ fontSize: 18 }}>🔒</span>
+                  <div>
+                    <h4 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "#1E293B" }}>
+                      Dados Cadastrais & Endereço
+                    </h4>
+                    <p style={{ margin: "2px 0 0", fontSize: 11, color: "#64748B" }}>
+                      Endereço residencial, matrícula e foto
+                    </p>
+                  </div>
+                </div>
+                <span style={{ fontSize: 11, color: "#64748B", fontWeight: 700, background: "#F1F5F9", padding: "4px 10px", borderRadius: 12 }}>
+                  {showDetailedInfo ? "Ocultar ▲" : "Ver / Editar ▼"}
+                </span>
+              </button>
+
+              {showDetailedInfo && (
+                <div style={{ padding: "0 20px 20px", borderTop: "1px solid #F1F5F9", display: "flex", flexDirection: "column", gap: 14 }}>
+                  {/* Photo update */}
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingTop: 14 }}>
+                    <div>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: "#1E293B", display: "block" }}>Foto do Aluno</span>
+                      <span style={{ fontSize: 11, color: "#64748B" }}>Utilizada na identificação escolar</span>
+                    </div>
+                    <input
+                      type="file"
+                      id="parent-student-photo"
+                      accept="image/*"
+                      style={{ display: "none" }}
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (file) await handleStudentPhotoUpload(file);
+                      }}
+                    />
+                    <label
+                      htmlFor="parent-student-photo"
+                      style={{
+                        background: "#FFF7ED",
+                        color: "#C2410C",
+                        border: "1px solid #FFEDD5",
+                        padding: "6px 12px",
+                        borderRadius: 10,
+                        fontSize: 12,
+                        fontWeight: 700,
+                        cursor: "pointer"
+                      }}
+                    >
+                      {uploadingFoto ? "Enviando..." : "📷 Alterar Foto"}
+                    </label>
+                  </div>
+
+                  {/* Read-Only Administrative info */}
+                  <div style={{ padding: 12, background: "#F8FAFC", borderRadius: 10, border: "1px solid #E2E8F0" }}>
+                    <span style={{ fontSize: 10, fontWeight: 800, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                      Identificação na Secretaria
+                    </span>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginTop: 8, fontSize: 12 }}>
+                      <div>
+                        <span style={{ color: "#64748B", fontSize: 11, display: "block" }}>TURMA</span>
+                        <strong style={{ color: "#1E293B" }}>{selectedStudent.turma}</strong>
+                      </div>
+                      <div>
+                        <span style={{ color: "#64748B", fontSize: 11, display: "block" }}>MATRÍCULA / ID</span>
+                        <strong style={{ color: "#1E293B", fontFamily: "monospace" }}>{selectedStudent.id.substring(0, 10)}</strong>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Address input */}
+                  <div>
+                    <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#1E293B", marginBottom: 6 }}>
+                      🏠 Endereço Residencial
+                    </label>
+                    <input
+                      type="text"
+                      className="text-input"
+                      placeholder="Rua, número, complemento, bairro, CEP..."
+                      value={profileAddress}
+                      onChange={e => setProfileAddress(e.target.value)}
+                      style={{ fontSize: 12, padding: "8px 12px" }}
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={savingProfile}
+                    className="btn btn--primary"
+                    style={{ padding: "10px", fontSize: 13, fontWeight: 700, borderRadius: 10 }}
+                  >
+                    {savingProfile ? "Salvando..." : "💾 Salvar Endereço / Dados"}
+                  </button>
+                </div>
+              )}
+            </div>
           </form>
         )}
       </div>
