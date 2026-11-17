@@ -6,10 +6,14 @@ export const metadata: Metadata = {
   title: "Agenda Creche do Papai",
   description: "Agenda digital escolar para pais e professores - Creche do Papai",
   manifest: "/manifest.json",
+  icons: {
+    icon: "/icons/icon-192x192.png",
+    apple: "/apple-touch-icon.png",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Agenda Ottomatic",
+    title: "Creche do Papai",
   },
 };
 

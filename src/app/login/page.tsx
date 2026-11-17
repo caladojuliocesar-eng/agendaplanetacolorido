@@ -2,6 +2,7 @@
 
 import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import {
   signInWithGoogle,
   signInWithIdentifier,
@@ -119,6 +120,15 @@ function LoginContent() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#FFF7ED] p-4">
       <div className="max-w-md w-full bg-white rounded-3xl shadow-xl p-8 border border-[#FED7AA]">
+        <div className="flex items-center justify-between mb-4">
+          <Link 
+            href="/"
+            className="inline-flex items-center gap-1 text-xs text-[#9A3412] hover:text-[#EA580C] font-semibold transition-colors"
+          >
+            ← Boas-vindas e instruções
+          </Link>
+        </div>
+
         <div className="text-center mb-8">
           <div className="flex items-center justify-center mb-6">
             <img 
