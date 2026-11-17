@@ -79,6 +79,7 @@ export interface UserProfile {
   uid: string;
   nome: string;
   email: string;
+  telefone?: string;
   cpf?: string;          // login por CPF
   role: UserRole;
   escolaId: string;
@@ -118,6 +119,7 @@ export interface Student {
   // Contatos e Autorizações
   contatosEmergencia?: ContatoEmergencia[];
   autorizadosRetirada?: AutorizadoRetirada[];
+  cadastroAtualizadoPelaFamiliaEm?: string;
   
   criadoEm: string;
   atualizadoEm?: string;

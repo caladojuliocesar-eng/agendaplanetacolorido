@@ -485,6 +485,23 @@ export default function RegistroIndividual() {
         );
       })()}
 
+      {/* ====== PESSOAS AUTORIZADAS A RETIRAR ====== */}
+      {student && student.autorizadosRetirada && student.autorizadosRetirada.length > 0 && (
+        <div style={{ padding: "10px 14px", background: "#F0FDF4", border: "1px solid #BBF7D0", borderRadius: 12, marginBottom: 16 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: 800, color: "#166534", fontSize: 12, marginBottom: 6 }}>
+            <span>🚗 AUTORIZADOS A RETIRAR (CADASTRO PERMANENTE)</span>
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+            {student.autorizadosRetirada.map((aut, idx) => (
+              <span key={idx} style={{ background: "white", border: "1px solid #86EFAC", padding: "4px 10px", borderRadius: 8, fontSize: 12, color: "#166534", fontWeight: 600 }}>
+                {aut.nome} <span style={{ color: "#64748B", fontWeight: 400 }}>({aut.parentesco})</span>
+                {aut.documento && <span style={{ color: "#0284C7", marginLeft: 4, fontSize: 11 }}>• Doc: {aut.documento}</span>}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* ====== STATUS DE PRESENÇA ====== */}
       <div className="card" style={{ padding: "12px 16px", marginBottom: 16, display: "flex", alignItems: "center", justifyContent: "space-between", border: ausente ? "1px solid var(--text-muted)" : "1px solid var(--success-light)" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>

@@ -175,24 +175,62 @@ export default function EscolaPage() {
     }
   };
 
-  const handleAddAutorizado = () => {
+  const handleAddAutorizado = async () => {
     if (!newAutorizado.nome.trim()) {
       alert("Preencha o nome da pessoa autorizada.");
       return;
     }
-    setProfileAutorizados(prev => [
-      ...prev,
-      {
-        nome: newAutorizado.nome.trim(),
-        parentesco: newAutorizado.parentesco.trim() || "Autorizado",
-        documento: newAutorizado.documento.trim() || ""
-      }
-    ]);
+    if (!selectedStudent || !profile?.escolaId) return;
+
+    const person: AutorizadoRetirada = {
+      nome: newAutorizado.nome.trim(),
+      parentesco: newAutorizado.parentesco.trim() || "Autorizado",
+      documento: newAutorizado.documento.trim() || ""
+    };
+
+    const updatedList = [...profileAutorizados, person];
+    setProfileAutorizados(updatedList);
     setNewAutorizado({ nome: "", parentesco: "", documento: "" });
+
+    try {
+      await updateStudentFamilyProfile(
+        selectedStudent.id,
+        { autorizadosRetirada: updatedList },
+        profile.nome || "Família",
+        selectedStudent.nome,
+        profile.escolaId,
+        `Nova pessoa autorizada: ${person.nome} (${person.parentesco})`
+      );
+      setSelectedStudent(prev => prev ? { ...prev, autorizadosRetirada: updatedList } : null);
+      alert("✅ Pessoa autorizada adicionada com sucesso ao cadastro!");
+    } catch (err) {
+      console.error("Erro ao salvar autorizado:", err);
+      alert("Erro ao salvar pessoa autorizada.");
+    }
   };
 
-  const handleRemoveAutorizado = (index: number) => {
-    setProfileAutorizados(prev => prev.filter((_, i) => i !== index));
+  const handleRemoveAutorizado = async (index: number) => {
+    if (!confirm("Deseja remover esta pessoa da lista de autorizados?")) return;
+    if (!selectedStudent || !profile?.escolaId) return;
+
+    const removedPerson = profileAutorizados[index];
+    const updatedList = profileAutorizados.filter((_, i) => i !== index);
+    setProfileAutorizados(updatedList);
+
+    try {
+      await updateStudentFamilyProfile(
+        selectedStudent.id,
+        { autorizadosRetirada: updatedList },
+        profile.nome || "Família",
+        selectedStudent.nome,
+        profile.escolaId,
+        `Pessoa autorizada removida: ${removedPerson?.nome || 'Cadastro'}`
+      );
+      setSelectedStudent(prev => prev ? { ...prev, autorizadosRetirada: updatedList } : null);
+    } catch (err) {
+      console.error("Erro ao remover autorizado:", err);
+      alert("Erro ao remover autorizado.");
+    }
   };
 
   const handleSaveFamilyProfile = async (e: React.FormEvent) => {
@@ -805,10 +843,10 @@ export default function EscolaPage() {
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
                 <div>
                   <h3 style={{ margin: 0, fontSize: 14, fontWeight: 800, color: "#1E293B" }}>
-                    🚗 Pessoas Autorizadas a Retirar o Aluno
+                    🚗 Pessoas Autorizadas a Retirar (Cadastro Permanente)
                   </h3>
                   <p style={{ margin: "2px 0 0", fontSize: 11, color: "#64748B" }}>
-                    A escola exige autorização formal para entregar a criança.
+                    Familiares ou pessoas autorizadas rotineiramente a buscar seu filho. Casos eventuais e exceções devem ser alinhados por telefone direto com a coordenação.
                   </p>
                 </div>
               </div>

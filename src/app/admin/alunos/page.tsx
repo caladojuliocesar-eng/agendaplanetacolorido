@@ -18,7 +18,7 @@ import {
   rejectMatriculaSolicitude,
   updateMatriculaSolicitude
 } from "@/lib/firestore";
-import { Student, UserProfile, MedicamentoTemporario } from "@/types";
+import { Student, UserProfile, MedicamentoTemporario, AutorizadoRetirada } from "@/types";
 
 const TURMAS_SUGERIDAS = [
   "Berçário I", "Berçário II",
@@ -119,6 +119,9 @@ export default function AlunosAdminPage() {
   // Parent Linking State
   const [parentSearchEmail, setParentSearchEmail] = useState("");
   const [parentNewName, setParentNewName] = useState("");
+
+  // Permanent Authorized Pickup State
+  const [adminNewAutorizado, setAdminNewAutorizado] = useState({ nome: "", parentesco: "", documento: "" });
 
   // Fichas de Matrícula Externa (Simplificação Ponto 3)
   const [pendingSolicitudes, setPendingSolicitudes] = useState<any[]>([]);
@@ -382,6 +385,54 @@ export default function AlunosAdminPage() {
     }
   };
 
+  const handleAdminAddAutorizado = async () => {
+    if (!editingStudent || !adminNewAutorizado.nome.trim()) {
+      alert("Preencha o nome da pessoa autorizada.");
+      return;
+    }
+    setSaving(true);
+    try {
+      const person: AutorizadoRetirada = {
+        nome: adminNewAutorizado.nome.trim(),
+        parentesco: adminNewAutorizado.parentesco.trim() || "Autorizado",
+        documento: adminNewAutorizado.documento.trim() || ""
+      };
+      const updatedList = [...(editingStudent.autorizadosRetirada || []), person];
+      await updateStudent(editingStudent.id, {
+        autorizadosRetirada: updatedList,
+        atualizadoEm: new Date().toISOString()
+      });
+      setEditingStudent(prev => prev ? { ...prev, autorizadosRetirada: updatedList } : null);
+      setAdminNewAutorizado({ nome: "", parentesco: "", documento: "" });
+      await loadData();
+    } catch (err) {
+      console.error("Erro ao adicionar autorizado:", err);
+      alert("Erro ao adicionar autorizado.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleAdminRemoveAutorizado = async (index: number) => {
+    if (!editingStudent) return;
+    if (!window.confirm("Deseja remover esta pessoa da lista de autorizados?")) return;
+    setSaving(true);
+    try {
+      const updatedList = (editingStudent.autorizadosRetirada || []).filter((_, i) => i !== index);
+      await updateStudent(editingStudent.id, {
+        autorizadosRetirada: updatedList,
+        atualizadoEm: new Date().toISOString()
+      });
+      setEditingStudent(prev => prev ? { ...prev, autorizadosRetirada: updatedList } : null);
+      await loadData();
+    } catch (err) {
+      console.error("Erro ao remover autorizado:", err);
+      alert("Erro ao remover autorizado.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const isEmailExisting = parentSearchEmail.trim().length > 3 && users.some(u => u.email === parentSearchEmail.toLowerCase().trim() && u.role === "pai");
   const linkedParents = editingStudent ? getParentsForStudent(editingStudent.id) : [];
 
@@ -475,7 +526,14 @@ export default function AlunosAdminPage() {
                           <div style={{ width: 40, height: 40, background: "#E2E8F0", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>
                             {student.fotoUrl ? <img src={student.fotoUrl} alt="" style={{ width: "100%", height: "100%", borderRadius: 10, objectFit: "cover" }} /> : "👶"}
                           </div>
-                          <span style={{ fontWeight: 600, color: "#1E293B" }}>{student.nome}</span>
+                          <div style={{ display: "flex", flexDirection: "column" }}>
+                            <span style={{ fontWeight: 600, color: "#1E293B" }}>{student.nome}</span>
+                            {student.cadastroAtualizadoPelaFamiliaEm && (
+                              <span style={{ fontSize: 10, fontWeight: 800, color: "#92400E", background: "#FEF3C7", padding: "1px 6px", borderRadius: 4, width: "fit-content", marginTop: 2 }}>
+                                🔔 Atualizado pela família
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </td>
                       <td style={{ padding: "16px 24px" }}>
@@ -539,6 +597,13 @@ export default function AlunosAdminPage() {
                             })}
                           </div>
                         )}
+                        {student.autorizadosRetirada && student.autorizadosRetirada.length > 0 && (
+                          <div style={{ marginTop: 8, paddingTop: 6, borderTop: "1px dashed #E2E8F0" }}>
+                            <span style={{ fontSize: 11, fontWeight: 700, color: "#0369A1", background: "#F0F9FF", border: "1px solid #BAE6FD", padding: "3px 8px", borderRadius: 6, display: "inline-flex", alignItems: "center", gap: 4 }}>
+                              🚗 {student.autorizadosRetirada.length} autorizado{student.autorizadosRetirada.length > 1 ? "s" : ""}: {student.autorizadosRetirada.map(a => `${a.nome} (${a.parentesco})`).join(", ")}
+                            </span>
+                          </div>
+                        )}
                       </td>
                       <td style={{ padding: "16px 24px", color: "#64748B", fontSize: 14 }}>{student.criadoEm ? new Date(student.criadoEm).toLocaleDateString("pt-BR") : "---"}</td>
                       <td style={{ padding: "16px 24px", textAlign: "right" }}>
@@ -564,7 +629,7 @@ export default function AlunosAdminPage() {
               <div style={{ display: "flex", gap: 24 }}>
                 <button onClick={() => setActiveTab("geral")} style={{ padding: "12px 0", border: "none", background: "none", fontSize: 13, fontWeight: 700, color: activeTab === "geral" ? "var(--primary)" : "#64748B", borderBottom: activeTab === "geral" ? "2px solid var(--primary)" : "2px solid transparent", cursor: "pointer" }}>DADOS GERAIS</button>
                 <button onClick={() => setActiveTab("saude")} style={{ padding: "12px 0", border: "none", background: "none", fontSize: 13, fontWeight: 700, color: activeTab === "saude" ? "var(--primary)" : "#64748B", borderBottom: activeTab === "saude" ? "2px solid var(--primary)" : "2px solid transparent", cursor: "pointer" }}>FICHA MÉDICA</button>
-                <button disabled={!editingStudent} onClick={() => setActiveTab("responsaveis")} style={{ padding: "12px 0", border: "none", background: "none", fontSize: 13, fontWeight: 700, color: !editingStudent ? "#CBD5E1" : (activeTab === "responsaveis" ? "var(--primary)" : "#64748B"), borderBottom: activeTab === "responsaveis" ? "2px solid var(--primary)" : "2px solid transparent", cursor: !editingStudent ? "not-allowed" : "pointer" }}>RESPONSÁVEIS</button>
+                <button disabled={!editingStudent} onClick={() => setActiveTab("responsaveis")} style={{ padding: "12px 0", border: "none", background: "none", fontSize: 13, fontWeight: 700, color: !editingStudent ? "#CBD5E1" : (activeTab === "responsaveis" ? "var(--primary)" : "#64748B"), borderBottom: activeTab === "responsaveis" ? "2px solid var(--primary)" : "2px solid transparent", cursor: !editingStudent ? "not-allowed" : "pointer" }}>RESPONSÁVEIS & RETIRADA</button>
               </div>
             </div>
 
@@ -936,6 +1001,106 @@ export default function AlunosAdminPage() {
                       <button type="button" onClick={handleLinkParent} disabled={saving || !parentSearchEmail || (!isEmailExisting && !parentNewName)} style={{ padding: "10px", background: "var(--primary)", color: "white", border: "none", borderRadius: 8, fontWeight: 700, cursor: "pointer" }}>{saving ? "..." : (isEmailExisting ? "Vincular Existente" : "Cadastrar e Vincular")}</button>
                     </div>
                   </div>
+                  {/* Seção: Pessoas Autorizadas a Retirar (Cadastro Permanente) */}
+                  <div style={{ background: "#F0FDF4", padding: 20, borderRadius: 12, border: "1px solid #BBF7D0" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
+                      <div>
+                        <h4 style={{ margin: 0, fontSize: 14, fontWeight: 800, color: "#166534", display: "flex", alignItems: "center", gap: 6 }}>
+                          🚗 Pessoas Autorizadas a Retirar (Cadastro Permanente)
+                        </h4>
+                        <p style={{ margin: "4px 0 0", fontSize: 12, color: "#15803D" }}>
+                          Pessoas autorizadas rotineiramente a buscar a criança na saída.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Alerta de Atualização Recente pela Família */}
+                    {editingStudent.cadastroAtualizadoPelaFamiliaEm && (
+                      <div style={{ padding: "10px 14px", background: "#FEF9C3", border: "1px solid #FDE047", borderRadius: 8, fontSize: 12, color: "#854D0E", marginBottom: 14, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
+                        <span>🔔 <strong>Atualizado recentemente pela família</strong> em {new Date(editingStudent.cadastroAtualizadoPelaFamiliaEm).toLocaleDateString("pt-BR")}.</span>
+                        {linkedParents.length > 0 && (
+                          <span style={{ fontWeight: 700, color: "#1E293B" }}>
+                            📞 Contato: {linkedParents[0].telefone || linkedParents[0].email || (linkedParents[0].cpf ? `CPF: ${linkedParents[0].cpf}` : "")}
+                          </span>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Lista */}
+                    {(!editingStudent.autorizadosRetirada || editingStudent.autorizadosRetirada.length === 0) ? (
+                      <div style={{ padding: 14, background: "white", borderRadius: 8, color: "#94A3B8", fontSize: 13, textAlign: "center", border: "1px dashed #CBD5E1", marginBottom: 12 }}>
+                        Nenhuma pessoa autorizada cadastrada além dos pais vinculados.
+                      </div>
+                    ) : (
+                      <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 14 }}>
+                        {editingStudent.autorizadosRetirada.map((aut, idx) => (
+                          <div key={idx} style={{ padding: "10px 14px", background: "white", borderRadius: 8, border: "1px solid #DCFCE7", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <div>
+                              <strong style={{ fontSize: 13, color: "#1E293B" }}>{aut.nome}</strong>
+                              <span style={{ fontSize: 12, color: "#64748B", marginLeft: 8 }}>({aut.parentesco})</span>
+                              {aut.documento && (
+                                <span style={{ fontSize: 11, color: "#0284C7", marginLeft: 8, background: "#E0F2FE", padding: "2px 6px", borderRadius: 4 }}>Doc: {aut.documento}</span>
+                              )}
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleAdminRemoveAutorizado(idx)}
+                              disabled={saving}
+                              style={{ background: "#FEE2E2", color: "#DC2626", border: "none", borderRadius: 6, padding: "4px 8px", fontSize: 11, fontWeight: 700, cursor: "pointer" }}
+                            >
+                              Remover
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Adicionar autorizado diretamente pela escola */}
+                    <div style={{ background: "white", padding: 14, borderRadius: 8, border: "1px dashed #86EFAC", display: "flex", flexDirection: "column", gap: 10 }}>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: "#166534" }}>+ Adicionar Autorizado pela Escola</span>
+                      <div style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr 1fr auto", gap: 8 }}>
+                        <input
+                          type="text"
+                          placeholder="Nome Completo"
+                          className="text-input"
+                          style={{ fontSize: 12, padding: "6px 10px", height: "auto" }}
+                          value={adminNewAutorizado.nome}
+                          onChange={e => setAdminNewAutorizado({ ...adminNewAutorizado, nome: e.target.value })}
+                        />
+                        <input
+                          type="text"
+                          placeholder="Parentesco (ex: Avó, Tio)"
+                          className="text-input"
+                          style={{ fontSize: 12, padding: "6px 10px", height: "auto" }}
+                          value={adminNewAutorizado.parentesco}
+                          onChange={e => setAdminNewAutorizado({ ...adminNewAutorizado, parentesco: e.target.value })}
+                        />
+                        <input
+                          type="text"
+                          placeholder="CPF/RG (opcional)"
+                          className="text-input"
+                          style={{ fontSize: 12, padding: "6px 10px", height: "auto" }}
+                          value={adminNewAutorizado.documento}
+                          onChange={e => setAdminNewAutorizado({ ...adminNewAutorizado, documento: e.target.value })}
+                        />
+                        <button
+                          type="button"
+                          onClick={handleAdminAddAutorizado}
+                          disabled={saving || !adminNewAutorizado.nome.trim()}
+                          style={{ background: "#16A34A", color: "white", border: "none", borderRadius: 6, padding: "6px 14px", fontSize: 12, fontWeight: 700, cursor: "pointer" }}
+                        >
+                          Adicionar
+                        </button>
+                      </div>
+                    </div>
+
+                    <div style={{ marginTop: 12, padding: "8px 12px", background: "#F8FAFC", borderRadius: 6, border: "1px solid #E2E8F0" }}>
+                      <p style={{ margin: 0, fontSize: 11, color: "#64748B", lineHeight: 1.4 }}>
+                        🛡️ <strong>Regra de Segurança:</strong> As pessoas acima constam no cadastro permanente. Casos de imprevisto ou exceções pontuais devem ser confirmados com muito cuidado pela diretoria diretamente por telefone com a família.
+                      </p>
+                    </div>
+                  </div>
+
                   <button type="button" onClick={() => setIsModalOpen(false)} style={{ width: "100%", padding: 12, background: "#F1F5F9", color: "#64748B", border: "none", borderRadius: 8, fontWeight: 600, cursor: "pointer" }}>Fechar</button>
                 </div>
               )}

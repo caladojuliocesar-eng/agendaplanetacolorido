@@ -465,7 +465,8 @@ export async function updateStudentFamilyProfile(
   const ref = doc(db(), "alunos", studentId);
   await updateDoc(ref, {
     ...data,
-    atualizadoEm: new Date().toISOString()
+    atualizadoEm: new Date().toISOString(),
+    cadastroAtualizadoPelaFamiliaEm: new Date().toISOString()
   });
 
   // Automatically log an audit notification message in conversas_coordenacao
